@@ -53,11 +53,11 @@
 ## 当前实现技术栈
 
 - Python + FastAPI：本地 MVP 后端。
-- SQLite：本地记录数据库；将来如需多人部署可迁移 PostgreSQL。
+- SQLite：本地记录数据库；云端配置 `DATABASE_URL` 后使用 PostgreSQL。
 - 静态 HTML、CSS 和 JavaScript：简洁响应式中文网页。
-- 本地图片存储，上传后用 Pillow 校正方向并重新编码，以移除 EXIF 元数据。
+- 本地运行时图片存储在本机；配置 Vercel Blob 后保存到 Blob。上传后用 Pillow 校正方向并重新编码，以移除 EXIF 元数据。
 - 配置 `DEEPSEEK_API_KEY` 后，在发布记录时调用 DeepSeek 视觉 API 提取属性；未配置或调用失败时仍可按表单信息匹配。
-- 当前匹配基于表单类别、地点、时间和 DeepSeek 提取的类别、颜色、品牌、特征做启发式排序；界面显示参考分，不调用模型逐对复核候选照片。
+- 当前匹配先按表单及 DeepSeek 提取属性排序，再让 DeepSeek 直接比较前 5 个候选照片并重排；API 不可用时退回属性排序。界面参考分不是配对概率。
 
 此技术栈是为本地原型的低门槛和快速启动作出的实现选择。
 
@@ -117,7 +117,7 @@
 - 文献综述起步笔记已建立，包含 LostNet、CLIP、图像检索基准和 MRR 参考；它不是完整系统综述，也没有宣称研究空缺已确认。
 - 相关工作对照表已补充 Springer 的 MobileNet embedding 检索和 2025 IEEE YOLO-LLM-CLIP 方向；这些付费论文目前只依据出版方摘要，需取得全文核对实验细节。
 - 离线评估脚本已准备，复用应用的同一排序函数比较表单基线和视觉属性方法，并可导出逐候选结果；当前尚无真实标注数据，也尚未运行评估。
-- 用户指定 Vercel 作为公开部署平台。目标数据层为 Neon PostgreSQL 保存记录、Vercel Blob 保存照片；当前仓库尚未完成适配或上线。部署计划见 [`PUBLIC_DEPLOYMENT_GUIDE.md`](PUBLIC_DEPLOYMENT_GUIDE.md)。
+- 用户指定 Vercel 作为公开部署平台。仓库已加入 FastAPI 入口、PostgreSQL/Blob 切换和大图压缩适配；尚未创建/连接云端资源，也没有部署。部署步骤见 [`PUBLIC_DEPLOYMENT_GUIDE.md`](PUBLIC_DEPLOYMENT_GUIDE.md)。
 - 当前 MVP 的系统架构说明已记录；公开部署仍需账号权限、举报/删除、滥用防护和费用限制等设计。
 - 用户已经确认的事实：12 个月；不需要了解编程经验；不需要进一步了解学校要求；预算目前不作为限制。
 - 研究问题、数据采集方式和评估方案仍可在后续讨论中细化。

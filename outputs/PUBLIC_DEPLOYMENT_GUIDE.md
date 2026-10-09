@@ -1,6 +1,6 @@
 # 公开网站部署计划（Vercel）
 
-> 用户指定 Vercel。此文件说明目标架构和上线步骤；代码仍需完成数据库、图片存储和 Vercel 静态资源适配，目前没有公开网址。
+> 用户指定 Vercel。代码已加入部署适配，但尚未连接云端资源或发布，目前没有公开网址。
 
 ## 数据放在哪里
 
@@ -18,16 +18,19 @@ Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘�
 3. 后端把图片上传到 Vercel Blob，并取得公开 URL。
 4. 如果配置 DeepSeek key，后端调用 `deepseek-flash` 提取照片可见属性。
 5. 后端把文字字段、照片 URL 和分析 JSON 存入 Neon PostgreSQL。
-6. 搜索时从 PostgreSQL 读取相反类型的记录，在 FastAPI 中计算本地排序分数，返回前 5 名。
+6. 搜索时从 PostgreSQL 读取相反类型的记录，先由 FastAPI 排序出前 5 名，再可让 DeepSeek 同时比较新照片和候选照片，返回综合排序。
 7. 网页通过照片 URL 展示 Blob 图片。
 
-## 必须适配的代码
+## 代码现状
 
-- 把当前 SQLite `connect()` 与 SQL 查询迁移到 PostgreSQL；数据库仍用同样的 `records` 概念，但由 Neon 持久保存。
-- 给记录保存 `image_url`，并增加 Vercel Blob 上传/错误清理逻辑。
-- 将静态网页放进 Vercel 支持的 `public/` 路径，并添加可识别的 FastAPI Function 入口。Vercel 对 FastAPI 提供 Python Runtime，但当前仍标为 Beta。
-- Vercel Function 的请求正文限制为 **4.5 MB**；现有网页允许上传 8 MB，所以不能直接照搬。第一版应在浏览器上传前把照片压缩到 4 MB 左右，或采用直接上传 Blob 的流程。
-- 保留本地开发：没设置 `DATABASE_URL` 和 `BLOB_READ_WRITE_TOKEN` 时，可以继续用本机 SQLite/文件目录；设置云端变量时再切换到 Neon/Blob。
+- `app/app.py` 是 Vercel FastAPI 入口，网页资源已放在 `public/`。
+- 配置 `DATABASE_URL` 后，应用使用 PostgreSQL；本地未配置时仍使用 SQLite。
+- 配置 `BLOB_READ_WRITE_TOKEN` 后，应用会把规范化照片上传到 Vercel Blob，并在数据库记录照片 URL；本地未配置时仍保存到本机目录。
+- 浏览器会将大于 4 MiB 的图片压缩到请求正文限制以内；服务端仍接受最大 8 MiB 的图片，以便本地使用。
+- `vercel.json` 将 FastAPI Function 的最长运行时间设为 180 秒，因为发布记录会同步等待属性分析和候选照片比较；较慢的模型响应仍可能让用户等待。
+- Vercel Python Runtime 对 FastAPI 的支持状态和部署细节请以官方文档为准。
+
+以上只表示仓库已有适配代码，不代表 Vercel 部署已成功。尚未连接 Neon/Blob，也未在 Vercel 上构建或运行云端版本。旧 SQLite 数据和本地照片不会自动迁移到新云端资源。
 
 ## Vercel 控制台部署步骤
 
@@ -35,7 +38,8 @@ Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘�
 2. 在 Vercel Storage / Marketplace 添加 Neon PostgreSQL，并将 `DATABASE_URL` 连接到项目。
 3. 创建一个**公开**的 Vercel Blob store，并将 `BLOB_READ_WRITE_TOKEN` 连接到项目。公开模式下，照片 URL 可被任何拿到链接的人访问。
 4. 在项目的 Production 环境变量中填入 `DEEPSEEK_API_KEY`，并设置 `DEEPSEEK_MODEL=deepseek-flash`。
-5. 部署后验证首页、`/api/health`、数据库读写、照片上传/显示和 DeepSeek 分析状态；先用非敏感测试图片。每次 AI 调用会产生真实 API token 用量。
+5. 确认 `DATABASE_URL`、`BLOB_READ_WRITE_TOKEN`、`DEEPSEEK_API_KEY` 已加入需要的部署环境，触发部署。
+6. 部署后验证首页、`/api/health`、数据库读写、照片上传/显示和 DeepSeek 分析/图片比较状态；先用非敏感测试图片。属性提取和多图比较会产生真实 API token 用量。
 
 以上步骤需要在用户自己的 Vercel 控制台完成账号授权、存储资源建立和密钥输入。密钥不应写入 GitHub 或网页代码。
 
@@ -53,3 +57,5 @@ Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘�
 - [Vercel Marketplace 存储和 Postgres](https://vercel.com/docs/marketplace-storage)
 - [Vercel Blob](https://vercel.com/docs/vercel-blob)
 - [Vercel Blob 服务端上传与 4.5 MB 限制](https://vercel.com/docs/vercel-blob/server-upload)
+- [Vercel Function 最长运行时间](https://vercel.com/docs/functions/configuring-functions/duration)
+- [DeepSeek Vision：多图输入与图片 token 计量](https://api-docs.deepseek.com/guides/vision/)

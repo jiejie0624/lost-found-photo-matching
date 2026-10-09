@@ -39,12 +39,12 @@ python -m uvicorn app.main:app --reload
 - SQLite 数据库位于 `work/app_data/lost_found.sqlite3`。
 - 图片在后端去除 EXIF 后保存到 `work/app_data/uploads/`。
 - API 目前不做账号、认领验证、聊天或管理员审核，适用于本地原型演示，不适合直接公开部署。
-- 视觉模型只在发布时提取一次属性；匹配排序由应用程序根据两条记录的信息计算，避免每次搜索都反复调用模型。
-- 匹配分数是原型启发式排序，不是经过研究验证的概率或准确率。
+- 配置 DeepSeek 后，发布记录时提取照片属性；再从文字排序选出的最多 5 条候选中读取照片，让模型比较外观并重排。未配置或调用失败时退回属性排序。
+- 匹配分数是启发式与视觉比较组成的参考分，不是经过研究验证的概率或准确率。
 
 ## 云端公开演示
 
-Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。计划使用 Neon PostgreSQL 保存记录、Vercel Blob 保存照片。代码还需完成云数据库、Blob 和 Vercel Function 适配；目前没有公开网址。
+Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。代码已支持 Neon PostgreSQL 保存记录、Vercel Blob 保存照片，并提供 FastAPI Function 入口；目前仍需在 Vercel 连接 GitHub、创建存储、配置环境变量并部署，所以还没有公开网址。
 
 ## 离线排序评估
 
