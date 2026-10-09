@@ -30,9 +30,18 @@ export async function getAccessToken() {
   if (result?.error) {
     throw new Error(`获取登录凭证失败：${result.error.message || "请重新登录。"}`);
   }
-  const token = result?.data?.token || result?.token;
+  const token = result?.data?.token
+    || (typeof result?.data === "string" ? result.data : null)
+    || result?.token;
   if (typeof token !== "string" || token.split(".").length !== 3) {
-    throw new Error("无法取得有效登录凭证，请退出后重新登录。");
+    const dataKeys = result?.data && typeof result.data === "object"
+      ? Object.keys(result.data).join(",") || "无"
+      : "不适用";
+    const topKeys = result && typeof result === "object"
+      ? Object.keys(result).join(",") || "无"
+      : typeof result;
+    const tokenParts = typeof token === "string" ? token.split(".").length : 0;
+    throw new Error(`登录凭证格式异常（返回字段：${topKeys}；data字段：${dataKeys}；JWT段数：${tokenParts}）。`);
   }
   return token;
 }
