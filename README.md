@@ -70,3 +70,4 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 - 匹配算法：[`outputs/MATCHING_ALGORITHM.md`](outputs/MATCHING_ALGORITHM.md)
 - 研究评估方案：[`outputs/RESEARCH_AND_EVALUATION_PLAN.md`](outputs/RESEARCH_AND_EVALUATION_PLAN.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
+- 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
