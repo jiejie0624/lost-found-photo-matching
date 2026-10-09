@@ -43,7 +43,7 @@ form.addEventListener("submit", async (event) => {
     const session = await currentSession();
     if (!session?.user) throw new Error("账号已创建，但还未完成登录。请登录后继续。");
     statusLine.textContent = "登录成功，正在打开你的记录…";
-    window.location.assign("/my-records");
+    window.location.assign("/my-records.html");
   } catch (error) {
     statusLine.textContent = error.message || "暂时无法完成操作，请稍后再试。";
     statusLine.classList.add("error");
@@ -62,7 +62,7 @@ try {
   } else {
     const session = await currentSession();
     if (session?.user) {
-      window.location.replace("/my-records");
+      window.location.replace("/my-records.html");
     }
   }
 } catch (error) {

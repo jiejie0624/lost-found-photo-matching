@@ -34,7 +34,7 @@ async function loadRecords() {
   try {
     const session = await currentSession();
     if (!session?.user) {
-      window.location.replace("/login");
+      window.location.replace("/login.html");
       return;
     }
     const response = await authorizedFetch("/api/me/records");
@@ -76,7 +76,7 @@ document.querySelector("#sign-out").addEventListener("click", async () => {
     const auth = await getAuthClient();
     await auth.signOut();
   } finally {
-    window.location.assign("/login");
+    window.location.assign("/login.html");
   }
 });
 

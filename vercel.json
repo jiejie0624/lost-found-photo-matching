@@ -5,6 +5,10 @@
       "maxDuration": 180
     }
   },
+  "rewrites": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/my-records", "destination": "/my-records.html" }
+  ],
   "crons": [
     {
       "path": "/api/cron/expire",

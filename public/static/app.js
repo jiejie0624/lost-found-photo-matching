@@ -203,7 +203,7 @@ try {
   const session = await currentSession();
   if (session?.user) {
     const accountLink = document.querySelector("#account-link");
-    accountLink.href = "/my-records";
+    accountLink.href = "/my-records.html";
     accountLink.textContent = "我的记录";
   }
 } catch {
