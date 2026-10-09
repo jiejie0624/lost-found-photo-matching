@@ -102,7 +102,8 @@
 
 截至 2026-10-09 查阅的 DeepSeek 官方文档：
 
-- `deepseek-flash` 支持图片输入；官方视觉文档列出 JPEG、PNG、GIF、WebP。图像以 token 计费，图片缩放后每张最多约 1,024 个输入 token。详见 [Vision 文档](https://api-docs.deepseek.com/guides/vision/)。
+- 用户指定使用 DeepSeek-V4.1-Flash。官方 API 调用名称是 `deepseek-flash`，而且支持图片输入；应用代码默认值已经是该 ID。只有启动后端时配置 `DEEPSEEK_API_KEY`，上传记录才会实际调用 API。详见 [官方更新日志](https://api-docs.deepseek.com/updates/) 和 [Vision 文档](https://api-docs.deepseek.com/guides/vision/)。
+- 官方视觉文档列出 JPEG、PNG、GIF、WebP。图像以 token 计费，价格可能变化，调用前请查看 [Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing/)。
 - 官方价格表按模型、输入缓存命中/未命中、输出及高峰/非高峰列价；价格会变动，开发前应重新查阅 [Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing/)。
 - 对“每个查询分析 1 张新照片，并比较最多 10 张候选照片”的假设，先前粗略估计 1,000 次查询约 US$2–5。此估算依赖图片 token、文字提示和输出长度，不能当成报价；照片存储、托管和数据库费用另计。
 

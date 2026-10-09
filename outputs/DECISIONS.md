@@ -12,6 +12,7 @@
 | 2026-10-09 | 可以创建供后续参考的规划文件。 | 用户明确要求 |
 | 2026-10-09 | 用户回复“start”，确认开始实现规划中的 MVP。 | 用户明确要求 |
 | 2026-10-09 | 当前 MVP 前端使用原生 HTML/CSS/JavaScript，后端使用 Python FastAPI，数据库使用 SQLite；DeepSeek 视觉分析通过环境变量启用。 | 已用于实现的 MVP 技术选择；正式部署架构仍可调整 |
+| 2026-10-09 | 用户希望视觉分析使用 DeepSeek-V4.1-Flash。 | DeepSeek API 正确模型 ID 为 `deepseek-flash`；代码默认值已是此 ID。只有配置 `DEEPSEEK_API_KEY` 后才会实际发起 API 请求。 |
 
 ## 尚未决定
 

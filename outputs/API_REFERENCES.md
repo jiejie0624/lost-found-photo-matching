@@ -9,6 +9,7 @@
 ## 当前规划相关摘录
 
 - 官方文档列出 `deepseek-flash` 支持图片输入。
+- 截至 2026-10-09，DeepSeek 官方模型更新说明：API 模型名称 `deepseek-flash` 对应 **DeepSeek-V4.1-Flash**，并支持视觉输入；`deepseek-v4-flash` 是旧名称，虽暂时兼容但新配置应使用 `deepseek-flash`。参见 [官方更新日志](https://api-docs.deepseek.com/updates/) 和 [Vision 文档](https://api-docs.deepseek.com/guides/vision/)。
 - 图片会缩放后转为 token 计费；文档说明单张图片最多约 1,024 个输入 token。
 - 支持 JPEG、PNG、GIF 和 WebP。
 - 价格会变化，费用依赖输入 token、输出 token、缓存情况和调用时间。
