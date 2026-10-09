@@ -66,6 +66,7 @@
 可执行的离线评估草案见 [`RESEARCH_AND_EVALUATION_PLAN.md`](RESEARCH_AND_EVALUATION_PLAN.md)。其中数据规模、伦理审批和参与者安排尚待导师确认。
 数据字段及配对标注规则草案见 [`DATASET_AND_ANNOTATION_GUIDE.md`](DATASET_AND_ANNOTATION_GUIDE.md)，空白 CSV 模板也在 `outputs/`。
 当前应用组件、接口、数据流和限制见 [`SYSTEM_ARCHITECTURE.md`](SYSTEM_ARCHITECTURE.md)。
+当前启发式分数、文本相似度和排序规则见 [`MATCHING_ALGORITHM.md`](MATCHING_ALGORITHM.md)。
 
 - 建立人工标注的失物与拾获配对数据集；尽量征得照片拍摄者同意，不使用未经授权的真实个人资料。
 - 比较：用户填写信息的表单基线与再加入结构化视觉属性后的排序；候选照片复核可作为后续扩展。

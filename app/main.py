@@ -164,7 +164,7 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
         candidate["match_score"] = score
         candidate["match_evidence"] = evidence
         scored.append(candidate)
-    return sorted(scored, key=lambda item: item["match_score"], reverse=True)[:5]
+    return sorted(scored, key=lambda item: (-item["match_score"], item["id"]))[:5]
 
 
 @app.get("/")
