@@ -17,6 +17,7 @@ export async function getAuthClient() {
 }
 
 export async function getAccessToken() {
+  if (recentSessionToken) return recentSessionToken;
   const auth = await getAuthClient();
   let token;
   try {
@@ -43,6 +44,10 @@ export async function currentSession() {
   const result = await auth.getSession();
   if (result?.error) throw new Error(result.error.message || "无法读取登录状态。");
   const session = result?.data || result;
-  recentSessionToken = typeof session?.session?.token === "string" ? session.session.token : null;
+  recentSessionToken = [
+    session?.session?.access_token,
+    session?.session?.token,
+    session?.access_token,
+  ].find((value) => typeof value === "string" && value.length > 0) || null;
   return session;
 }
