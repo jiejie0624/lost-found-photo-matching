@@ -23,7 +23,7 @@ function formatDate(value) {
 function card(record, showScore = false) {
   const found = record.kind === "found";
   const badge = found ? "已经拾获" : "正在寻找";
-  const score = showScore ? `<span class="match-score">${record.match_score}% 接近</span>` : "";
+  const score = showScore ? `<span class="match-score">参考分 ${record.match_score}</span>` : "";
   const evidence = showScore && record.match_evidence?.length
     ? `<p class="record-description">${record.match_evidence.map(escapeHtml).join(" · ")}</p>`
     : (record.description ? `<p class="record-description">${escapeHtml(record.description)}</p>` : "");
