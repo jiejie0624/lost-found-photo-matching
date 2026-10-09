@@ -32,6 +32,8 @@ export async function getAccessToken() {
   }
   const token = result?.data?.token
     || (typeof result?.data === "string" ? result.data : null)
+    || result?.data?.session?.access_token
+    || result?.data?.session?.token
     || result?.token;
   if (typeof token !== "string" || token.split(".").length !== 3) {
     const dataKeys = result?.data && typeof result.data === "object"
