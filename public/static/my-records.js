@@ -38,8 +38,15 @@ async function loadRecords() {
       return;
     }
     const response = await authorizedFetch("/api/me/records");
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.detail || "无法读取你的记录。");
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error(`记录接口返回了无法读取的内容（HTTP ${response.status}）。`);
+    }
+    if (!response.ok) {
+      throw new Error(`读取记录接口失败（HTTP ${response.status}）：${payload.detail || "请稍后重试。"}`);
+    }
     statusLine.textContent = `${session.user.name || session.user.email}，你有 ${payload.length} 条记录。`;
     render(payload);
   } catch (error) {

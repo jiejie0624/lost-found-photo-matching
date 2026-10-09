@@ -17,7 +17,13 @@ export async function getAuthClient() {
 
 export async function getAccessToken() {
   const auth = await getAuthClient();
-  const token = await auth.getJWTToken?.();
+  let token;
+  try {
+    token = await auth.getJWTToken?.();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`获取登录凭证失败：${detail}`);
+  }
   if (!token) throw new Error("请先登录后再发布记录。");
   return token;
 }
