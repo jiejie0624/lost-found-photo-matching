@@ -63,6 +63,7 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 ## 参考
 
 - 项目上下文、计划及约束：[`outputs/PROJECT_CONTEXT.md`](outputs/PROJECT_CONTEXT.md)
+- FYP Proposal 草案：[`outputs/FYP_PROPOSAL_DRAFT.md`](outputs/FYP_PROPOSAL_DRAFT.md)
 - 决策记录：[`outputs/DECISIONS.md`](outputs/DECISIONS.md)
 - DeepSeek 官方参考：[`outputs/API_REFERENCES.md`](outputs/API_REFERENCES.md)
 - 系统架构：[`outputs/SYSTEM_ARCHITECTURE.md`](outputs/SYSTEM_ARCHITECTURE.md)
