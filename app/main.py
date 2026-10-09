@@ -22,7 +22,7 @@ from .matching import match_score, parse_time
 
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
-DATA_DIR = PROJECT_ROOT / "work" / "app_data"
+DATA_DIR = Path(os.getenv("APP_DATA_DIR", str(PROJECT_ROOT / "work" / "app_data"))).expanduser()
 UPLOAD_DIR = DATA_DIR / "uploads"
 DB_PATH = DATA_DIR / "lost_found.sqlite3"
 STATIC_DIR = ROOT / "static"
@@ -170,6 +170,11 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
 @app.get("/")
 def home() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/api/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.get("/uploads/{filename}")

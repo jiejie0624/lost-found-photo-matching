@@ -42,6 +42,10 @@ python -m uvicorn app.main:app --reload
 - 视觉模型只在发布时提取一次属性；匹配排序由应用程序根据两条记录的信息计算，避免每次搜索都反复调用模型。
 - 匹配分数是原型启发式排序，不是经过研究验证的概率或准确率。
 
+## 云端公开演示
+
+仓库根目录提供 Render Blueprint `render.yaml`。部署步骤、数据持久化方式和公开前限制见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。目前只是部署准备，尚未创建云服务或公开网址；公开部署前要处理匿名发布、举报/删除、滥用和 API 费用限制。
+
 ## 离线排序评估
 
 在项目根目录创建私有数据目录并复制模板；`work/` 不会提交到 Git。`vision_*` 列填照片分析得到的属性，其他表单列用作基线信息。
@@ -72,3 +76,4 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
 - 相关工作对照表：[`outputs/RELATED_WORK_MATRIX.md`](outputs/RELATED_WORK_MATRIX.md)
+- 公开演示部署指南：[`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)
