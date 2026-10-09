@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>我的记录 · 拾见</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="account-page">
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">拾</span><span>拾见</span></a><nav><a href="/#records">社区线索</a></nav><button class="nav-login" id="sign-out" type="button">退出登录</button></header>
+  <main class="my-records-main">
+    <div class="section-heading"><div><p class="eyebrow">YOUR CONTRIBUTIONS</p><h1>我的记录</h1></div><a class="button button-dark" href="/#publish">发布新记录 <span>↗</span></a></div>
+    <p class="records-note">记录和照片会公开显示。关闭记录会从公开线索中隐藏；删除会同时删除记录和照片。每条记录会在发布 90 天后自动清理。</p>
+    <p class="auth-status" id="records-status" role="status" aria-live="polite">正在读取你的记录…</p>
+    <div class="my-records-grid" id="my-records-grid"></div>
+  </main>
+  <script type="module" src="/static/my-records.js"></script>
+</body>
+</html>

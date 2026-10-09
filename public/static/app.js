@@ -1,3 +1,5 @@
+import { authorizedFetch, currentSession } from "./auth.js";
+
 const form = document.querySelector("#record-form");
 const statusLine = document.querySelector("#form-status");
 const fileInput = form.elements.image;
@@ -163,8 +165,9 @@ form.addEventListener("submit", async (event) => {
     if (!sourceImage) throw new Error("请先选择一张照片。");
     statusLine.textContent = sourceImage.size > 4 * 1024 * 1024 ? "正在压缩照片并保存记录…" : "正在保存记录并寻找相似线索。";
     formData.set("image", await prepareImageForUpload(sourceImage));
-    const response = await fetch("/api/records", { method: "POST", body: formData });
+    const response = await authorizedFetch("/api/records", { method: "POST", body: formData });
     const payload = await response.json();
+    if (response.status === 401) throw new Error("请先登录或注册，然后再发布记录。");
     if (!response.ok) throw new Error(payload.detail || "提交失败，请检查填写内容。");
     const results = payload.matches || [];
     const analysisText = payload.analysis_status === "analyzed"
@@ -195,3 +198,14 @@ form.addEventListener("submit", async (event) => {
 });
 
 loadRecords();
+
+try {
+  const session = await currentSession();
+  if (session?.user) {
+    const accountLink = document.querySelector("#account-link");
+    accountLink.href = "/my-records";
+    accountLink.textContent = "我的记录";
+  }
+} catch {
+  // Public browsing remains available when login has not been configured yet.
+}

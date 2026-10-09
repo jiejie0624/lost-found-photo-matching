@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>登录 / 注册 · 拾见</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="account-page">
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">拾</span><span>拾见</span></a><nav><a href="/">返回首页</a></nav><a class="nav-cta" href="/my-records">我的记录 <span>↗</span></a></header>
+  <main class="auth-layout">
+    <section class="auth-card">
+      <p class="eyebrow">WELCOME TO SHIJIAN</p>
+      <h1 id="auth-title">欢迎回来</h1>
+      <p class="auth-intro">登录后发布失物或拾获记录，并管理自己发布的线索。</p>
+      <form id="auth-form">
+        <label id="name-field" hidden>怎么称呼你？<input name="name" autocomplete="name" maxlength="80" placeholder="姓名或昵称"></label>
+        <label>电子邮箱<input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></label>
+        <label>密码<input name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128" placeholder="至少 8 个字符"></label>
+        <button class="button button-dark auth-submit" id="auth-submit" type="submit">登录 <span>↗</span></button>
+      </form>
+      <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
+      <p class="auth-switch"><span id="switch-copy">还没有账号？</span> <button type="button" id="switch-mode">创建账号</button></p>
+      <p class="auth-footnote">请使用你能收信的邮箱。账号由 Neon Auth 安全管理；本网站不会保存你的密码。</p>
+    </section>
+    <aside class="auth-side"><span class="auth-side-mark">拾</span><h2>让每一条线索<br><em>都有人负责。</em></h2><p>登录账号可以查看自己的发布记录、关闭已解决的线索，或删除不再需要的记录。</p><span class="auth-side-line"></span><a href="/">返回社区线索 →</a></aside>
+  </main>
+  <script type="module" src="/static/login.js"></script>
+</body>
+</html>

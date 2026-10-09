@@ -4,16 +4,18 @@ import base64
 import json
 import os
 import re
+import secrets
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator
+from urllib.parse import urlsplit
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -30,6 +32,19 @@ STATIC_DIR = PROJECT_ROOT / "public"
 STATIC_ASSET_DIR = STATIC_DIR / "static"
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 BLOB_TOKEN = os.getenv("BLOB_READ_WRITE_TOKEN", "").strip()
+NEON_AUTH_BASE_URL = (
+    os.getenv("NEON_AUTH_BASE_URL", "").strip()
+    or os.getenv("DATABASE_NEON_AUTH_BASE_URL", "").strip()
+    or os.getenv("DATABASE_VITE_NEON_AUTH_URL", "").strip()
+)
+NEON_AUTH_JWKS_URL = (
+    os.getenv("NEON_AUTH_JWKS_URL", "").strip()
+    or os.getenv("DATABASE_NEON_AUTH_JWKS_URL", "").strip()
+)
+if NEON_AUTH_BASE_URL and not NEON_AUTH_JWKS_URL:
+    NEON_AUTH_JWKS_URL = f"{NEON_AUTH_BASE_URL.rstrip('/')}/.well-known/jwks.json"
+CRON_SECRET = os.getenv("CRON_SECRET", "").strip()
+_AUTH_JWKS_CLIENT: Any | None = None
 ON_VERCEL = os.getenv("VERCEL", "").lower() == "1"
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -93,7 +108,10 @@ def init_db() -> None:
                 image_url TEXT,
                 image_analysis TEXT NOT NULL,
                 analysis_status TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                owner_id TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                expires_at TEXT
             )""",
         )
         if DATABASE_URL:
@@ -108,6 +126,22 @@ def init_db() -> None:
             columns = {row["name"] for row in execute(db, "PRAGMA table_info(records)").fetchall()}
         if "image_url" not in columns:
             execute(db, "ALTER TABLE records ADD COLUMN image_url TEXT")
+        if "owner_id" not in columns:
+            execute(db, "ALTER TABLE records ADD COLUMN owner_id TEXT")
+        if "status" not in columns:
+            execute(db, "ALTER TABLE records ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+        if "expires_at" not in columns:
+            execute(db, "ALTER TABLE records ADD COLUMN expires_at TEXT")
+        legacy_rows = execute(db, "SELECT id, created_at FROM records WHERE expires_at IS NULL").fetchall()
+        for legacy_row in legacy_rows:
+            try:
+                created = datetime.fromisoformat(legacy_row["created_at"].replace("Z", "+00:00"))
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                expires = (created + timedelta(days=90)).astimezone(timezone.utc).isoformat()
+            except (TypeError, ValueError):
+                expires = datetime.now(timezone.utc).isoformat()
+            execute(db, "UPDATE records SET expires_at = ? WHERE id = ?", (expires, legacy_row["id"]))
         execute(
             db,
             "UPDATE records SET image_url = '/uploads/' || image_name WHERE image_url IS NULL OR image_url = ''",
@@ -115,6 +149,41 @@ def init_db() -> None:
 
 
 init_db()
+
+
+def authenticated_user_id(authorization: str | None) -> str:
+    global _AUTH_JWKS_CLIENT
+    if not NEON_AUTH_BASE_URL or not NEON_AUTH_JWKS_URL:
+        raise HTTPException(status_code=503, detail="登录服务尚未配置，请管理员在 Neon 启用 Auth 并配置环境变量。")
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="请先登录后再操作。")
+    token = authorization[7:].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="登录状态无效，请重新登录。")
+    try:
+        import jwt
+
+        if _AUTH_JWKS_CLIENT is None:
+            _AUTH_JWKS_CLIENT = jwt.PyJWKClient(NEON_AUTH_JWKS_URL, timeout=5)
+        jwks_client = _AUTH_JWKS_CLIENT
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        auth_url = urlsplit(NEON_AUTH_BASE_URL)
+        issuer = f"{auth_url.scheme}://{auth_url.netloc}"
+        claims = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["EdDSA"],
+            issuer=issuer,
+            options={"require": ["sub", "exp", "iss"]},
+        )
+        user_id = claims.get("sub")
+        if not isinstance(user_id, str) or not user_id:
+            raise ValueError("Missing subject")
+        return user_id
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail="登录状态已过期或无效，请重新登录。") from exc
 
 
 def normalize_image(raw: bytes) -> tuple[bytes, str]:
@@ -201,13 +270,20 @@ def row_to_record(row: Any) -> dict[str, Any]:
         "analysis": json.loads(row["image_analysis"]),
         "analysis_status": row["analysis_status"],
         "created_at": row["created_at"],
+        "status": row["status"],
+        "expires_at": row["expires_at"],
     }
 
 
 def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
     opposite_kind = "found" if record["kind"] == "lost" else "lost"
     with connect() as db:
-        rows = execute(db, "SELECT * FROM records WHERE kind = ? AND id != ?", (opposite_kind, record["id"])).fetchall()
+        now = datetime.now(timezone.utc).isoformat()
+        rows = execute(
+            db,
+            "SELECT * FROM records WHERE kind = ? AND id != ? AND status = 'active' AND expires_at > ?",
+            (opposite_kind, record["id"], now),
+        ).fetchall()
     scored = []
     for row in rows:
         candidate = row_to_record(row)
@@ -342,11 +418,26 @@ def home() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/login")
+def login_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "login.html")
+
+
+@app.get("/my-records")
+def my_records_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "my-records.html")
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     with connect() as db:
         execute(db, "SELECT 1").fetchone()
     return {"status": "ok"}
+
+
+@app.get("/api/config")
+def public_config() -> dict[str, Any]:
+    return {"auth_configured": bool(NEON_AUTH_BASE_URL and NEON_AUTH_JWKS_URL), "auth_url": NEON_AUTH_BASE_URL}
 
 
 @app.get("/uploads/{filename}")
@@ -366,11 +457,96 @@ def list_records(kind: str | None = None) -> list[dict[str, Any]]:
     if kind and kind not in KINDS:
         raise HTTPException(status_code=400, detail="无效的记录类型。")
     with connect() as db:
+        now = datetime.now(timezone.utc).isoformat()
         if kind:
-            rows = execute(db, "SELECT * FROM records WHERE kind = ? ORDER BY created_at DESC LIMIT 100", (kind,)).fetchall()
+            rows = execute(
+                db,
+                "SELECT * FROM records WHERE kind = ? AND status = 'active' AND expires_at > ? ORDER BY created_at DESC LIMIT 100",
+                (kind, now),
+            ).fetchall()
         else:
-            rows = execute(db, "SELECT * FROM records ORDER BY created_at DESC LIMIT 100").fetchall()
+            rows = execute(
+                db,
+                "SELECT * FROM records WHERE status = 'active' AND expires_at > ? ORDER BY created_at DESC LIMIT 100",
+                (now,),
+            ).fetchall()
     return [row_to_record(row) for row in rows]
+
+
+@app.get("/api/me/records")
+def list_my_records(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        rows = execute(
+            db,
+            "SELECT * FROM records WHERE owner_id = ? AND expires_at > ? ORDER BY created_at DESC LIMIT 100",
+            (user_id, datetime.now(timezone.utc).isoformat()),
+        ).fetchall()
+    return [row_to_record(row) for row in rows]
+
+
+@app.patch("/api/records/{record_id}/close")
+def close_record(record_id: str, authorization: str | None = Header(default=None)) -> dict[str, str]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        result = execute(
+            db,
+            "UPDATE records SET status = 'closed' WHERE id = ? AND owner_id = ? AND status = 'active'",
+            (record_id, user_id),
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="找不到可关闭的记录。")
+    return {"status": "closed"}
+
+
+async def delete_image(image_url: str | None, image_name: str | None) -> None:
+    if image_url and image_url.startswith("https://"):
+        if not BLOB_TOKEN:
+            raise RuntimeError("Vercel Blob token is not configured")
+        from vercel.blob import AsyncBlobClient
+
+        await AsyncBlobClient().delete(image_url)
+    elif image_name:
+        path = (UPLOAD_DIR / image_name).resolve()
+        if path.parent == UPLOAD_DIR.resolve() and path.is_file():
+            path.unlink()
+
+
+@app.delete("/api/records/{record_id}")
+async def delete_record(record_id: str, authorization: str | None = Header(default=None)) -> dict[str, str]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        row = execute(db, "SELECT image_url, image_name FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="找不到这条记录。")
+        try:
+            await delete_image(row["image_url"], row["image_name"])
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="照片暂时无法删除，请稍后再试。") from exc
+        execute(db, "DELETE FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id))
+    return {"status": "deleted"}
+
+
+@app.get("/api/cron/expire")
+async def expire_records(request: Request) -> dict[str, int]:
+    if not CRON_SECRET:
+        raise HTTPException(status_code=503, detail="尚未配置过期清理密钥。")
+    supplied_secret = request.headers.get("authorization", "")
+    expected_secret = f"Bearer {CRON_SECRET}"
+    if not secrets.compare_digest(supplied_secret, expected_secret):
+        raise HTTPException(status_code=401, detail="未授权。")
+    now = datetime.now(timezone.utc).isoformat()
+    with connect() as db:
+        expired = execute(db, "SELECT id, image_url, image_name FROM records WHERE expires_at <= ?", (now,)).fetchall()
+        deleted = 0
+        for row in expired:
+            try:
+                await delete_image(row["image_url"], row["image_name"])
+            except Exception:
+                continue
+            execute(db, "DELETE FROM records WHERE id = ?", (row["id"],))
+            deleted += 1
+    return {"expired_records_deleted": deleted}
 
 
 @app.post("/api/records")
@@ -383,7 +559,9 @@ async def create_record(
     occurred_at: str = Form(...),
     description: str = Form(""),
     image: UploadFile = File(...),
+    authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
+    owner_id = authenticated_user_id(authorization)
     if ON_VERCEL and (not DATABASE_URL or not BLOB_TOKEN):
         raise HTTPException(status_code=503, detail="云端数据库或照片存储尚未配置。")
     if kind not in KINDS:
@@ -426,15 +604,16 @@ async def create_record(
     attributes, analysis_status = analyze_image(normalized, title, category, description)
     record_id = uuid.uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat()
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
     with connect() as db:
         execute(
             db,
             """INSERT INTO records
             (id, kind, title, category, color, location, occurred_at, description,
-             image_name, image_url, image_analysis, analysis_status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+             image_name, image_url, image_analysis, analysis_status, created_at, owner_id, status, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)""",
             (record_id, kind, title, category, color, location, occurred_at, description,
-             stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at),
+             stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id, expires_at),
         )
         row = execute(db, "SELECT * FROM records WHERE id = ?", (record_id,)).fetchone()
     record = row_to_record(row)

@@ -4,5 +4,11 @@
     "app/app.py": {
       "maxDuration": 180
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/expire",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
