@@ -42,8 +42,29 @@ python -m uvicorn app.main:app --reload
 - 视觉模型只在发布时提取一次属性；匹配排序由应用程序根据两条记录的信息计算，避免每次搜索都反复调用模型。
 - 匹配分数是原型启发式排序，不是经过研究验证的概率或准确率。
 
+## 离线排序评估
+
+在项目根目录创建私有数据目录并复制模板；`work/` 不会提交到 Git。`vision_*` 列填照片分析得到的属性，其他表单列用作基线信息。
+
+```powershell
+New-Item -ItemType Directory -Force work/evaluation
+Copy-Item outputs/records_template.csv work/evaluation/records.csv
+Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
+```
+
+在项目根目录运行：
+
+```powershell
+python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --split test
+```
+
+脚本在相同的已标注候选集合上比较表单基线和加入视觉属性的方法，输出 Hit Rate@5、Recall@5 和 MRR@5。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。调权重时使用 `development` 集；不要根据 `test` 结果继续调整。
+
 ## 参考
 
 - 项目上下文、计划及约束：[`outputs/PROJECT_CONTEXT.md`](outputs/PROJECT_CONTEXT.md)
 - 决策记录：[`outputs/DECISIONS.md`](outputs/DECISIONS.md)
 - DeepSeek 官方参考：[`outputs/API_REFERENCES.md`](outputs/API_REFERENCES.md)
+- 系统架构：[`outputs/SYSTEM_ARCHITECTURE.md`](outputs/SYSTEM_ARCHITECTURE.md)
+- 研究评估方案：[`outputs/RESEARCH_AND_EVALUATION_PLAN.md`](outputs/RESEARCH_AND_EVALUATION_PLAN.md)
+- 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
