@@ -174,7 +174,10 @@ def authenticated_user_id(authorization: str | None) -> str:
             signing_key.key,
             algorithms=["EdDSA"],
             issuer=issuer,
-            options={"require": ["sub", "exp", "iss"]},
+            # Neon Auth tokens carry an audience for Neon services. This API
+            # validates the signature, issuer, expiry, and subject; PyJWT
+            # otherwise rejects the token when no application audience is set.
+            options={"require": ["sub", "exp", "iss"], "verify_aud": False},
         )
         user_id = claims.get("sub")
         if not isinstance(user_id, str) or not user_id:

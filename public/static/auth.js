@@ -36,14 +36,7 @@ export async function getAccessToken() {
     || result?.data?.session?.token
     || result?.token;
   if (typeof token !== "string" || token.split(".").length !== 3) {
-    const dataKeys = result?.data && typeof result.data === "object"
-      ? Object.keys(result.data).join(",") || "无"
-      : "不适用";
-    const topKeys = result && typeof result === "object"
-      ? Object.keys(result).join(",") || "无"
-      : typeof result;
-    const tokenParts = typeof token === "string" ? token.split(".").length : 0;
-    throw new Error(`登录凭证格式异常（返回字段：${topKeys}；data字段：${dataKeys}；JWT段数：${tokenParts}）。`);
+    throw new Error("无法取得有效登录凭证，请重新登录后再试。");
   }
   return token;
 }
