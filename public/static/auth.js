@@ -1,4 +1,5 @@
 let clientPromise;
+let recentSessionToken = null;
 
 export async function getAuthClient() {
   if (!clientPromise) {
@@ -21,9 +22,11 @@ export async function getAccessToken() {
   try {
     token = await auth.getJWTToken?.();
   } catch (error) {
+    if (recentSessionToken) return recentSessionToken;
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(`获取登录凭证失败：${detail}`);
   }
+  if (!token && recentSessionToken) return recentSessionToken;
   if (!token) throw new Error("请先登录后再发布记录。");
   return token;
 }
@@ -39,5 +42,7 @@ export async function currentSession() {
   const auth = await getAuthClient();
   const result = await auth.getSession();
   if (result?.error) throw new Error(result.error.message || "无法读取登录状态。");
-  return result?.data || result;
+  const session = result?.data || result;
+  recentSessionToken = typeof session?.session?.token === "string" ? session.session.token : null;
+  return session;
 }
