@@ -49,11 +49,12 @@ flowchart LR
 - 后端同步调用外部视觉 API，设置了 35 秒超时；高并发或服务延迟时可能拖慢发布请求。
 - 图片去除 EXIF 并不能去除画面中可能出现的人脸、证件或其他敏感信息；若启用 API，也要按学校批准的流程确认第三方图片处理。
 
-## 公开演示准备
+## Vercel 公开部署目标
 
-- `APP_DATA_DIR` 可以把 SQLite 和上传图片目录移动到云端持久盘；本地默认仍是 `work/app_data`。
-- 根目录 `render.yaml` 预设一个单实例 Render 部署，并设置 `DEEPSEEK_MODEL=deepseek-flash`（DeepSeek-V4.1-Flash）和健康检查。
-- 当前 Render 配置尚未部署；单实例持久盘适合小型 FYP 演示，不能横向扩展。部署说明见 [`PUBLIC_DEPLOYMENT_GUIDE.md`](PUBLIC_DEPLOYMENT_GUIDE.md)。
+- 用户指定使用 Vercel。目标方案为 Vercel FastAPI Function + Neon PostgreSQL（记录）+ Vercel Blob（照片）。
+- 目前代码仍使用本地 SQLite 和本地文件上传；还没有连接 Neon 或 Blob，也没有部署到 Vercel。
+- Vercel Function 的上传请求正文上限会影响当前 8 MB 表单限制；部署适配需压缩上传图片或改为浏览器直传 Blob。
+- 部署步骤和限制见 [`PUBLIC_DEPLOYMENT_GUIDE.md`](PUBLIC_DEPLOYMENT_GUIDE.md)。
 - 上传表单说明了记录/照片的公开范围及启用 AI 时会把照片发送给 DeepSeek。
 
 ## 未来正式部署前仍需处理

@@ -1,44 +1,55 @@
-# 公开演示部署指南（Render 初稿）
+# 公开网站部署计划（Vercel）
 
-## 目标
+> 用户指定 Vercel。此文件说明目标架构和上线步骤；代码仍需完成数据库、图片存储和 Vercel 静态资源适配，目前没有公开网址。
 
-让任何人用浏览器访问公开网址，并共用云端记录和照片。当前配置使用一个 Render Web Service 和一块持久磁盘：FastAPI 应用、SQLite 数据库及照片保存在同一服务的磁盘中。`APP_DATA_DIR` 默认仍指向本地 `work/app_data`；Render 配置将它改为 `/var/data`。
+## 数据放在哪里
 
-这适用于 FYP 小规模演示和单实例运行。Render 持久磁盘不能由多个服务实例共用，也不能横向扩展；如果用户量或可用性要求提高，应迁移到托管 PostgreSQL 和对象存储。Render 默认文件系统是临时的，所以数据库和照片必须写入已挂载的持久盘。
+- **记录与匹配属性：Neon PostgreSQL**，通过 Vercel Marketplace 连接。数据库保存失物/拾获文字、DeepSeek 提取的特征、照片 URL 和时间等结构化数据。
+- **照片：Vercel Blob**。图片文件存放在 Blob，PostgreSQL 只保存对应的 URL/路径。当前产品会向所有访客显示记录图片，所以第一版可使用公开 Blob；公开 URL 会被任何持有者打开。若以后需要只对登录用户开放图片，应改为私有 Blob 并添加登录与授权。
+- **应用：Vercel Python Runtime / FastAPI Function**。Vercel 托管网页和后端，所有访客通过同一网址使用。
+- **AI：DeepSeek-V4.1-Flash**。在 Vercel 项目环境变量中配置 `DEEPSEEK_API_KEY`，API 模型 ID 为 `deepseek-flash`。
 
-## 仓库已准备的配置
+Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘；重启或换实例后，临时文件不能作为共享数据库或照片库。因此生产记录应放在外部数据库，图片应放在对象存储。
 
-- 根目录 `render.yaml` 定义 Python Web Service、启动命令、健康检查、1 GB 持久盘和环境变量。
-- 后端通过 `APP_DATA_DIR` 选择数据库与图片目录，保留本地运行默认值。
-- `DEEPSEEK_MODEL=deepseek-flash` 对应用户选定的 DeepSeek-V4.1-Flash。
-- `DEEPSEEK_API_KEY` 标记为部署时输入的密钥；不要写进仓库或网页代码。
-- `/api/health` 提供部署健康检查。
-- 上传表单已说明记录/图片可被网站访问者看到，且启用 AI 时会把照片发送给 DeepSeek。
+## 数据流
 
-## 首次部署步骤
+1. 浏览器提交表单和照片。
+2. FastAPI 校正图片方向、压缩并移除 EXIF。
+3. 后端把图片上传到 Vercel Blob，并取得公开 URL。
+4. 如果配置 DeepSeek key，后端调用 `deepseek-flash` 提取照片可见属性。
+5. 后端把文字字段、照片 URL 和分析 JSON 存入 Neon PostgreSQL。
+6. 搜索时从 PostgreSQL 读取相反类型的记录，在 FastAPI 中计算本地排序分数，返回前 5 名。
+7. 网页通过照片 URL 展示 Blob 图片。
 
-1. 登录 Render 并连接 GitHub 账号，授权访问私有仓库 `lost-found-photo-matching-fyp`。
-2. 在 Render Dashboard 选择 **New > Blueprint**，选中该仓库和 `main` 分支。Render 会读取根目录的 `render.yaml`。
-3. Blueprint 会要求填写 `DEEPSEEK_API_KEY`。在 Render 的 secret/environment field 中填入 DeepSeek API key；不要把它粘贴到 GitHub、源代码或公开聊天。
-4. 检查即将创建的资源与价格后再部署。这个 Blueprint 使用付费 Web Service 和持久磁盘；Render 官方说明，持久磁盘只适用于付费 Web Service，且默认文件系统会在重启或重新部署时丢失更改。
-5. 部署完成后，在 Render 提供的 `onrender.com` 网址打开首页，并访问 `/api/health` 确认服务状态为 `ok`。从手机浏览器再打开同一网址检查窄屏显示。
-6. 先用非敏感测试图片各发布一条失物和拾获记录，确认记录、图片和 DeepSeek 分析状态都能正常工作；这会产生真实 API token 用量。
+## 必须适配的代码
 
-Render 的官方文档：
+- 把当前 SQLite `connect()` 与 SQL 查询迁移到 PostgreSQL；数据库仍用同样的 `records` 概念，但由 Neon 持久保存。
+- 给记录保存 `image_url`，并增加 Vercel Blob 上传/错误清理逻辑。
+- 将静态网页放进 Vercel 支持的 `public/` 路径，并添加可识别的 FastAPI Function 入口。Vercel 对 FastAPI 提供 Python Runtime，但当前仍标为 Beta。
+- Vercel Function 的请求正文限制为 **4.5 MB**；现有网页允许上传 8 MB，所以不能直接照搬。第一版应在浏览器上传前把照片压缩到 4 MB 左右，或采用直接上传 Blob 的流程。
+- 保留本地开发：没设置 `DATABASE_URL` 和 `BLOB_READ_WRITE_TOKEN` 时，可以继续用本机 SQLite/文件目录；设置云端变量时再切换到 Neon/Blob。
 
-- [Blueprint YAML 规范](https://render.com/docs/blueprint-spec)
-- [持久磁盘说明](https://render.com/docs/disks)
-- [FastAPI 部署指南](https://render.com/docs/deploy-fastapi)
-- [免费方案限制](https://render.com/docs/free)
+## Vercel 控制台部署步骤
 
-## 公开前必须处理的限制
+1. 在 Vercel 选择 **Add New > Project**，连接 GitHub 私有仓库 `lost-found-photo-matching-fyp`。
+2. 在 Vercel Storage / Marketplace 添加 Neon PostgreSQL，并将 `DATABASE_URL` 连接到项目。
+3. 创建一个**公开**的 Vercel Blob store，并将 `BLOB_READ_WRITE_TOKEN` 连接到项目。公开模式下，照片 URL 可被任何拿到链接的人访问。
+4. 在项目的 Production 环境变量中填入 `DEEPSEEK_API_KEY`，并设置 `DEEPSEEK_MODEL=deepseek-flash`。
+5. 部署后验证首页、`/api/health`、数据库读写、照片上传/显示和 DeepSeek 分析状态；先用非敏感测试图片。每次 AI 调用会产生真实 API token 用量。
 
-- **目前没有登录、举报、管理员删除或审核。** 匿名访客可以创建公开记录，记录和照片可被其他访客查看。部署配置本身不会补上这些功能。
-- **API 费用可能被公开提交触发。** DeepSeek key 放在服务端环境变量中，但当前没有用户级配额或请求速率限制。正式公开前需加防滥用措施和费用告警。
-- **数据治理尚未完成。** 需要说明数据保存多久、怎样申请删除，以及谁负责审核不当内容；真实参与者数据需遵守导师和学校伦理要求。
-- **运行磁盘为单实例。** 同一个服务访问数据库与图片；不要开启多个实例。此配置不是高可用或大规模生产架构。
-- **备份计划需要确认。** 部署后应定期导出数据库并检查磁盘快照；不要只把 GitHub 当作数据库备份。
+以上步骤需要在用户自己的 Vercel 控制台完成账号授权、存储资源建立和密钥输入。密钥不应写入 GitHub 或网页代码。
 
-## 当前状态
+## 公开前的产品限制
 
-代码仓库已经有部署配置，但尚未在 Render 创建服务，也没有公开网址。创建服务需要 Render 账号连接私有 GitHub 仓库，并在 Dashboard 输入 API key。完成这些后，部署过程和费用会由 Render 账号管理。
+- 当前没有登录、举报、管理员删除或审核。任何访客都可以发记录，所有访客都可以读取记录和图片。
+- 当前没有速率限制或费用上限保护；公开表单可能被滥用并触发 DeepSeek 用量。
+- 页面已提示访客记录和照片会公开显示，启用 AI 时照片会发送给 DeepSeek；仍需和导师确认真实参与者数据的伦理、同意和保留期限。
+- 用户量增大时需加认证、滥用防护、管理删除、备份、费用告警和数据库连接池。
+
+## 官方文档
+
+- [Vercel 上部署 FastAPI](https://vercel.com/docs/frameworks/backend/fastapi)
+- [Vercel Python Runtime](https://vercel.com/docs/functions/runtimes/python)
+- [Vercel Marketplace 存储和 Postgres](https://vercel.com/docs/marketplace-storage)
+- [Vercel Blob](https://vercel.com/docs/vercel-blob)
+- [Vercel Blob 服务端上传与 4.5 MB 限制](https://vercel.com/docs/vercel-blob/server-upload)

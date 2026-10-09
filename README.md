@@ -44,7 +44,7 @@ python -m uvicorn app.main:app --reload
 
 ## 云端公开演示
 
-仓库根目录提供 Render Blueprint `render.yaml`。部署步骤、数据持久化方式和公开前限制见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。目前只是部署准备，尚未创建云服务或公开网址；公开部署前要处理匿名发布、举报/删除、滥用和 API 费用限制。
+Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。计划使用 Neon PostgreSQL 保存记录、Vercel Blob 保存照片。代码还需完成云数据库、Blob 和 Vercel Function 适配；目前没有公开网址。
 
 ## 离线排序评估
 
