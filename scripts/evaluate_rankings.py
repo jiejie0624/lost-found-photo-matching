@@ -164,41 +164,67 @@ def evaluate(
     pairs_by_query: dict[str, list[tuple[str, int]]],
     k: int,
     use_vision: bool,
-) -> dict[str, float | int]:
+) -> tuple[dict[str, float | int], list[dict[str, Any]]]:
     hits = 0
     recall_sum = 0.0
     reciprocal_rank_sum = 0.0
+    detail_rows: list[dict[str, Any]] = []
+    method = "with_vision_attributes" if use_vision else "form_only_baseline"
 
     for query_id, pairs in pairs_by_query.items():
         query = records[query_id]
         source = query if use_vision else {**query, "analysis": {}}
-        ranked: list[tuple[str, int, int]] = []
+        ranked: list[tuple[str, int, int, list[str]]] = []
         for candidate_id, label in pairs:
             candidate = records[candidate_id]
             candidate_for_scoring = candidate if use_vision else {**candidate, "analysis": {}}
-            score, _ = match_score(source, candidate_for_scoring)
-            ranked.append((candidate_id, score, label))
+            score, evidence = match_score(source, candidate_for_scoring)
+            ranked.append((candidate_id, score, label, evidence))
         ranked.sort(key=lambda item: (-item[1], item[0]))
 
-        relevant = sum(label for _, _, label in ranked)
+        relevant = sum(label for _, _, label, _ in ranked)
         top = ranked[:k]
-        retrieved = sum(label for _, _, label in top)
+        retrieved = sum(label for _, _, label, _ in top)
         hits += int(retrieved > 0)
         recall_sum += retrieved / relevant
         first_relevant_rank = next(
-            (rank for rank, (_, _, label) in enumerate(ranked[:k], start=1) if label == 1),
+            (rank for rank, (_, _, label, _) in enumerate(ranked[:k], start=1) if label == 1),
             None,
         )
         if first_relevant_rank:
             reciprocal_rank_sum += 1 / first_relevant_rank
+        for rank, (candidate_id, score, label, evidence) in enumerate(ranked, start=1):
+            detail_rows.append({
+                "split": records[query_id]["split"],
+                "method": method,
+                "query_record_id": query_id,
+                "candidate_record_id": candidate_id,
+                "rank": rank,
+                "reference_score": score,
+                "label": label,
+                "evidence": "；".join(evidence),
+            })
 
     query_count = len(pairs_by_query)
-    return {
+    metrics = {
         f"hit_rate@{k}": round(hits / query_count, 4),
         f"recall@{k}": round(recall_sum / query_count, 4),
         f"mrr@{k}": round(reciprocal_rank_sum / query_count, 4),
         "queries": query_count,
     }
+    return metrics, detail_rows
+
+
+def write_details(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "split", "method", "query_record_id", "candidate_record_id", "rank",
+        "reference_score", "label", "evidence",
+    ]
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def main() -> int:
@@ -211,6 +237,7 @@ def main() -> int:
         "--min-confidence", choices=("high", "medium", "low"), default="high",
         help="只纳入达到此置信度的配对，默认 high",
     )
+    parser.add_argument("--details-out", type=Path, help="可选：保存逐候选排序结果 CSV")
     args = parser.parse_args()
     if args.k < 1:
         parser.error("--k 必须大于 0")
@@ -225,6 +252,8 @@ def main() -> int:
         print(f"数据错误：{exc}", file=sys.stderr)
         return 2
 
+    form_metrics, form_details = evaluate(records, pairs_by_query, args.k, use_vision=False)
+    vision_metrics, vision_details = evaluate(records, pairs_by_query, args.k, use_vision=True)
     report = {
         "split": args.split,
         "k": args.k,
@@ -232,9 +261,16 @@ def main() -> int:
         "labeled_pairs": labeled_pair_count,
         "uncertain_pairs_excluded": uncertain_count,
         "lower_confidence_pairs_excluded": confidence_excluded,
-        "form_only_baseline": evaluate(records, pairs_by_query, args.k, use_vision=False),
-        "with_vision_attributes": evaluate(records, pairs_by_query, args.k, use_vision=True),
+        "form_only_baseline": form_metrics,
+        "with_vision_attributes": vision_metrics,
     }
+    if args.details_out:
+        try:
+            write_details(args.details_out, form_details + vision_details)
+        except OSError as exc:
+            print(f"无法写入详细结果：{exc}", file=sys.stderr)
+            return 2
+        report["details_csv"] = str(args.details_out)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
 

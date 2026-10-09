@@ -55,10 +55,10 @@ Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
 在项目根目录运行：
 
 ```powershell
-python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --split test
+python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --split test --details-out work/evaluation/ranking_details.csv
 ```
 
-脚本在相同的已标注候选集合上比较表单基线和加入视觉属性的方法，输出 Hit Rate@5、Recall@5 和 MRR@5。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。调权重时使用 `development` 集；不要根据 `test` 结果继续调整。
+脚本在相同的已标注候选集合上比较表单基线和加入视觉属性的方法，输出 Hit Rate@5、Recall@5 和 MRR@5。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存每个候选的名次、参考分、标签和排序依据，供错误分析。调权重时使用 `development` 集；不要根据 `test` 结果继续调整。
 
 ## 参考
 
