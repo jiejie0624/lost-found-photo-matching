@@ -1,5 +1,4 @@
 let clientPromise;
-let recentSessionToken = null;
 
 export async function getAuthClient() {
   if (!clientPromise) {
@@ -17,18 +16,24 @@ export async function getAuthClient() {
 }
 
 export async function getAccessToken() {
-  if (recentSessionToken) return recentSessionToken;
   const auth = await getAuthClient();
-  let token;
+  let result;
   try {
-    token = await auth.getJWTToken?.();
+    // Neon Auth's Better Auth client exposes the JWT plugin as `token()`.
+    // `getSession()` returns session metadata; its `session.token` is not a
+    // bearer JWT and must not be sent to our API.
+    result = await auth.token();
   } catch (error) {
-    if (recentSessionToken) return recentSessionToken;
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(`获取登录凭证失败：${detail}`);
   }
-  if (!token && recentSessionToken) return recentSessionToken;
-  if (!token) throw new Error("请先登录后再发布记录。");
+  if (result?.error) {
+    throw new Error(`获取登录凭证失败：${result.error.message || "请重新登录。"}`);
+  }
+  const token = result?.data?.token || result?.token;
+  if (typeof token !== "string" || token.split(".").length !== 3) {
+    throw new Error("无法取得有效登录凭证，请退出后重新登录。");
+  }
   return token;
 }
 
@@ -43,11 +48,5 @@ export async function currentSession() {
   const auth = await getAuthClient();
   const result = await auth.getSession();
   if (result?.error) throw new Error(result.error.message || "无法读取登录状态。");
-  const session = result?.data || result;
-  recentSessionToken = [
-    session?.session?.access_token,
-    session?.session?.token,
-    session?.access_token,
-  ].find((value) => typeof value === "string" && value.length > 0) || null;
-  return session;
+  return result?.data || result;
 }
