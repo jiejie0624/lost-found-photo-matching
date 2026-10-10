@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import re
 import secrets
@@ -50,6 +51,7 @@ MAX_IMAGE_BYTES = 8 * 1024 * 1024
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 CATEGORIES = {"电子产品", "证件与卡片", "钥匙", "包袋", "衣物", "水瓶与餐具", "书籍文具", "饰品", "其他"}
 KINDS = {"lost", "found"}
+logger = logging.getLogger("lost_found")
 
 if not ON_VERCEL:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -619,29 +621,45 @@ async def create_record(
         stored_name = image_name
     ai_processing_allowed = ai_processing_consent == "yes"
     if ai_processing_allowed:
-        attributes, analysis_status = analyze_image(normalized, title, category, description)
+        try:
+            attributes, analysis_status = analyze_image(normalized, title, category, description)
+        except Exception:
+            logger.exception("Unexpected photo-analysis failure; continue without AI attributes")
+            attributes, analysis_status = {}, "unavailable"
     else:
         attributes, analysis_status = {}, "not_consented"
     record_id = uuid.uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat()
     expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
-    with connect() as db:
-        execute(
-            db,
-            """INSERT INTO records
-            (id, kind, title, category, color, location, occurred_at, description,
-             image_name, image_url, image_analysis, analysis_status, created_at, owner_id, status, expires_at,
-             ai_processing_allowed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
-            (record_id, kind, title, category, color, location, occurred_at, description,
-             stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id,
-             expires_at, int(ai_processing_allowed)),
-        )
-        row = execute(db, "SELECT * FROM records WHERE id = ?", (record_id,)).fetchone()
+    try:
+        with connect() as db:
+            execute(
+                db,
+                """INSERT INTO records
+                (id, kind, title, category, color, location, occurred_at, description,
+                 image_name, image_url, image_analysis, analysis_status, created_at, owner_id, status, expires_at,
+                 ai_processing_allowed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
+                (record_id, kind, title, category, color, location, occurred_at, description,
+                 stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id,
+                 expires_at, int(ai_processing_allowed)),
+            )
+            row = execute(db, "SELECT * FROM records WHERE id = ?", (record_id,)).fetchone()
+    except Exception as exc:
+        logger.exception("Failed to persist a new record")
+        try:
+            await delete_image(image_url, stored_name)
+        except Exception:
+            logger.exception("Failed to clean up an image after record persistence failed")
+        raise HTTPException(status_code=503, detail="记录暂时无法保存，请稍后重试。") from exc
     record = row_to_record(row)
     record["_ai_processing_allowed"] = ai_processing_allowed
     record["image_bytes"] = normalized
-    record["matches"] = find_matches(record)
+    try:
+        record["matches"] = find_matches(record)
+    except Exception:
+        logger.exception("Record saved, but matching failed")
+        record["matches"] = []
     record.pop("image_bytes", None)
     record.pop("_ai_processing_allowed", None)
     return record
