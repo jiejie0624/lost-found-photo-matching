@@ -123,6 +123,14 @@ Matthé, M., Sannolo, M., Winiarski, K., Spitzen-van der Sluijs, A., Goedbloed, 
 - **发现与限制：** 摘要报告不同算法和照片库的 Top-10 识别率从 22.6% 到 100% 不等；表现随算法、图像库和图像质量变化。此任务是动物个体花纹识别，采集条件和目标特征与日常失物不同，数值不能作为本 FYP 基线或预期。
 - **对本 FYP 的启发：** 有可靠身份标签后，Top-K 排名能表达人工需要查看前几张候选的目标；应在本研究数据上实测，而不是从其他任务移植准确率。这支持评估方法选择，不证明本项目的研究空缺或新颖性。
 
+### 12. 通用物品同实例视觉基准与公开数据限制（2023）
+
+Kotar, K., Tian, S., Yu, H.-X., Yamins, D. L. K., & Wu, J. (2023). “Are These the Same Apple? Comparing Images Based on Object Intrinsics.” *NeurIPS 2023 Datasets and Benchmarks*. [论文](https://proceedings.neurips.cc/paper_files/paper/2023/file/803c6ab3d62346e004ef70211d2d15b8-Paper-Datasets_and_Benchmarks.pdf) · [维护者数据说明](https://github.com/s-tian/CUTE/blob/main/datasheet.md)
+
+- **研究重点：** CUTE 用常见实物在不同姿态、光照和拍摄环境中的照片，研究视觉方法能否根据物品本身的特征而非背景判断身份；提出 Foreground Feature Averaging，并比较预训练图像特征与前景筛选方法。
+- **与本 FYP 的关系：** 它直接支持把“同类物品”与“同一件实物”分开定义，也提示背景和成像条件可能干扰照片比较。论文摘要称 18,000 张图片、180 件实物，但维护者数据说明写 10,000 张，公开来源数字不一致；仓储档案约 31.4 GB，当前内容和配对映射未检查。数据说明称目录隐式表示身份关系，并建议把整套数据作为测试集。
+- **限制与使用边界：** CUTE 没有失物/拾获方向、地点、时间和用户描述，不能替代本项目的主要数据集。若导师认可且数据核验可行，只能作为冻结方法的补充同实例视觉测试，不用于调参，也不应把其效果外推为真实失物系统效果。
+
 ## 当前研究问题的文献定位（暂定）
 
 现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索、YOLO/LLM/CLIP 与不确定性感知级联，以及图片/文字登记的端到端智能失物框架。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
@@ -165,5 +173,7 @@ Matthé, M., Sannolo, M., Winiarski, K., Spitzen-van der Sluijs, A., Goedbloed, 
 - Liu et al. (2025), IDMR, arXiv:2504.00954: https://arxiv.org/abs/2504.00954
 - Das et al. (2026; first online 2025), Springer: https://doi.org/10.1007/978-981-96-6046-9_32
 - Radenović et al. (2018), CVPR / CVF Open Access: https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html
+- Kotar et al. (2023), NeurIPS Datasets and Benchmarks, CUTE object-intrinsics benchmark: https://proceedings.neurips.cc/paper_files/paper/2023/file/803c6ab3d62346e004ef70211d2d15b8-Paper-Datasets_and_Benchmarks.pdf
+- CUTE maintainer dataset datasheet: https://github.com/s-tian/CUTE/blob/main/datasheet.md
 - Radford et al. (2021), arXiv: https://arxiv.org/abs/2103.00020
 - TREC-10 Measures, NIST: https://trec.nist.gov/pubs/trec10/appendices/measures.pdf
