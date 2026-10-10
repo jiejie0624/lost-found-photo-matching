@@ -135,6 +135,7 @@ python scripts/analyze_ranking_errors.py --details work/evaluation/development_d
 - 第一章草稿：[`outputs/THESIS_CHAPTER_1_DRAFT.md`](outputs/THESIS_CHAPTER_1_DRAFT.md)
 - 第二章相关研究草稿：[`outputs/THESIS_CHAPTER_2_DRAFT.md`](outputs/THESIS_CHAPTER_2_DRAFT.md)
 - 第三章研究方法草稿：[`outputs/THESIS_CHAPTER_3_DRAFT.md`](outputs/THESIS_CHAPTER_3_DRAFT.md)
+- 第四章系统设计与实现草稿：[`outputs/THESIS_CHAPTER_4_DRAFT.md`](outputs/THESIS_CHAPTER_4_DRAFT.md)
 - 决策记录：[`outputs/DECISIONS.md`](outputs/DECISIONS.md)
 - DeepSeek 官方参考：[`outputs/API_REFERENCES.md`](outputs/API_REFERENCES.md)
 - 系统架构：[`outputs/SYSTEM_ARCHITECTURE.md`](outputs/SYSTEM_ARCHITECTURE.md)
