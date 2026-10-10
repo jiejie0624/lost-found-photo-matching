@@ -5,6 +5,7 @@
 ## 文件
 
 - [`records_template.csv`](records_template.csv)：每条失物或拾获记录一行。
+- [`annotation_round_template.csv`](annotation_round_template.csv)：双人独立判断用；每位标注者对每个配对各填一行。
 - [`pair_labels_template.csv`](pair_labels_template.csv)：每个“查询记录—候选记录”组合一行。
 - [`photo_scores_template.csv`](photo_scores_template.csv)：第三种评估方法所需的候选照片直接比较分数。
 
@@ -59,11 +60,13 @@ CSV 只放匿名编号和粗略属性。不要把姓名、电话、账号、精�
 
 ## 标注流程
 
-1. 先用少量样本试标；两位标注者独立判断配对，并记录分歧原因。
+1. 先用少量样本试标；两位标注者分别在 `annotation_round.csv` 对相同配对独立填写一行，记录 label、置信度和简短理由。
 2. 修订标签说明，明确哪些证据足以确认同一实物，再开始正式标注。
-3. 正式数据至少对一部分配对双人独立标注；通过讨论或第三方裁决处理分歧，并报告一致性。
-4. 保存标签、置信度、匿名标注者编号和简短理由；理由不要包含联系信息或认领用秘密细节。
-5. 在运行系统前冻结测试标签；模型开发者不应根据测试集标签调整排序权重或提示词。
+3. 正式标注至少对一部分配对双人独立标注；用 [`../scripts/analyze_annotation_agreement.py`](../scripts/analyze_annotation_agreement.py) 计算重叠样本的原始一致率、三类混淆表和 Cohen's kappa。该脚本把 `uncertain` 当作第三个名义类别，报告未被两人共同标注的配对数；kappa 不可计算时会明确显示。
+4. 一致性统计后再讨论或由第三方裁决分歧。脚本不会替研究者裁决。保留原始 `annotation_round.csv`，另将最终裁决结果整理成 `pair_labels.csv`；评估文件必须每个配对只有一行。
+5. 保存匿名标注者编号和简短理由；理由不要包含联系信息或认领用秘密细节。在运行系统前冻结测试标签；模型开发者不应根据测试集标签调整排序权重或提示词。
+
+Cohen's kappa 受标签比例影响，应与样本数、原始一致率和混淆表一起报告；不要把单一 kappa 阈值当作审批或标签质量的自动判定。
 
 ## 划分与隐私
 

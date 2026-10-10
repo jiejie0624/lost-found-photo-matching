@@ -56,10 +56,19 @@ Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](out
 ```powershell
 New-Item -ItemType Directory -Force work/evaluation
 Copy-Item outputs/records_template.csv work/evaluation/records.csv
+Copy-Item outputs/annotation_round_template.csv work/evaluation/annotation_round.csv
 Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
 Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
 Copy-Item outputs/experiment_log_template.csv work/evaluation/experiment_log.csv
 ```
+
+双人试标后，先按实际匿名 ID 汇总一致性；把 `A01`、`A02` 替换成两位标注者的 ID：
+
+```powershell
+python scripts/analyze_annotation_agreement.py --annotations work/evaluation/annotation_round.csv --annotator-a A01 --annotator-b A02
+```
+
+该工具报告双方共同标注的配对数、未重叠数量、原始一致率、三类混淆表和 Cohen's kappa。它不裁决标签。讨论并裁决后，人工整理为 `pair_labels.csv`，确保每个配对只有一行供评估脚本使用。`work/` 已加入 `.gitignore`，原始标注和研究数据不会被 Git 跟踪。
 
 录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和达到置信度门槛的正负例结构。它不能代替伦理审批，也不能确认标签是否真实：
 
@@ -107,6 +116,7 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 - 研究评估方案：[`outputs/RESEARCH_AND_EVALUATION_PLAN.md`](outputs/RESEARCH_AND_EVALUATION_PLAN.md)
 - 导师讨论与确认清单：[`outputs/SUPERVISOR_REVIEW_CHECKLIST.md`](outputs/SUPERVISOR_REVIEW_CHECKLIST.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
+- 双人标注一致性分析：[`scripts/analyze_annotation_agreement.py`](scripts/analyze_annotation_agreement.py)
 - API 实验调用日志指南：[`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
 - 相关工作对照表：[`outputs/RELATED_WORK_MATRIX.md`](outputs/RELATED_WORK_MATRIX.md)
