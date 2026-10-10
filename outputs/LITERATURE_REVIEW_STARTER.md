@@ -115,6 +115,14 @@ Liu, B. et al. (2025). “IDMR: Towards Instance-Driven Precise Visual Correspon
 - **对本项目的影响：** 失物配对的正例应代表同一件实物；同类别、同颜色但不同物品是重要困难负例。只识别“这是水瓶”并不等于识别“这是同一个水瓶”。
 - **限制：** 这是通用多模态检索预印本，不是失物/拾获数据上的研究，也不证明 DeepSeek API 能可靠完成具体物品身份匹配。可用其支持任务定义，不可用来声称本方法有效。
 
+### 11. 相邻领域的已知同实例照片排序评估（2017）
+
+Matthé, M., Sannolo, M., Winiarski, K., Spitzen-van der Sluijs, A., Goedbloed, D., Steinfartz, S., & Stachow, U. (2017). “Comparison of photo-matching algorithms commonly used for photographic capture–recapture studies.” *Ecology and Evolution, 7*(15), 5861–5872. [PMC 开放全文](https://pmc.ncbi.nlm.nih.gov/articles/PMC5552938/) · [DOI](https://doi.org/10.1002/ece3.3140)
+
+- **研究方法：** 在多个有已知配对的两栖动物照片库中比较四种照片同个体算法，按全库候选计算正确配对排名与 rank-CDF，并报告 Top-1/Top-10 识别率。
+- **发现与限制：** 摘要报告不同算法和照片库的 Top-10 识别率从 22.6% 到 100% 不等；表现随算法、图像库和图像质量变化。此任务是动物个体花纹识别，采集条件和目标特征与日常失物不同，数值不能作为本 FYP 基线或预期。
+- **对本 FYP 的启发：** 有可靠身份标签后，Top-K 排名能表达人工需要查看前几张候选的目标；应在本研究数据上实测，而不是从其他任务移植准确率。这支持评估方法选择，不证明本项目的研究空缺或新颖性。
+
 ## 当前研究问题的文献定位（暂定）
 
 现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索、YOLO/LLM/CLIP 与不确定性感知级联，以及图片/文字登记的端到端智能失物框架。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
