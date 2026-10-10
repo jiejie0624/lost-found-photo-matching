@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -205,11 +206,12 @@ def evaluate(
     use_vision: bool,
     photo_scores: dict[tuple[str, str], int] | None = None,
     photo_shortlist_k: int = 5,
-) -> tuple[dict[str, float | int], list[dict[str, Any]]]:
+) -> tuple[dict[str, float | int], list[dict[str, Any]], dict[str, dict[str, float]]]:
     hits = 0
     recall_sum = 0.0
     reciprocal_rank_sum = 0.0
     detail_rows: list[dict[str, Any]] = []
+    per_query_metrics: dict[str, dict[str, float]] = {}
     if photo_scores is not None and not use_vision:
         raise ValueError("候选照片比较方法必须建立在视觉属性排序上")
     if photo_scores is not None:
@@ -250,14 +252,23 @@ def evaluate(
         relevant = sum(label for _, _, label, _ in ranked)
         top = ranked[:k]
         retrieved = sum(label for _, _, label, _ in top)
-        hits += int(retrieved > 0)
-        recall_sum += retrieved / relevant
+        hit_rate = float(retrieved > 0)
+        recall = retrieved / relevant
+        hits += int(hit_rate)
+        recall_sum += recall
         first_relevant_rank = next(
             (rank for rank, (_, _, label, _) in enumerate(ranked[:k], start=1) if label == 1),
             None,
         )
+        reciprocal_rank = 0.0
         if first_relevant_rank:
-            reciprocal_rank_sum += 1 / first_relevant_rank
+            reciprocal_rank = 1 / first_relevant_rank
+            reciprocal_rank_sum += reciprocal_rank
+        per_query_metrics[query_id] = {
+            f"hit_rate@{k}": hit_rate,
+            f"recall@{k}": recall,
+            f"mrr@{k}": reciprocal_rank,
+        }
         for rank, (candidate_id, score, label, evidence) in enumerate(ranked, start=1):
             detail_rows.append({
                 "split": records[query_id]["split"],
@@ -277,7 +288,77 @@ def evaluate(
         f"mrr@{k}": round(reciprocal_rank_sum / query_count, 4),
         "queries": query_count,
     }
-    return metrics, detail_rows
+    return metrics, detail_rows, per_query_metrics
+
+
+def percentile(sorted_values: list[float], probability: float) -> float:
+    """Return a linearly interpolated percentile from an already sorted list."""
+    if not sorted_values:
+        raise ValueError("无法从空的 bootstrap 样本计算区间")
+    position = (len(sorted_values) - 1) * probability
+    lower = int(position)
+    upper = min(lower + 1, len(sorted_values) - 1)
+    fraction = position - lower
+    return sorted_values[lower] * (1 - fraction) + sorted_values[upper] * fraction
+
+
+def paired_bootstrap_differences(
+    methods: dict[str, dict[str, dict[str, float]]],
+    query_clusters: dict[str, str],
+    iterations: int,
+    seed: int = 42,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """Estimate paired method differences with item-group cluster bootstrap intervals."""
+    method_names = list(methods)
+    if len(method_names) < 2:
+        return {}
+    query_ids = sorted(set.intersection(*(set(methods[name]) for name in method_names)))
+    if not query_ids:
+        raise ValueError("方法之间没有相同的查询，不能进行配对 bootstrap")
+    queries_by_cluster: dict[str, list[str]] = defaultdict(list)
+    for query_id in query_ids:
+        queries_by_cluster[query_clusters.get(query_id, query_id)].append(query_id)
+    cluster_ids = sorted(queries_by_cluster)
+
+    comparisons: dict[str, dict[str, dict[str, Any]]] = {}
+    rng = random.Random(seed)
+    metric_names = sorted(methods[method_names[0]][query_ids[0]])
+    for left_index, left_name in enumerate(method_names):
+        for right_name in method_names[left_index + 1:]:
+            differences = {
+                metric: {
+                    query: methods[right_name][query][metric] - methods[left_name][query][metric]
+                    for query in query_ids
+                }
+                for metric in metric_names
+            }
+            comparison_name = f"{right_name} - {left_name}"
+            comparisons[comparison_name] = {}
+            for metric, values_by_query in differences.items():
+                sampled_means = []
+                for _ in range(iterations):
+                    sampled_query_ids = [
+                        query_id
+                        for cluster_id in (rng.choice(cluster_ids) for _ in cluster_ids)
+                        for query_id in queries_by_cluster[cluster_id]
+                    ]
+                    sampled_means.append(
+                        sum(values_by_query[query_id] for query_id in sampled_query_ids)
+                        / len(sampled_query_ids)
+                    )
+                sampled_means.sort()
+                comparisons[comparison_name][metric] = {
+                    "mean_difference": round(
+                        sum(values_by_query.values()) / len(values_by_query), 4
+                    ),
+                    "ci95": [
+                        round(percentile(sampled_means, 0.025), 4),
+                        round(percentile(sampled_means, 0.975), 4),
+                    ],
+                    "queries": len(query_ids),
+                    "item_groups": len(cluster_ids),
+                }
+    return comparisons
 
 
 def write_details(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -310,12 +391,18 @@ def main() -> int:
         "--photo-shortlist-k", type=int, default=5,
         help="先按视觉属性方法选出前 K 个候选进行照片比较，默认 5",
     )
+    parser.add_argument(
+        "--bootstrap-iterations", type=int, default=2000,
+        help="配对 bootstrap 抽样次数，默认 2000；建议正式报告至少 2000 次",
+    )
     parser.add_argument("--details-out", type=Path, help="可选：保存逐候选排序结果 CSV")
     args = parser.parse_args()
     if args.k < 1:
         parser.error("--k 必须大于 0")
     if args.photo_shortlist_k < 1:
         parser.error("--photo-shortlist-k 必须大于 0")
+    if args.bootstrap_iterations < 100:
+        parser.error("--bootstrap-iterations 至少为 100")
 
     try:
         records = load_records(args.records)
@@ -327,9 +414,17 @@ def main() -> int:
             load_photo_scores(args.photo_scores, records, pairs_by_query, args.split)
             if args.photo_scores else None
         )
-        form_metrics, form_details = evaluate(records, pairs_by_query, args.k, use_vision=False)
-        vision_metrics, vision_details = evaluate(records, pairs_by_query, args.k, use_vision=True)
+        form_metrics, form_details, form_query_metrics = evaluate(
+            records, pairs_by_query, args.k, use_vision=False
+        )
+        vision_metrics, vision_details, vision_query_metrics = evaluate(
+            records, pairs_by_query, args.k, use_vision=True
+        )
         detail_rows = form_details + vision_details
+        query_metrics_by_method = {
+            "form_only_baseline": form_query_metrics,
+            "with_vision_attributes": vision_query_metrics,
+        }
         report: dict[str, Any] = {
             "split": args.split,
             "k": args.k,
@@ -341,7 +436,7 @@ def main() -> int:
             "with_vision_attributes": vision_metrics,
         }
         if photo_scores is not None:
-            photo_metrics, photo_details = evaluate(
+            photo_metrics, photo_details, photo_query_metrics = evaluate(
                 records,
                 pairs_by_query,
                 args.k,
@@ -352,6 +447,13 @@ def main() -> int:
             report["photo_comparison_shortlist_k"] = args.photo_shortlist_k
             report["with_photo_comparison"] = photo_metrics
             detail_rows.extend(photo_details)
+            query_metrics_by_method["with_photo_comparison"] = photo_query_metrics
+        report["paired_bootstrap_95ci"] = paired_bootstrap_differences(
+            query_metrics_by_method,
+            {query_id: records[query_id]["item_group_id"] for query_id in pairs_by_query},
+            args.bootstrap_iterations,
+        )
+        report["bootstrap_iterations"] = args.bootstrap_iterations
     except (OSError, csv.Error, ValueError) as exc:
         print(f"数据错误：{exc}", file=sys.stderr)
         return 2

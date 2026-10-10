@@ -74,6 +74,8 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 
 第三种方法按线上当前规则把视觉属性分数的 45% 与照片比较分数的 55% 合并。评估脚本不会调用 DeepSeek；分数需先按学校批准的数据处理流程生成，并记录模型、提示词版本、日期和 API 用量。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存各方法的候选名次、参考分、标签和依据，供错误分析。只在 `development` 集调参；锁定方法后在 `test` 集做一次最终评估。
 
+结果还会输出按 `item_group_id` 重抽样的配对 cluster bootstrap 95% 置信区间，比较方法间 Hit Rate@K、Recall@K 和 MRR@K 的差异。默认抽样 2,000 次；物品组较少时，区间仅作谨慎参考。
+
 冻结方法后，在 test 数据和已固定的 test 照片分数上执行同样命令，将 `--split development` 改为 `--split test`，输出到单独的结果文件。不要根据 test 结果继续调整方法。
 
 ## FYP 尚未完成的部分

@@ -123,7 +123,7 @@
 ### 研究材料与工具
 
 - 已有 Proposal、文献综述起步笔记、相关工作矩阵、数据/标注指南、算法和系统架构说明；这些是草案，不是导师批准的最终方案。
-- 离线评估工具支持表单基线、视觉属性方法，以及导入 `photo_scores.csv` 的候选照片比较方法。新增的照片比较评估尚未运行。
+- 离线评估工具支持表单基线、视觉属性方法，以及导入 `photo_scores.csv` 的候选照片比较方法；会输出按物品组重抽样的配对 cluster bootstrap 置信区间。评估尚未用真实研究数据运行。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
 ### 尚待完成（不能代替学校/导师确认）
