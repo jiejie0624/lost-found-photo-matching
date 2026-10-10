@@ -121,6 +121,7 @@
 - 2026-10-10 推送 AI 逐条授权改动后，线上首页和 `/static/app.js` 的只读 GET 均返回 HTTP 200，且响应内容含新增授权文案与 `not_consented` 状态；`/api/health` 返回 HTTP 200。此检查确认最新前端已部署并健康路由可达，但没有上传照片、触发 DeepSeek 或验证完整业务流程。
 - 2026-10-10 对线上首页、`/login`、`/login.html`、`/my-records`、`/my-records.html`、Auth 配置、健康接口和公开记录接口进行只读检查，均返回 HTTP 200；当时公开记录接口返回空数组。未带登录凭证访问 `/api/me/records` 返回预期的 HTTP 401。先前已登录“我的记录”页曾正常显示，但真实注册/登录提交、发布、AI 调用、匹配、关闭/删除或过期清理仍未完成端到端验收；此次检查没有发送 DeepSeek 请求。
 - 同日对 Neon Auth 的 GET session 与 POST 预检做只读检查：session 返回 `200 null`，CORS 反射当前网站来源，预检允许当前来源。此结果只证明 Auth 路由/CORS 可达，没有验证注册或登录提交，因此此前截图中的 `Invalid origin` 是否已在真实表单流程解决仍未确认。
+- 后续检查（2026-10-10）：当前浏览器的“我的记录”页面显示已登录用户 `jie`，并显示 0 条记录；这说明该会话能读取受保护的个人记录页面/API，但不证明新注册、退出后重新登录或发布流程成功。线上首页、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 和前端静态 JS/CSS 均返回 HTTP 200，Auth 配置标记为已启用；未发起 DeepSeek 调用。此前注册截图中的 `Invalid origin` 仍需退出后重新注册/登录才能最终确认。
 
 ### 研究材料与工具
 
