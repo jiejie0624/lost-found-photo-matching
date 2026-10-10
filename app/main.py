@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from .matching import match_score, parse_time
+from .matching import match_score, parse_time, stable_tiebreak_key
 
 
 ROOT = Path(__file__).resolve().parent
@@ -342,7 +342,10 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
         candidate["match_score"] = score
         candidate["match_evidence"] = evidence
         scored.append(candidate)
-    shortlist = sorted(scored, key=lambda item: (-item["match_score"], item["id"]))[:5]
+    shortlist = sorted(
+        scored,
+        key=lambda item: (-item["match_score"], stable_tiebreak_key(record["id"], item["id"])),
+    )[:5]
     matches = compare_candidate_images(record, shortlist)
     for candidate in matches:
         candidate.pop("_ai_processing_allowed", None)
@@ -464,7 +467,10 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
             uncertainty = visual.get("uncertainty")
             if isinstance(uncertainty, str) and uncertainty.strip():
                 candidate["match_evidence"].append(f"照片比较不确定：{uncertainty[:100]}")
-        return sorted(candidates, key=lambda item: (-item["match_score"], item["id"]))
+        return sorted(
+            candidates,
+            key=lambda item: (-item["match_score"], stable_tiebreak_key(record["id"], item["id"])),
+        )
     except HTTPError as exc:
         log_deepseek_http_error("image comparison", exc)
         return candidates

@@ -16,7 +16,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.matching import match_score, parse_time  # noqa: E402
+from app.matching import match_score, parse_time, stable_tiebreak_key  # noqa: E402
 
 
 RECORD_FIELDS = {
@@ -298,7 +298,7 @@ def evaluate(
             candidate_for_scoring = candidate if use_vision else {**candidate, "analysis": {}}
             score, evidence = match_score(source, candidate_for_scoring)
             ranked.append((candidate_id, score, judgment["metric_label"], judgment, evidence))
-        ranked.sort(key=lambda item: (-item[1], item[0]))
+        ranked.sort(key=lambda item: (-item[1], stable_tiebreak_key(query_id, item[0])))
         if photo_scores is not None:
             shortlist_ids = {candidate_id for candidate_id, _, _, _, _ in ranked[:photo_shortlist_k]}
             missing_scores = [
@@ -317,7 +317,10 @@ def evaluate(
                     score = round(score * 0.45 + visual_score * 0.55)
                     evidence = [*evidence, f"照片直接比较参考分：{visual_score}/100"]
                 blended_ranked.append((candidate_id, score, metric_label, judgment, evidence))
-            ranked = sorted(blended_ranked, key=lambda item: (-item[1], item[0]))
+            ranked = sorted(
+                blended_ranked,
+                key=lambda item: (-item[1], stable_tiebreak_key(query_id, item[0])),
+            )
 
         relevant = sum(metric_label == 1 for _, _, metric_label, _, _ in ranked)
         top = ranked[:k]

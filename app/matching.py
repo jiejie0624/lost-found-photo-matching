@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
@@ -18,6 +19,12 @@ def parse_time(value: str) -> datetime | None:
         return parsed
     except (TypeError, ValueError):
         return None
+
+
+def stable_tiebreak_key(query_id: str, candidate_id: str) -> str:
+    """Return a stable, ID-order-independent key for equal-score candidates."""
+    pair = f"{query_id}\0{candidate_id}".encode("utf-8")
+    return hashlib.sha256(pair).hexdigest()
 
 
 def similarity(a: str, b: str) -> float:
