@@ -69,6 +69,8 @@ Voorhees, E. M. (2001). “The TREC-10 Question Answering Track Report.” 见 N
 - **研究做法：** IEEE 摘要描述 YOLOv12、LLM 与 CLIP 的级联，用于小目标、文字描述增强和跨模态检索。
 - **阅读限制：** 当前只核实摘要；未取得足够的样本、基线、划分、消融或 Top-K 数字。不能据摘要判断效果大小或与本项目比较。
 
+2026 年 IEEE ICHORA 又发表 Weerakoon et al. 的 *AI-Enabled Lost and Found System With Adaptive Retrieval and Intelligent Security Monitoring*（[DOI](https://doi.org/10.1109/ICHORA69329.2026.11537024)）。IEEE 摘要描述不确定性感知的级联检索：类别受限 FAISS 检索后由 CLIP 重排，并整合输入质量检查与安全监测。摘要的 94% 准确率对应 500 次提交的输入校验，不是配对检索结果；监控模块的 AUC 同样不能当作匹配指标。当前只核实 IEEE 摘要与 Crossref 书目，全文和检索评估方案待查。此文进一步说明“多模态/自适应失物检索”不构成新颖性；本研究问题须聚焦在同一人工配对、同一候选池下 A/B/C 排序增量能否得到可复核评估。
+
 ### 8. 直接相关：图像分类与加权排名（2018）
 
 Jeong, H. et al. (2018). “Lost and Found Registration and Inquiry Management System for User-dependent Interface using Automatic Image Classification and Ranking System based on Deep Learning.” *Journal of the Korea Convergence Security Association, 18*(4), 19–25. [DBpia 出版方页面](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
@@ -95,7 +97,7 @@ Liu, B. et al. (2025). “IDMR: Towards Instance-Driven Precise Visual Correspon
 
 ## 当前研究问题的文献定位（暂定）
 
-现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索，以及 YOLO/LLM/CLIP 多模态路线。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
+现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索，以及 YOLO/LLM/CLIP 与不确定性感知的自适应级联路线。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
 
 > 在相同查询、候选记录和人工配对标签下，加入照片提取的结构化属性，或对初筛候选做照片直接比较，是否比只使用用户填写的类别、地点、时间和说明，更常把正确的失物/拾获记录排入前 5 名？
 
@@ -128,6 +130,7 @@ Liu, B. et al. (2025). “IDMR: Towards Instance-Driven Precise Visual Correspon
 - Ghazal et al. (2015), FiCloud: https://doi.org/10.1109/FiCloud.2015.80
 - Ghazal et al. (2016), IJCDS: https://doi.org/10.12785/IJCDS/050107
 - IEEE IRCE (2025), YOLO-LLM-CLIP: https://doi.org/10.1109/IRCE66030.2025.11203217
+- Weerakoon et al. (2026), IEEE ICHORA: https://doi.org/10.1109/ICHORA69329.2026.11537024
 - Jeong et al. (2018), Journal of the Korea Convergence Security Association, DBpia record: https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974
 - Hirose, Hara, & Saito (2022), IEICE Technical Report: https://ken.ieice.org/ken/paper/20220309ICJm/eng/
 - Liu et al. (2025), IDMR, arXiv:2504.00954: https://arxiv.org/abs/2504.00954

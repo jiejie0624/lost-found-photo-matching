@@ -7,6 +7,7 @@
 | 检索式 | 用途/结果 | 后续处理 |
 | --- | --- | --- |
 | `site:ieeexplore.ieee.org lost found object image retrieval lost item matching lost found photo retrieval` | 找到 IEEE IRCE 2025 的 YOLO/LLM/CLIP 级联论文；目前只核实 IEEE 页面摘要。 | 取得全文，抽取数据、基线、Top-K 指标、消融和划分。 |
+| `site:ieeexplore.ieee.org "AI-Enabled Lost and Found System With Adaptive Retrieval"` | 发现 Weerakoon et al. (2026) IEEE ICHORA 论文；摘要描述不确定性感知级联检索、FAISS 类别过滤后 CLIP 重排，并包含输入质量/安全监测模块。 | 获取全文核查检索标签、候选池、对照、拆分和检索指标；摘要中的输入校验准确率及安全监测 AUC 不能当作检索效果。 |
 | `site:dl.acm.org lost and found image matching retrieval items` | 本轮没有确认 ACM 出版的直接相关论文。 | 之后在 ACM DL 以同义词和引用追踪重查；本结果不能说明 ACM 无相关工作。 |
 | `"lost and found" "image retrieval" item matching system` | 找到 LostNet、Ghazal 等失物图片检索工作，以及图像分类/排名与视觉 API 线索。 | 查看引用链，区分实例匹配、类别分类和系统论文。 |
 | `2024 2025 lost and found object image matching paper multimodal retrieval` | 找到 IEEE 2025 YOLO/LLM/CLIP 论文；另发现通用实例检索 IDMR (2025)。 | 前者查全文；后者仅用于界定“同一实例”任务，不作为失物领域证据。 |
@@ -28,6 +29,7 @@
 | Hirose et al. (2022), 只用图片登记的失物检索 | IEICE 出版方页面/英文摘要；使用 Google Cloud Vision API，摘要称进行了 usability study。 | 全文为日语且尚未取得；未知配对标注、检索指标、样本和易用性方法。 |
 | Das et al. (2026), MobileNet 嵌入检索 | Springer 出版方摘要。 | 未取得全文；数值、样本和拆分方式未知。 |
 | IEEE IRCE (2025), YOLO/LLM/CLIP | IEEE 出版方摘要描述多阶段多模态检索。 | 未取得全文；数据、指标、消融、比较基线未知。 |
+| Weerakoon et al. (2026), IEEE ICHORA, **AI-Enabled Lost and Found System With Adaptive Retrieval and Intelligent Security Monitoring** | IEEE 摘要描述不确定性感知级联检索，用类别受限 FAISS 检索与 CLIP 语义重排，并整合输入质量检查和安全监测。Crossref 核对作者、会议和 DOI。 | 尚未取得全文；IEEE 记录未提供参考文献。摘要提到的 500 次提交 94% 是输入校验结果，不是失物配对检索指标；安全监测 AUC 也不能说明 Top-K 配对效果。需核实数据、检索基线、身份隔离和消融。 DOI: [10.1109/ICHORA69329.2026.11537024](https://doi.org/10.1109/ICHORA69329.2026.11537024)。 |
 | Liu et al. (2025), IDMR | arXiv 预印本摘要明确定义跨场景的同实例检索，并提出 IDMR-bench。 | 通用视觉检索而非失物系统；仅支持任务定义，不支持 DeepSeek 或本 FYP 的效果结论。 |
 
 ## 公开数据集候选（待核验）
@@ -41,6 +43,8 @@ LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figs
 ## 暂定结论与检索空缺
 
 已查到多种失物系统采用了图像分类、加权排名、感知哈希、局部特征或视觉 API；因此不能声称“首个失物照片配对系统”或“首次把视觉与元数据结合”。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、结构化视觉属性和直接照片重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
+
+本轮又发现 2026 年 IEEE ICHORA 的自适应级联检索系统。因此“多模态失物检索/级联方法缺失”不能作为研究空缺；可检验的窄问题仍是：是否存在在同一人工配对集合、同一候选池上对 A 表单、B 结构化视觉属性、C 候选照片比较做受控增量比较，并按物品身份隔离、报告 Top-K 指标及调用成本的工作。现有证据尚不足以回答“没有”，必须查该论文全文和系统检索。
 
 这一点目前只是**待查的问题**，并非已证明的空白。系统检索至少还需要：
 
@@ -61,4 +65,5 @@ LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figs
 - [Hirose et al. (2022), IEICE](https://ken.ieice.org/ken/paper/20220309ICJm/eng/)
 - [Das et al. (2026), Springer](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32)
 - [IEEE IRCE (2025)](https://ieeexplore.ieee.org/document/11203217/)
+- [Weerakoon et al. (2026), IEEE ICHORA](https://doi.org/10.1109/ICHORA69329.2026.11537024)
 - [IDMR, arXiv:2504.00954](https://arxiv.org/abs/2504.00954)
