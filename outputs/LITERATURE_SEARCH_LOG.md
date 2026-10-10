@@ -12,6 +12,7 @@
 | `"lost and found" "image retrieval" item matching system` | 找到 LostNet、Ghazal 等失物图片检索工作，以及图像分类/排名与视觉 API 线索。 | 查看引用链，区分实例匹配、类别分类和系统论文。 |
 | `2024 2025 lost and found object image matching paper multimodal retrieval` | 找到 IEEE 2025 YOLO/LLM/CLIP 论文；另发现通用实例检索 IDMR (2025)。 | 前者查全文；后者仅用于界定“同一实例”任务，不作为失物领域证据。 |
 | `lost and found AI framework smart cities image matching dlib` | 发现 IEEE MEDCOM 2025 的 *An AI-Driven Intelligent Communication Framework for Lost-and-Found Services in Smart Cities*。摘要描述 Android/Flask/MongoDB 与照片/文字信息；提及 dlib 人脸识别，但摘要未说清它是否用于具体物品配对。 | 获取全文，确认系统任务、dlib 的用途、数据和检索评估；摘要没有样本数或可核验的配对指标。 |
+| `lost-and-found visual matching dataset`（OpenAlex 定向书目检索后核出版方） | 找到 Dhanawardhana et al. (2025) 的 SBERT + Siamese 多模态失物配对研究；已读出版方开放全文。 | 全文已核实：文字描述为合成数据，融合数据仅 170 条且时间特征随机生成；报告的融合分类数字在摘要/结果段落间不一致。需把它作为直接相关先例，并避免直接比较分类准确率与本 FYP 的 Top-K 排序指标。 |
 | `"Deep Learning-Based Image Retrieval System for School Lost and Found"` | 结果主要是非学术汇报材料，没有确认可引用的正式论文。 | 暂不纳入核心证据；若导师提供题名/来源再核查。 |
 | `"lost property" image matching dataset retrieval academic paper lost and found benchmark dataset` | 发现 IEICE 2022 只以图片登记/检索论文。 | 目前只核实官方英文摘要；须查全文及其可用性研究设计。 |
 | `lost and found item matching dataset paired images public dataset` | 发现 LostNet 论文数据声明链接到 Figshare 公共记录；另筛除道路遗落货物数据集，因为任务不是日常失物配对。 | Figshare 压缩包内容和标签尚未检查，不能视为已确认适用的数据集。 |
@@ -31,6 +32,7 @@
 | Das et al. (2026), MobileNet 嵌入检索 | Springer 出版方摘要。 | 未取得全文；数值、样本和拆分方式未知。 |
 | IEEE IRCE (2025), YOLO/LLM/CLIP | IEEE 出版方摘要描述多阶段多模态检索。 | 未取得全文；数据、指标、消融、比较基线未知。 |
 | IEEE MEDCOM (2025), **An AI-Driven Intelligent Communication Framework for Lost-and-Found Services in Smart Cities** | IEEE 摘要描述 Android 前端、Flask 后端、dlib 人脸识别库、MongoDB，以及图片/描述登记与找回流程；摘要声称初步实验改善找回时间、可扩展性和用户满意度。 | 仅摘要级证据；没有给出样本数、对照、指标数值或同一实物配对协议。摘要未说明人脸识别在物品找回中的具体用途，须读全文，不能把摘要的主张当作已验证的照片配对效果。 DOI: [10.1109/MEDCOM67532.2025.11405255](https://doi.org/10.1109/MEDCOM67532.2025.11405255)。 |
+| Dhanawardhana et al. (2025), **Enhancing Lost and Found Systems with Multi-Modal Deep Learning: Integrating SBERT and Siamese Networks for Improved Semantic Matching** | 已读期刊出版方开放全文。研究实现 SBERT 文字相似、MobileNetV2 Siamese 图片相似和融合模型，并加入地点/时间。 | 文字数据 2,600 对由模板脚本生成；848 张包袋图按 283 个具体袋子分组、每组至少两张；融合特征数据共 170 条，文中称时间相似度用随机值模拟。摘要报 fusion accuracy 0.87/F1 0.98，但结果章节给出的验证/混淆矩阵和 F1 叙述彼此不一致；指标是配对分类而非固定候选池 Top-K 排名。 | 这是与本项目“文字+图片+地点/时间融合”最接近的直接先例，排除了把多模态融合本身当作新颖点的说法。其数据与报告限制提示候选 FYP 应在相同、按实物隔离的候选池上评估 Hit Rate@K/Recall@K/MRR@K，并记录 API 成本/时延；这种研究空缺仍须继续检索与导师确认。 [全文 PDF](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf) · [DOI](https://doi.org/10.54364/AAIML.2025.52212)。 |
 | Weerakoon et al. (2026), IEEE ICHORA, **AI-Enabled Lost and Found System With Adaptive Retrieval and Intelligent Security Monitoring** | IEEE 摘要描述不确定性感知级联检索，用类别受限 FAISS 检索与 CLIP 语义重排，并整合输入质量检查和安全监测。Crossref 核对作者、会议和 DOI。 | 尚未取得全文；IEEE 记录未提供参考文献。摘要提到的 500 次提交 94% 是输入校验结果，不是失物配对检索指标；安全监测 AUC 也不能说明 Top-K 配对效果。需核实数据、检索基线、身份隔离和消融。 DOI: [10.1109/ICHORA69329.2026.11537024](https://doi.org/10.1109/ICHORA69329.2026.11537024)。 |
 | Liu et al. (2025), IDMR | arXiv 预印本摘要明确定义跨场景的同实例检索，并提出 IDMR-bench。 | 通用视觉检索而非失物系统；仅支持任务定义，不支持 DeepSeek 或本 FYP 的效果结论。 |
 
@@ -44,15 +46,15 @@ LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figs
 
 ## 暂定结论与检索空缺
 
-已查到多种失物系统采用了图像分类、加权排名、感知哈希、局部特征、视觉 API、YOLO/LLM/CLIP 级联，以及图片/文字登记与找回框架；因此不能声称“首个失物照片配对系统”或“首次把视觉与元数据结合”。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、结构化视觉属性和直接照片重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
+已查到多种失物系统采用了图像分类、加权排名、感知哈希、局部特征、视觉 API、YOLO/LLM/CLIP 级联，以及 SBERT/Siamese 的文字、图片、地点和时间融合；因此不能声称“首个失物照片配对系统”“首次把视觉与元数据结合”或“首次做失物多模态融合”。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、API 提取的结构化视觉属性和照片直接重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
 
-本轮又发现 IEEE MEDCOM 2025 的端到端 AI 失物服务框架，以及 2026 IEEE ICHORA 的自适应级联检索系统。因此“多模态失物检索/级联方法缺失”不能作为研究空缺；可检验的窄问题仍是：是否存在在同一人工配对集合、同一候选池上对 A 表单、B 结构化视觉属性、C 候选照片比较做受控增量比较，并按物品身份隔离、报告 Top-K 指标及调用成本的工作。现有证据尚不足以回答“没有”，必须查这两篇论文全文和系统检索。
+本轮读到 Dhanawardhana et al. (2025) 的多模态融合全文，并发现其使用合成文字、随机生成的时间相似特征和 170 条融合样本，且分类结果报告不一致；另有 IEEE MEDCOM 2025 服务框架和 IEEE ICHORA 2026 自适应检索系统。因此“多模态失物检索/融合方法缺失”不能作为研究空缺。可检验的窄问题仍是：是否有研究在同一人工配对集合、同一候选池上对 A 表单、B API 提取的结构化视觉属性、C 候选照片比较做受控增量排序，并按实物身份隔离、报告 Top-K 指标及运行成本。现有证据尚不足以回答“没有”，必须继续系统检索并请导师确认。
 
 这一点目前只是**待查的问题**，并非已证明的空白。系统检索至少还需要：
 
 1. 在 Scopus/Web of Science 或学校认可数据库、IEEE Xplore、ACM DL、Google Scholar 分别检索，并记录每次完整查询式、日期、结果数和筛选理由。
 2. 搜索同义词：`lost property`, `lost item`, `lost-and-found`, `found item`, `object instance retrieval`, `same-instance matching`, `visual re-identification`, `image-based retrieval`, `multimodal ranking`。
-3. 回溯 Ghazal 2015/2016、LostNet、IEICE 2022、韩国 2018、Springer 2026、IEEE IRCE/MEDCOM 2025 和 IEEE ICHORA 2026 的参考文献和引用论文，合并重复版本并保留排除理由。
+3. 回溯 Ghazal 2015/2016、LostNet、IEICE 2022、韩国 2018、Springer 2026、Dhanawardhana et al. 2025、IEEE IRCE/MEDCOM 2025 和 IEEE ICHORA 2026 的参考文献和引用论文，合并重复版本并保留排除理由。
 4. 取得付费/日语/韩语论文全文后，抽取数据来源、正例是否同一实物、候选池、基线、测试划分、指标、用户研究人数与限制；若全文无法取得，继续标为摘要级证据。
 5. 完成导师确认后，再把证据支持的范围写进 proposal；在此之前不使用“首次”“没有研究过”或“已证明有效”等说法。
 
@@ -68,5 +70,6 @@ LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figs
 - [Das et al. (2026), Springer](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32)
 - [IEEE IRCE (2025)](https://ieeexplore.ieee.org/document/11203217/)
 - [IEEE MEDCOM (2025), AI-Driven Intelligent Communication Framework](https://ieeexplore.ieee.org/document/11405255/)
+- [Dhanawardhana et al. (2025), SBERT + Siamese fusion, publisher full text](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf)
 - [Weerakoon et al. (2026), IEEE ICHORA](https://doi.org/10.1109/ICHORA69329.2026.11537024)
 - [IDMR, arXiv:2504.00954](https://arxiv.org/abs/2504.00954)

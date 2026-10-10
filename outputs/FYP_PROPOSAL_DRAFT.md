@@ -16,7 +16,7 @@
 
 失物和拾获信息可能分散在公告板、聊天群或其他渠道中，失主与拾获者需要人工查找相似记录。简单按类别、地点或时间筛选，可能无法充分利用照片中可见的颜色、品牌和独特特征；但仅凭视觉相似也可能把外观相近的不同物品误配。需要研究一种把照片属性与用户填写的类别、颜色、地点、时间和说明结合起来的排序方式，并评估它是否能改善候选排序。
 
-**相关工作边界：** 已有研究摘要涉及文字/GIS 与照片特征结合、图像分类后排序、视觉 API 检索，以及近年的 YOLO/LLM/CLIP 级联和 AI 失物服务框架（例如 [IEEE IRCE 2025](https://ieeexplore.ieee.org/document/11203217/)、[IEEE MEDCOM 2025](https://ieeexplore.ieee.org/document/11405255/)、[IEEE ICHORA 2026](https://ieeexplore.ieee.org/abstract/document/11537024)）。因此本项目不把“做一个 AI 失物网站”或“首次使用照片”作为创新主张。拟研究的只是同一人工确认候选集上的排序方法增量比较；是否存在此类比较及其新颖性仍需查全文、系统检索并经导师确认。
+**相关工作边界：** Dhanawardhana et al. (2025) 已实现 SBERT 文字相似、Siamese 图片相似及地点/时间融合的失物 PWA（[出版方全文](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf)）。全文称文字描述由模板脚本生成，融合样本仅 170 条且时间相似度随机模拟；其指标是配对分类而非固定候选池 Top-K 排序，且结果章节数字不一致。因此不能把“做 AI 失物网站”“首次融合照片与时空信息”作为创新主张。其他相关系统包括 [IEEE IRCE 2025](https://ieeexplore.ieee.org/document/11203217/)、[IEEE MEDCOM 2025](https://ieeexplore.ieee.org/document/11405255/) 和 [IEEE ICHORA 2026](https://ieeexplore.ieee.org/abstract/document/11537024)。本项目的候选研究问题是：在同一、按物品身份隔离且有可靠标签的候选池上，DeepSeek 视觉属性与候选照片直接比较是否改善 Top-K 排序，以及带来多少 API 成本/时延。这个比较方向仍须系统检索全文并经导师确认，不能声称已证明新颖。
 
 ## 研究问题
 

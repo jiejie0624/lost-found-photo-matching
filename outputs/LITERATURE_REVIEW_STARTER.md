@@ -73,6 +73,15 @@ Voorhees, E. M. (2001). “The TREC-10 Question Answering Track Report.” 见 N
 
 另有 IEEE MEDCOM 2025 论文 *An AI-Driven Intelligent Communication Framework for Lost-and-Found Services in Smart Cities*（[DOI](https://doi.org/10.1109/MEDCOM67532.2025.11405255)）。出版方摘要提到 Android 前端、Flask 后端、MongoDB、图片与文字登记，以及 dlib 人脸识别库；摘要称初步实验改善找回时间、可扩展性和用户满意度，但没有样本数或可核实的检索指标。摘要没有说明人脸识别具体用于物品配对的哪一步，且 IEEE 全文页面本次访问触发 JavaScript 验证，尚未读全文。应将它视为直接相关的系统工作线索，而不是其照片配对效果或本项目研究空缺的证据。
 
+### 7.1 直接相关：SBERT、Siamese 图片模型与时空融合（2025）
+
+Dhanawardhana, B. M. P., Chalana, K. A. D., Abeywardena, I. D. S. P., Lankasena, N., & Paul, M. H. (2025). “Enhancing Lost and Found Systems with Multi-Modal Deep Learning: Integrating SBERT and Siamese Networks for Improved Semantic Matching.” *Advances in Artificial Intelligence and Machine Learning, 5*(2), 3736–3754. [出版方全文 PDF](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf) · [DOI](https://doi.org/10.54364/AAIML.2025.52212)
+
+- **研究方法：** 全文描述以 SBERT 比较描述文本、MobileNetV2 Siamese 网络比较包袋图片，并把两类相似度与地点/时间特征送入融合分类器；最终系统为 PWA。它已覆盖文字、图片、地点和时间的联合匹配，所以本 FYP 不能把这种组合本身当作新颖性。
+- **数据：** 文中称文字配对共 2,600 条，由 Python 模板脚本生成，训练/测试划分为 1,799/801；848 张包袋图片对应 283 个包袋身份，每个身份至少两张不同角度/光照图片。融合模型使用 170 条配对特征，文中明确说时间相似度以随机值模拟。
+- **评估与限制：** 论文以配对分类准确率/F1 报告效果，不是同一固定候选池上的 Hit Rate@K、Recall@K 或 MRR@K。摘要、讨论与结果段落对融合模型的 accuracy/F1 以及混淆矩阵数量报告不一致；不能将某一个数字选作可信基准。需在引用结果前由研究者回看表格/图与切分，记录这一报告不一致。
+- **对本 FYP 的启发：** 可检验的问题更窄：在同一、按物品身份隔离并经人工确认的候选池上，比较用户表单、DeepSeek 提取视觉属性、以及 DeepSeek 对候选照片直接比较的 Top-K 排序增量，并报告实际调用成本/时延。该方向与这篇工作的方法不同，但是否足够新颖仍须系统检索并由导师确认。
+
 ### 8. 直接相关：图像分类与加权排名（2018）
 
 Jeong, H. et al. (2018). “Lost and Found Registration and Inquiry Management System for User-dependent Interface using Automatic Image Classification and Ranking System based on Deep Learning.” *Journal of the Korea Convergence Security Association, 18*(4), 19–25. [DBpia 出版方页面](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
