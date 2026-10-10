@@ -2,7 +2,7 @@
 
 > 当前状态（2026-10-10）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。已有账号的登录会话已成功读取个人记录（当前 0 条）；注册、发布、AI 匹配、图片存储、关闭/删除等流程仍未全部验收。维护或新部署时可参考下面的配置清单。
 
-2026-10-11 代码新增 `/api/health` 的 DeepSeek 非敏感配置诊断：`deepseek_key_configured` 只表示环境变量非空，`deepseek_model_id` 只显示允许列表中的模型 ID（其他值统一显示 `other`），`deepseek_vision_model_supported` 表示模型 ID 是否在当前代码允许列表中。该接口公开可访问，不返回 API key；配置存在不代表 key 有效，也不代表 DeepSeek 图片调用成功。部署后可先查看此接口，再结合 Vercel 函数日志定位供应商错误；不要在公开截图或日志中暴露密钥。该改动仍需确认已部署后才可据线上响应验收。
+2026-10-11 安全诊断已上线：Vercel Production 的提交 `87d2fd5` 显示 Ready。线上只读 `GET /api/health` 返回 `status=ok`、`deepseek_key_configured=true`、`deepseek_model_id=deepseek-flash`、`deepseek_vision_model_supported=true`。这证明 Vercel 环境变量非空且模型 ID 在代码允许列表中；接口不返回密钥。它**不能**证明密钥有效、供应商接受请求、图片分析/比较成功或费用正确。要确认 AI 实际功能，仍需在使用非敏感图片且接受 API 费用后做单次端到端验收，并对照 Vercel 安全错误日志；不要把密钥放入公开截图或日志。
 
 2026-10-10 的补充只读检查：`/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config` 和 `/api/records` 均返回 HTTP 200；当时 `/api/records` 返回空数组。未带登录凭证请求 `/api/me/records` 返回 HTTP 401，符合该接口要求认证的行为。这只能确认公开路由和未认证拦截可达，不能证明真实登录、发布、AI 匹配、图片存储、关闭/删除或过期清理流程已通过。
 

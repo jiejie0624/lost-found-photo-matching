@@ -4,8 +4,8 @@
 
 ## 当前状态快照（2026-10-11）
 
-- **应用（最新核验）：** 生产站为 `https://lost-found-photo-matching-fyp.vercel.app/`。生产注册/登录曾用临时验收账号成功；两条合成测试线索成功写入 Neon/Blob，照片可读，基础表单排序返回候选。用户明确选择暂不删除，仍留在生产站。2026-10-11 只读复核中，主页、登录/个人页、健康/配置/公开列表返回 HTTP 200，未登录的个人记录接口返回 401。该结果和既有一次性合成冒烟均不等于完整验收。
-- **DeepSeek（未完成）：** 模型 ID 为 `deepseek-flash`。获准 AI 处理的合成照片请求曾显示分析暂不可用；提交 `34f2b91` 加入安全失败日志，`c28f010` 扩展为仅记录过滤后的 HTTP 状态、供应商错误类型/代码/参数，不记录原始消息、密钥、图片或请求内容。`c28f010` 已在本地历史并推送，但其生产部署版本和部署后的具体失败类别仍未核实；尚无成功属性提取或照片比较的证据。当前本地环境没有 `DEEPSEEK_API_KEY`，本轮未发起收费 API 请求。`app/main.py` 现增加 `/api/health` 的非敏感诊断：显示 key 环境变量是否非空、允许列表模型 ID 或 `other`、模型 ID 是否受支持；这不会验证 key 有效性或 API 调用，且仍需部署后再核对线上响应。
+- **应用（最新核验）：** 生产站为 `https://lost-found-photo-matching-fyp.vercel.app/`。生产注册/登录曾用临时验收账号成功；两条合成测试线索成功写入 Neon/Blob，照片可读，基础表单排序返回候选。用户明确选择暂不删除，仍留在生产站。2026-10-11 Vercel Production commit `87d2fd5` 显示 Ready；主页、登录/个人页、健康/配置/公开列表返回 HTTP 200，未登录的个人记录接口返回 401。线上健康接口确认数据库可连通，且 DeepSeek key 环境变量非空、模型 ID 为受支持的 `deepseek-flash`。这不验证密钥有效或 AI 调用成功；以上只读检查和既有一次性合成冒烟均不等于完整验收。
+- **DeepSeek（未完成）：** 模型 ID 为 `deepseek-flash`。获准 AI 处理的合成照片请求曾显示分析暂不可用；`34f2b91` 加入安全失败日志，`c28f010` 扩展为仅记录过滤后的 HTTP 状态、供应商错误类型/代码/参数，不记录原始消息、密钥、图片或请求内容。当前生产 Ready 版本 `87d2fd5` 包含这些代码和 `/api/health` 非敏感诊断；部署后具体供应商失败类别仍未核实，尚无成功属性提取或照片比较证据。线上 `deepseek_key_configured=true` 仅表示变量非空，当前本地环境没有 `DEEPSEEK_API_KEY`，本轮未发起收费 API 请求。
 - **Neon/Auth/Blob：** 生产项目与 Vercel 配置目标已核对；登录会话能读个人记录，发布时照片进入 Blob、记录进入数据库。90 天清理端点的未授权访问返回 401，但尚未等待并验证真实自动过期删除。
 - **Neon 目标：** Neon 控制台显示生产项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支启用 Better Auth；其 trusted domains 列表现已确认包含 `https://lost-found-photo-matching-fyp.vercel.app`。生产 `/api/config` 返回的 Auth URL 与该控制台显示值一致。此前真实注册页面出现过 `Invalid origin`；之后使用一次性验收账号成功注册并进入个人记录页，因此该错误在这次验收中未再出现，但这不证明所有浏览器/旧会话都不会遇到。
 - **研究：** 暂定比较表单排序、视觉属性提取和候选照片比较的同物品分组 Top-K 效果；相关方法已有直接先例，新颖性没有系统检索或导师确认。研究数据、伦理审批、DeepSeek 第三方处理授权、实验和论文均未完成。
@@ -172,7 +172,7 @@
 
 ### 最新线上复核（2026-10-11）
 
-- 生产 `/`、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 返回 HTTP 200；无凭证访问 `/api/me/records` 返回 HTTP 401。健康接口报告数据库连通，公开配置报告 Auth 已配置。
+- Vercel 中 commit `87d2fd5` 的 Production deployment 显示 Ready。生产 `/api/health` 返回 HTTP 200 和 `{"status":"ok","deepseek_key_configured":true,"deepseek_model_id":"deepseek-flash","deepseek_vision_model_supported":true}`；主页、登录/个人页、配置和公开记录接口仍返回 HTTP 200，无凭证访问 `/api/me/records` 返回 HTTP 401。该健康响应证明环境变量存在与模型 ID 在允许列表内，不验证密钥有效性、成功推理或照片比较。
 - 两条合成测试记录仍在线，用户明确选择暂不删除。此次只检查路由状态；没有读取或输出个人记录，没有新增/删除记录，也没有调用 DeepSeek。
 - 这未验证有效登录后发布、Blob 图片持久化、DeepSeek 属性分析/多图比较、跨账号隔离、删除/关闭或 90 天清理，也没有复现截图中的交互错误。不得据此声称线上端到端流程已完成。
 - 2026-10-10 最新浏览器复核：现有会话打开首页后，账号入口切换为“我的记录”；个人记录页面显示 `jie` 已登录且有 0 条记录。与之前 JWT `/token` 修复后的只读接口结果相符，确认当前登录态取 JWT 和个人记录读取可用。旧发布 404 可能同样由旧 JWT 获取实现造成，但未经登录后真实提交验证，仍不能声称发布链路已修复；注册 `Invalid origin`、Blob 上传、DeepSeek 调用/匹配、删除/过期清理仍未全部验收。未创建公开测试记录或调用 DeepSeek。
