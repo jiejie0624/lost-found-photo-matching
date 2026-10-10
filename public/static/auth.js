@@ -1,36 +1,5 @@
 let clientPromise;
 let authBaseUrl;
-const authRequestDiagnostics = [];
-
-async function withAuthFetchTrace(action) {
-  const originalFetch = globalThis.fetch;
-  const authOrigin = new URL(authBaseUrl).origin;
-  const tracedFetch = async (input, init) => {
-    const requestUrl = new URL(input instanceof Request ? input.url : String(input), authBaseUrl);
-    try {
-      const result = await originalFetch.call(globalThis, input, init);
-      if (requestUrl.origin === authOrigin && !result.ok) {
-        const message = `${requestUrl.pathname} HTTP ${result.status}`;
-        authRequestDiagnostics.push(message);
-        console.warn(`[Neon Auth] ${message}`);
-      }
-      return result;
-    } catch (error) {
-      if (requestUrl.origin === authOrigin) {
-        const message = `${requestUrl.pathname} request failed (${error?.name || "Error"})`;
-        authRequestDiagnostics.push(message);
-        console.warn(`[Neon Auth] ${message}`);
-      }
-      throw error;
-    }
-  };
-  globalThis.fetch = tracedFetch;
-  try {
-    return await action();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-}
 
 export async function getAuthClient() {
   if (!clientPromise) {
@@ -49,23 +18,27 @@ export async function getAuthClient() {
 }
 
 export async function getAccessToken() {
-  const auth = await getAuthClient();
-  if (typeof auth.getJWTToken !== "function") {
-    throw new Error("当前 Neon Auth SDK 不支持获取登录凭证，请刷新页面或联系管理员。");
-  }
-  const diagnosticStart = authRequestDiagnostics.length;
-  let token;
+  await getAuthClient();
+  if (!authBaseUrl) throw new Error("登录服务尚未配置。");
+
+  // Neon Auth's browser session cookie is opaque; exchange it for the short-lived
+  // JWT used by this app's API. `credentials: include` sends the Auth cookie.
+  const response = await fetch(`${authBaseUrl}/token`, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  let payload = null;
   try {
-    token = await withAuthFetchTrace(() => auth.getJWTToken());
-  } catch (error) {
-    const diagnostic = authRequestDiagnostics.slice(diagnosticStart).at(-1);
-    if (diagnostic) {
-      throw new Error(`${error.message || "获取登录凭证失败。"}（Auth 请求：${diagnostic}）`);
-    }
-    throw error;
+    payload = await response.json();
+  } catch {
+    // Keep the error below limited to the HTTP status; never expose token payloads.
   }
-  if (typeof token === "string" && token.split(".").length === 3) return token;
-  throw new Error("没有取得有效登录凭证，请重新登录后再试。");
+  const token = payload?.data?.token || payload?.token || payload?.data?.access_token;
+  if (response.ok && typeof token === "string" && token.split(".").length === 3) {
+    return token;
+  }
+  throw new Error(`获取登录凭证失败：Neon Auth HTTP ${response.status}。请重新登录后再试。`);
 }
 
 export async function authorizedFetch(url, options = {}) {
@@ -77,7 +50,7 @@ export async function authorizedFetch(url, options = {}) {
 
 export async function currentSession() {
   const auth = await getAuthClient();
-  const result = await withAuthFetchTrace(() => auth.getSession());
+  const result = await auth.getSession();
   if (result?.error) throw new Error(result.error.message || "无法读取登录状态。");
   return result?.data || result;
 }
