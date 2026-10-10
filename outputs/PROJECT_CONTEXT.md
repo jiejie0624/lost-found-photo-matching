@@ -118,6 +118,7 @@
 - Neon Auth 注册/登录，Neon PostgreSQL 保存记录，Vercel Blob 保存图片；登录用户可管理自己发布的记录。
 - 记录 90 天期限和每日 Vercel Cron 清理。未带密钥访问清理端点得到 401，确认其密钥校验已开启。
 - GitHub `main` 已与本地 `main` 同步。当前线上网站为 `https://lost-found-photo-matching-fyp.vercel.app/`。
+- 2026-10-10 推送 AI 逐条授权改动后，线上首页和 `/static/app.js` 的只读 GET 均返回 HTTP 200，且响应内容含新增授权文案与 `not_consented` 状态；`/api/health` 返回 HTTP 200。此检查确认最新前端已部署并健康路由可达，但没有上传照片、触发 DeepSeek 或验证完整业务流程。
 - 2026-10-10 对线上首页、`/login`、`/login.html`、`/my-records`、`/my-records.html`、Auth 配置、健康接口和公开记录接口进行只读检查，均返回 HTTP 200；当时公开记录接口返回空数组。未带登录凭证访问 `/api/me/records` 返回预期的 HTTP 401。先前已登录“我的记录”页曾正常显示，但真实注册/登录提交、发布、AI 调用、匹配、关闭/删除或过期清理仍未完成端到端验收；此次检查没有发送 DeepSeek 请求。
 - 同日对 Neon Auth 的 GET session 与 POST 预检做只读检查：session 返回 `200 null`，CORS 反射当前网站来源，预检允许当前来源。此结果只证明 Auth 路由/CORS 可达，没有验证注册或登录提交，因此此前截图中的 `Invalid origin` 是否已在真实表单流程解决仍未确认。
 

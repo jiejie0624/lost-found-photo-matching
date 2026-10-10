@@ -4,6 +4,8 @@
 
 2026-10-10 的补充只读检查：`/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config` 和 `/api/records` 均返回 HTTP 200；当时 `/api/records` 返回空数组。未带登录凭证请求 `/api/me/records` 返回 HTTP 401，符合该接口要求认证的行为。这只能确认公开路由和未认证拦截可达，不能证明真实登录、发布、AI 匹配、图片存储、关闭/删除或过期清理流程已通过。
 
+推送逐条 AI 授权功能后，再次只读访问 `/`、`/static/app.js` 和 `/api/health`，均返回 HTTP 200；首页包含 AI 授权文案，脚本包含 `not_consented` 状态。这证明该前端版本已部署、健康路由可达；没有实际提交记录或调用 DeepSeek，完整授权逻辑仍需在获准且使用非敏感样本后验收。
+
 同日只读检查 Neon Auth：对当前网站来源查询 `/neondb/auth/get-session` 得到 HTTP 200、响应 `null`，并返回匹配网站来源的 `Access-Control-Allow-Origin`；对应 POST 预检返回 HTTP 204 并允许该来源。这说明 Auth 路由和浏览器来源的 CORS 设置当前可达，但没有提交注册/登录请求，因此不能据此确认 `Invalid origin` 注册错误已完全解决。
 
 ## 数据放在哪里
