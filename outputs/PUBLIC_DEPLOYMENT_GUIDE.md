@@ -1,8 +1,8 @@
 # 公开网站部署计划（Vercel）
 
-> 当前状态（2026-10-11）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。现行认证前端调用 Neon Auth SDK 的 `getJWTToken()`；Production commit `a327829` 显示 Ready，生产静态 `auth.js` 已更新。健康、配置和公开列表接口返回 HTTP 200，现有两条合成线索仍保留。此提交之后尚未用登录会话复验个人列表或发布；关闭/删除、DeepSeek 成功、自动过期清理也未全部验收。下面较早日期的记录描述当时部署状态和当时代码，不代表现在的认证实现。
+> 当前状态（2026-10-11）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。现行认证前端调用 Neon Auth SDK 的 `getJWTToken()`；Production commit `7189a55` 显示 Ready，生产静态 `auth.js` 已更新。健康、配置、公开列表和认证脚本接口均返回 HTTP 200，现有两条合成线索仍保留。此部署尚未用登录会话复验个人列表或发布；关闭/删除、DeepSeek 成功、自动过期清理也未全部验收。下面较早日期的记录描述当时部署状态和当时代码，不代表现在的认证实现。
 
-2026-10-11 安全诊断已上线：Vercel Production 的早期提交 `87d2fd5` 曾显示 Ready，之后最新的 `a327829` 也已部署 Ready。线上只读 `GET /api/health` 返回 `status=ok`、`deepseek_key_configured=true`、`deepseek_model_id=deepseek-flash`、`deepseek_vision_model_supported=true`。这证明 Vercel 环境变量非空且模型 ID 在代码允许列表中；接口不返回密钥。它**不能**证明密钥有效、供应商接受请求、图片分析/比较成功或费用正确。要确认 AI 实际功能，仍需在使用非敏感图片且接受 API 费用后做单次端到端验收，并对照 Vercel 安全错误日志；不要把密钥放入公开截图或日志。
+2026-10-11 安全诊断已上线：Vercel Production 的早期提交 `87d2fd5` 和后续提交均曾显示 Ready；当前生产提交为 `7189a55`。线上只读 `GET /api/health` 返回 HTTP 200；该接口证明环境变量非空及模型 ID 在允许列表中，不返回密钥。它**不能**证明密钥有效、供应商接受请求、图片分析/比较成功或费用正确。要确认 AI 实际功能，仍需在使用非敏感图片且接受 API 费用后做单次端到端验收，并对照 Vercel 安全错误日志；不要把密钥放入公开截图或日志。
 
 2026-10-11 登录凭证修订：`a327829` 将之前手动访问 Neon Auth `/token` 的代码替换为 `@neondatabase/auth@0.5.0-beta` SDK 的 `getJWTToken()`。生产部署已 Ready，生产 `/static/auth.js` 已切换到该方法。此前只读 `/token` 探测没有登录 cookie，不能代替真实会话验收；新实现下的个人页/API 请求和发布操作尚未实际复核。
 

@@ -1,4 +1,4 @@
-import { authorizedFetch, getAuthClient, currentSession } from "./auth.js";
+import { getAccessToken, getAuthClient, currentSession } from "./auth.js";
 
 const grid = document.querySelector("#my-records-grid");
 const statusLine = document.querySelector("#records-status");
@@ -31,13 +31,19 @@ function render(records) {
 }
 
 async function loadRecords() {
+  let phase = "读取登录状态";
   try {
     const session = await currentSession();
     if (!session?.user) {
       window.location.replace("/login.html");
       return;
     }
-    const response = await authorizedFetch("/api/me/records");
+    phase = "获取登录凭证";
+    const token = await getAccessToken();
+    phase = "读取个人记录";
+    const response = await fetch("/api/me/records", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     let payload;
     try {
       payload = await response.json();
@@ -50,7 +56,7 @@ async function loadRecords() {
     statusLine.textContent = `${session.user.name || session.user.email}，你有 ${payload.length} 条记录。`;
     render(payload);
   } catch (error) {
-    statusLine.textContent = error.message || "暂时无法读取记录。";
+    statusLine.textContent = `${phase}失败：${error.message || "暂时无法读取记录。"}`;
     statusLine.classList.add("error");
   }
 }
