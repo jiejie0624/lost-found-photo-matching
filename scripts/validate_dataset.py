@@ -64,8 +64,10 @@ def validate(
     warnings: list[str] = []
     records: dict[str, dict[str, str]] = {}
     group_splits: dict[str, set[str]] = defaultdict(set)
+    contributor_splits: dict[str, set[str]] = defaultdict(set)
     image_ids: dict[str, list[str]] = defaultdict(list)
     counts: Counter[str] = Counter()
+    missing_contributor_ids = 0
 
     try:
         record_rows = read_csv(records_path, RECORD_FIELDS)
@@ -97,6 +99,11 @@ def validate(
             errors.append(f"{prefix} ({record_id}): split 必须是 development 或 test。")
         elif group_id:
             group_splits[group_id].add(row["split"])
+        contributor_group_id = row.get("contributor_group_id", "")
+        if contributor_group_id and row["split"] in SPLITS:
+            contributor_splits[contributor_group_id].add(row["split"])
+        elif not contributor_group_id:
+            missing_contributor_ids += 1
         if row["direction"] not in {"lost", "found"}:
             errors.append(f"{prefix} ({record_id}): direction 必须是 lost 或 found。")
         if not row["title"]:
@@ -135,6 +142,15 @@ def validate(
     for group_id, splits in group_splits.items():
         if len(splits) > 1:
             errors.append(f"item_group_id {group_id} 同时出现在多个 split：{', '.join(sorted(splits))}。")
+    for contributor_id, splits in contributor_splits.items():
+        if len(splits) > 1:
+            errors.append(
+                f"contributor_group_id {contributor_id} 同时出现在多个 split：{', '.join(sorted(splits))}。"
+            )
+    if missing_contributor_ids:
+        warnings.append(
+            f"{missing_contributor_ids} 条记录没有 contributor_group_id；无法检查同一贡献者是否跨 development/test。"
+        )
     for image_id, record_ids in image_ids.items():
         if len(record_ids) > 1:
             warnings.append(f"image_id {image_id} 被多条记录复用：{', '.join(record_ids[:5])}。")

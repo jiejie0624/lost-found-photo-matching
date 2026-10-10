@@ -60,11 +60,19 @@ Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](out
 ```powershell
 New-Item -ItemType Directory -Force work/evaluation
 Copy-Item outputs/records_template.csv work/evaluation/records.csv
-Copy-Item outputs/annotation_round_template.csv work/evaluation/annotation_round.csv
 Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
 Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
 Copy-Item outputs/experiment_log_template.csv work/evaluation/experiment_log.csv
 ```
+
+填写并锁定 `records.csv` 的 `split` 后，为两位标注者分别生成完整、匿名的候选配对表（每份输出路径需是新文件）：
+
+```powershell
+python scripts/generate_annotation_pairs.py --records work/evaluation/records.csv --out work/evaluation/annotation_A01.csv --annotator-id A01
+python scripts/generate_annotation_pairs.py --records work/evaluation/records.csv --out work/evaluation/annotation_A02.csv --annotator-id A02
+```
+
+两位标注者独立填完后，合并两份行到 `annotation_round.csv` 再计算一致性。生成器为每条 lost 记录列出同一 split 的所有 found 候选，标签和理由保持空白；默认最多 50,000 个配对，并且不覆盖已有文件。该工具不会生成 ground truth。
 
 双人试标后，先按实际匿名 ID 汇总一致性；把 `A01`、`A02` 替换成两位标注者的 ID：
 
@@ -132,6 +140,7 @@ python scripts/analyze_ranking_errors.py --details work/evaluation/development_d
 - 导师讨论与确认清单：[`outputs/SUPERVISOR_REVIEW_CHECKLIST.md`](outputs/SUPERVISOR_REVIEW_CHECKLIST.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
 - 双人标注一致性分析：[`scripts/analyze_annotation_agreement.py`](scripts/analyze_annotation_agreement.py)
+- 完整匿名配对表生成：[`scripts/generate_annotation_pairs.py`](scripts/generate_annotation_pairs.py)
 - 排名错配人工复核表：[`scripts/analyze_ranking_errors.py`](scripts/analyze_ranking_errors.py)
 - API 实验调用日志指南：[`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)

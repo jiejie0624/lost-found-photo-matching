@@ -67,6 +67,7 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
 
     records: dict[str, dict[str, Any]] = {}
     group_splits: dict[str, set[str]] = defaultdict(set)
+    contributor_splits: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         record_id = row["record_id"]
         group_id = row["item_group_id"]
@@ -79,6 +80,9 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
         if row["direction"] not in {"lost", "found"}:
             raise ValueError(f"记录 {record_id} 的 direction 必须是 lost 或 found")
         group_splits[group_id].add(row["split"])
+        contributor_group_id = row.get("contributor_group_id", "")
+        if contributor_group_id:
+            contributor_splits[contributor_group_id].add(row["split"])
         if row["category"] == "unknown":
             category = ""
         else:
@@ -107,6 +111,11 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
     leaked_groups = [group_id for group_id, splits in group_splits.items() if len(splits) > 1]
     if leaked_groups:
         raise ValueError(f"同一 item_group_id 出现在不同 split：{', '.join(leaked_groups[:5])}")
+    leaked_contributors = [group_id for group_id, splits in contributor_splits.items() if len(splits) > 1]
+    if leaked_contributors:
+        raise ValueError(
+            f"同一 contributor_group_id 出现在不同 split：{', '.join(sorted(leaked_contributors)[:5])}"
+        )
     return records
 
 

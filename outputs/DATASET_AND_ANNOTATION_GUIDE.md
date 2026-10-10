@@ -19,6 +19,7 @@ CSV 只放匿名编号和粗略属性。不要把姓名、电话、账号、精�
 | --- | --- |
 | `record_id` | 唯一匿名编号，例如 `R0001`；不要编码个人身份。 |
 | `item_group_id` | 同一件实物的匿名编号；用于避免同一物品跨数据集泄漏。不同物品不能共用。 |
+| `contributor_group_id` | 可选的匿名贡献者/采集批次编号；同一参与者或共享拍摄布景的记录尽量放在同一 split。没有可链接的贡献者时留空，并在研究限制中说明无法检查此类泄漏。不得填姓名、邮箱或可反查身份的编号。 |
 | `direction` | `lost` 或 `found`。 |
 | `title` | 用户填写的简短物品标题。 |
 | `category` | 用户从固定类别表选择的类别；无法判断时填 `unknown`。 |
@@ -64,6 +65,7 @@ CSV 只放匿名编号和粗略属性。不要把姓名、电话、账号、精�
 ## 标注流程
 
 1. 先用少量样本试标；两位标注者分别在 `annotation_round.csv` 对相同配对独立填写一行，记录 label、置信度和简短理由。
+   可用 [`../scripts/generate_annotation_pairs.py`](../scripts/generate_annotation_pairs.py) 按 split 生成完整 lost×found 配对表；工具仅导出匿名记录/图像 ID，不填标签、不推断身份，并拒绝覆盖已有输出。
 2. 修订标签说明，明确哪些证据足以确认同一实物，再开始正式标注。
 3. 正式标注至少对一部分配对双人独立标注；用 [`../scripts/analyze_annotation_agreement.py`](../scripts/analyze_annotation_agreement.py) 计算重叠样本的原始一致率、三类混淆表和 Cohen's kappa。该脚本把 `uncertain` 当作第三个名义类别，报告未被两人共同标注的配对数；kappa 不可计算时会明确显示。
 4. 一致性统计后再讨论或由第三方裁决分歧。脚本不会替研究者裁决。保留原始 `annotation_round.csv`，另将最终裁决结果整理成 `pair_labels.csv`；评估文件必须每个配对只有一行。
