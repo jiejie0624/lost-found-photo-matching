@@ -2,6 +2,8 @@
 
 > 本文件用于准备离线匹配实验。收集真实图片或招募参与者前，先按学校和导师要求确认伦理审批、同意方式、保存位置和删除期限。
 
+更完整的受控物品配对采集步骤、分组、防泄漏、第三方 AI 授权与删除流程，见 [`CONTROLLED_DATA_COLLECTION_PROTOCOL_DRAFT.md`](CONTROLLED_DATA_COLLECTION_PROTOCOL_DRAFT.md)。该文件是讨论草案，不代表伦理或导师批准。
+
 ## 文件
 
 - [`records_template.csv`](records_template.csv)：每条失物或拾获记录一行。
