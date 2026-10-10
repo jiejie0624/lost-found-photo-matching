@@ -635,7 +635,7 @@ async def create_record(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
             (record_id, kind, title, category, color, location, occurred_at, description,
              stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id,
-             expires_at, ai_processing_allowed),
+             expires_at, int(ai_processing_allowed)),
         )
         row = execute(db, "SELECT * FROM records WHERE id = ?", (record_id,)).fetchone()
     record = row_to_record(row)
