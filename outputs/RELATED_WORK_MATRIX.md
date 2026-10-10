@@ -1,11 +1,11 @@
 # 相关工作对照表（初稿）
 
-> 整理日期：2026-10-09。此表用于确定 FYP 的比较范围，不是系统综述。部分付费论文目前只根据出版方公开的摘要整理；正式引用前应通过学校图书馆取得全文并核对方法、数据和实验细节。
+> 整理日期：2026-10-10。此表用于确定 FYP 的比较范围，不是系统综述。部分付费论文目前只根据出版方公开的摘要整理；正式引用前应通过学校图书馆取得全文并核对方法、数据和实验细节。
 
 | 工作 | 问题与方法 | 数据/评估（公开摘要或页面所述） | 与本 FYP 的关系 | 阅读时要留意 |
 | --- | --- | --- | --- | --- |
-| Zhou et al. (2024), **LostNet**，PLOS ONE | 失物照片识别与匹配；MobileNetV2、CBAM、感知哈希，并实现线上系统。 | 作者称其自建数据集有 10 类、10,499 张增强图片；报告最高测试准确率 96.8%。 | 最直接的领域工作，说明失物照片识别已有人研究。 | 主要报告分类准确率，与本 FYP 的 Top-5 配对排序不是同一指标。需读全文了解训练/测试划分、正负配对和是否存在身份级测试隔离。页面说明另有 2024 年勘误，引用时保持作者信息准确。 [出版方页面](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998) |
-| Das et al. (2026), **Building a Smarter Lost and Found Systems: Leveraging TensorFlow.js for Image-Based Item Matching**，Springer 会议论文 | 用预训练 MobileNet 生成图像 embedding，再以欧氏距离检索相似记录；提出用户设定相似度门槛。 | 出版方摘要说明了方法和距离阈值，但摘要页没有给出可核实的数据规模或具体排序指标。 | 与本 FYP 同属“查询照片对记录排序”；提供轻量浏览器端视觉检索的方案参照。 | 目前仅依据摘要页，不能据此断言效果优于文字基线。阅读全文时核实数据来源、同一物品配对的定义、候选集构建和实际指标。 [Springer 页面](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32) |
+| Zhou et al. (2024), **LostNet**，PLOS ONE | MobileNetV2 与 CBAM 做失物类别识别；系统先按预测类别取候选照片，再用感知哈希按相似度排序。 | 论文报告 10 类、10,499 张照片和 70%/30% 训练/验证划分；原文对数据增强与该总数的关系表述不清。报告分类准确率最高 96.8%。 | 最直接的领域工作，证明已有失物图像分类与照片候选检索系统。 | 不能把它简化成“只有分类”，但 96.8% 是分类结果，不等同本 FYP 的 Top-K 配对排序指标。已核对段落描述训练/验证划分，独立测试集与身份隔离方式仍需进一步核查。 [PLOS ONE 全文](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998) |
+| Das et al. (2026), **Building a Smarter Lost and Found Systems: Leveraging TensorFlow.js for Image-Based Item Matching**，Springer 会议论文 | 用 TensorFlow.js 和预训练 MobileNet 生成图像嵌入，以欧氏距离检索，并可按阈值过滤。 | 公开摘要没有可核实的数据量和具体排序数字。Springer 正式引用年份为 2026；首次在线日期为 2025-10-02；论文集系列为 ICDMIS 2024。 | 与本 FYP 同属查询照片检索；提供客户端嵌入检索的路线参照。 | 目前只读到出版方摘要，不能据此断言优于文本基线。需取得全文核实配对定义、候选集合、数据划分和指标。 [Springer 页面](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32) |
 | **Cascaded YOLO-LLM-CLIP Model for Robust Multimodal Retrieval in Intelligent Lost & Found System** (2025)，IEEE IRCE | 摘要提出级联 YOLOv12、LLM 与 CLIP：检测小物体、改善文字描述，再做跨模态检索。 | IEEE 页面摘要称方法针对杂乱背景，并提到模块自适应融合；公开摘要未提供足够的样本和指标细节供本表比较。 | 可作为较复杂的多模态路线背景，说明最新领域工作正在探索检测、文字生成和图文检索组合。 | 不建议直接把它加进本科 MVP：需要更多模型组件和复现实验。阅读全文并检查数据、基线、消融实验和数字结果后再引用。 [IEEE Xplore 页面](https://ieeexplore.ieee.org/document/11203217/) |
 | Radenović et al. (2018), **Revisiting Oxford and Paris: Large-Scale Image Retrieval Benchmarking**，CVPR | 研究图像检索评估基准，更新标注，设置不同难度协议并加入困难干扰图像。 | 论文重点是基准、标注和检索评估设计。 | 虽非失物领域，但可借鉴评估实验：可靠标签、固定测试集和困难负例对可信比较很重要。 | Oxford/Paris 是地点图像检索任务，不能直接拿来代表日常物品照片。 [CVF 论文页](https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html) |
 
@@ -19,7 +19,7 @@
 4. 对同一批查询与候选记录比较 Hit Rate@5、Recall@5、MRR@5，并记录响应时间、失败率和实际 API 用量。
 5. 以物品身份划分开发集和测试集；不让同一物品或近重复照片同时进入两边。
 
-这个研究范围与 LostNet 的分类准确率和 embedding 检索路线不同，但**不能仅凭目前这几篇文献就声称它构成已证实的研究空缺**。下一轮系统搜索应重点核对已有工作是否比较了表单基线与结构化视觉属性、是否使用人工验证的配对标签，以及是否报告 Top-K 检索指标。
+本项目的研究重点暂定为：在相同且人工确认的候选配对上，比较表单基线、加入结构化视觉属性、以及初筛后进行照片直接比较这三种方法。LostNet 已有类别筛选加感知哈希排序，Springer 论文也已有嵌入检索，因此不可声称既有工作没有做照片匹配。**目前没有足够证据确认研究空缺**；系统搜索还需核实已有工作是否直接比较表单与视觉属性、是否用人工确认的配对标签，以及是否报告 Top-K 排序指标。
 
 ## 后续阅读顺序
 
