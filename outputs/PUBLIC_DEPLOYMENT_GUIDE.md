@@ -8,6 +8,8 @@
 
 同日只读检查 Neon Auth：对当前网站来源查询 `/neondb/auth/get-session` 得到 HTTP 200、响应 `null`，并返回匹配网站来源的 `Access-Control-Allow-Origin`；对应 POST 预检返回 HTTP 204 并允许该来源。这说明 Auth 路由和浏览器来源的 CORS 设置当前可达，但没有提交注册/登录请求，因此不能据此确认 `Invalid origin` 注册错误已完全解决。
 
+后续代码复核发现前端取 API JWT 的实现调用了 SDK 未记录的 `auth.token()`，这与用户遇到的“获取登录凭证失败 HTTP 404”相符。已改为优先调用固定 SDK 文档中的 `auth.getJWTToken()`，并在 SDK session 带 `access_token` 时作为后备；本次只完成代码修复，尚未重新部署并用登录账号端到端核验。
+
 ## 数据放在哪里
 
 - **记录与账号：Neon PostgreSQL**，通过 Vercel Marketplace 连接。数据库保存失物/拾获记录、发布者 ID、状态、90 天过期时间和照片 URL；Neon Auth 在 `neon_auth` schema 管理账号与会话。

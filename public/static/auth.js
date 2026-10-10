@@ -17,28 +17,43 @@ export async function getAuthClient() {
 
 export async function getAccessToken() {
   const auth = await getAuthClient();
-  let result;
+  let result = null;
+  let tokenError = null;
   try {
-    // Neon Auth's Better Auth client exposes the JWT plugin as `token()`.
-    // `getSession()` returns session metadata; its `session.token` is not a
-    // bearer JWT and must not be sent to our API.
-    result = await auth.token();
+    // @neondatabase/auth exposes getJWTToken() for the API bearer JWT.
+    // The session's `token` is only an opaque session identifier.
+    if (typeof auth.getJWTToken === "function") {
+      result = await auth.getJWTToken();
+    }
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`获取登录凭证失败：${detail}`);
+    tokenError = error instanceof Error ? error.message : String(error);
   }
   if (result?.error) {
-    throw new Error(`获取登录凭证失败：${result.error.message || "请重新登录。"}`);
+    tokenError = result.error.message || "Neon Auth 暂时无法签发 API 凭证。";
   }
-  const token = result?.data?.token
-    || (typeof result?.data === "string" ? result.data : null)
-    || result?.data?.session?.access_token
-    || result?.data?.session?.token
-    || result?.token;
-  if (typeof token !== "string" || token.split(".").length !== 3) {
-    throw new Error("无法取得有效登录凭证，请重新登录后再试。");
+
+  const directToken = typeof result === "string"
+    ? result
+    : result?.data?.token || result?.data?.access_token || result?.token;
+  if (typeof directToken === "string" && directToken.split(".").length === 3) {
+    return directToken;
   }
-  return token;
+
+  // Some SDK versions include the bearer JWT in getSession() instead.
+  try {
+    const sessionResult = await currentSession();
+    const sessionToken = sessionResult?.session?.access_token
+      || sessionResult?.session?.accessToken
+      || sessionResult?.access_token
+      || sessionResult?.accessToken;
+    if (typeof sessionToken === "string" && sessionToken.split(".").length === 3) {
+      return sessionToken;
+    }
+  } catch (error) {
+    tokenError ||= error instanceof Error ? error.message : String(error);
+  }
+
+  throw new Error(`获取登录凭证失败：${tokenError || "请重新登录后再试。"}`);
 }
 
 export async function authorizedFetch(url, options = {}) {
