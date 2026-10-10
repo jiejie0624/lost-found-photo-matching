@@ -123,6 +123,7 @@
 - 同日对 Neon Auth 的 GET session 与 POST 预检做只读检查：session 返回 `200 null`，CORS 反射当前网站来源，预检允许当前来源。此结果只证明 Auth 路由/CORS 可达，没有验证注册或登录提交，因此此前截图中的 `Invalid origin` 是否已在真实表单流程解决仍未确认。
 - 后续检查（2026-10-10）：当前浏览器的“我的记录”页面显示已登录用户 `jie`，并显示 0 条记录；这说明该会话能读取受保护的个人记录页面/API，但不证明新注册、退出后重新登录或发布流程成功。线上首页、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 和前端静态 JS/CSS 均返回 HTTP 200，Auth 配置标记为已启用；未发起 DeepSeek 调用。此前注册截图中的 `Invalid origin` 仍需退出后重新注册/登录才能最终确认。
 - 同日检查 Neon 控制台时，当前组织项目列表仅显示 `dawn-voice-63453865`（AWS US East 2 / Ohio）；其唯一 `production` 分支的 Better Auth 页面显示“Enable Neon Auth”，尚未启用。与此同时，线上 `/api/config` 返回的 Auth URL 是 `ep-flat-recipe-b7nuq4d3.neonauth.c-13.us-east-1.aws.neon.tech`（US East 1）。因此当前 Vercel 部署所用 Auth 地址与控制台可见项目/分支不一致；尚不能确认 Vercel 的 `DATABASE_URL` 指向哪一套数据库，也不能断言旧项目被删除。先不要把生产环境变量改指向 `dawn-voice`，应先确认预期项目并核对 Vercel 的 Neon 集成，避免生产数据库/Auth 错配。
+- 2026-10-10 追加线上只读检查：`/api/health`、`/api/config`、`/api/records` 均为 HTTP 200，公开记录为空；无凭证访问 `/api/me/records` 和 `/api/cron/expire` 均为预期 HTTP 401。未发布记录、未调用 DeepSeek。当前浏览器 Vercel 账号看不到目标项目；切换账号后需要 GitHub 登录凭据，未提交凭据。暂时不能检查或更改目标项目的环境变量和部署设置；需要项目所有者本人登录正确账号后继续，期间不动线上数据库/Auth 配置。
 
 ### 研究材料与工具
 
