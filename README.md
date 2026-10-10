@@ -61,6 +61,14 @@ Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
 Copy-Item outputs/experiment_log_template.csv work/evaluation/experiment_log.csv
 ```
 
+录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和正负例结构。它不能代替伦理审批，也不能确认标签是否真实：
+
+```powershell
+python scripts/validate_dataset.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv
+```
+
+预检默认要求每个查询至少有一个高置信度正例和负例，与评估脚本默认设置一致。做敏感性分析时，可把两者都改成 `--min-confidence medium`。
+
 不提供照片分数时，脚本比较表单基线和加入视觉属性的方法：
 
 ```powershell
