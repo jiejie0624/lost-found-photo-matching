@@ -1,10 +1,12 @@
 # 公开网站部署计划（Vercel）
 
-> 当前状态（2026-10-11）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。现行认证前端调用 Neon Auth SDK 的 `getJWTToken()`；Production commit `7189a55` 显示 Ready，生产静态 `auth.js` 已更新。健康、配置、公开列表和认证脚本接口均返回 HTTP 200，现有两条合成线索仍保留。此部署尚未用登录会话复验个人列表或发布；关闭/删除、DeepSeek 成功、自动过期清理也未全部验收。下面较早日期的记录描述当时部署状态和当时代码，不代表现在的认证实现。
+> 当前状态（2026-10-11）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。最新前端通过 Auth `/token` 携带 Cookie 获取 API JWT；提交 `ef48daf` 的脚本已在生产域名核对，实际登录会话成功显示 2 条合成个人记录。线上两条记录按用户要求保留。有效登录发帖、关闭/删除、跨账号隔离、DeepSeek 成功及自动过期清理仍未全部验收。下面较早日期的记录描述当时部署状态和当时代码，不代表现状。
+
+2026-10-11 登录复验：Neon Auth SDK 的 `getJWTToken()` 在当前服务端请求 `/neondb/auth/get-jwt-token` 并返回 HTTP 404；改回带会话 Cookie 的 `/token` 交换后，正式网站的“我的记录”页成功读出该账号 2 条记录。未创建、关闭或删除记录。
 
 2026-10-11 安全诊断已上线：Vercel Production 的早期提交 `87d2fd5` 和后续提交均曾显示 Ready；当前生产提交为 `7189a55`。线上只读 `GET /api/health` 返回 HTTP 200；该接口证明环境变量非空及模型 ID 在允许列表中，不返回密钥。它**不能**证明密钥有效、供应商接受请求、图片分析/比较成功或费用正确。要确认 AI 实际功能，仍需在使用非敏感图片且接受 API 费用后做单次端到端验收，并对照 Vercel 安全错误日志；不要把密钥放入公开截图或日志。
 
-2026-10-11 登录凭证修订：`a327829` 将之前手动访问 Neon Auth `/token` 的代码替换为 `@neondatabase/auth@0.5.0-beta` SDK 的 `getJWTToken()`。生产部署已 Ready，生产 `/static/auth.js` 已切换到该方法。此前只读 `/token` 探测没有登录 cookie，不能代替真实会话验收；新实现下的个人页/API 请求和发布操作尚未实际复核。
+2026-10-11 登录凭证排查记录（后续已修正）：中间版本曾把取凭证切换为 Neon Auth SDK `getJWTToken()`；真实登录会话证实其请求 `/neondb/auth/get-jwt-token` 并收到 404。该中间方案已被后续提交 `ef48daf` 的 `/token` Cookie 交换替代。最新生产交互复验已通过个人记录读取（显示 2 条合成记录）；该复验未验证登录后发布、关闭或删除。
 
 随后查看 Vercel 最近一小时可见运行日志，时间范围内只有健康/配置/公开列表等 HTTP 请求记录，没有新的 DeepSeek 请求或供应商错误详情。因此目前仍不能从线上日志确认之前 `unavailable` 的具体原因；这不是“AI 正常”或“没有错误”的证明。
 
