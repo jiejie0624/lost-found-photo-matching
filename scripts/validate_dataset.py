@@ -16,7 +16,7 @@ from app.matching import parse_time  # noqa: E402
 
 
 RECORD_FIELDS = {
-    "record_id", "item_group_id", "direction", "title", "category", "color",
+    "record_id", "item_group_id", "contributor_group_id", "direction", "title", "category", "color",
     "location_zone", "time_start", "time_end", "description", "vision_category",
     "vision_colors", "vision_brand", "vision_features", "image_id", "image_consent",
     "external_ai_consent", "split",

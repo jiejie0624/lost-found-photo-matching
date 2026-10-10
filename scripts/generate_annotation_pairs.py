@@ -38,7 +38,9 @@ def load_records(
 
     with handle:
         reader = csv.DictReader(handle)
-        required = {"record_id", "item_group_id", "direction", "split", "image_id"}
+        required = {
+            "record_id", "item_group_id", "contributor_group_id", "direction", "split", "image_id"
+        }
         missing = required - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"records CSV 缺少字段：{', '.join(sorted(missing))}")

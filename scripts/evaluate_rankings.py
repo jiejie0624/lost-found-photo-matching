@@ -20,7 +20,7 @@ from app.matching import match_score, parse_time  # noqa: E402
 
 
 RECORD_FIELDS = {
-    "record_id", "item_group_id", "direction", "title", "category", "color",
+    "record_id", "item_group_id", "contributor_group_id", "direction", "title", "category", "color",
     "location_zone", "time_start", "time_end", "description", "vision_category",
     "vision_colors", "vision_brand", "vision_features", "external_ai_consent", "split",
 }
@@ -60,7 +60,7 @@ def split_values(value: str) -> list[str]:
     return [part.strip() for part in value.split(";") if part.strip()]
 
 
-def load_records(path: Path) -> dict[str, dict[str, Any]]:
+def load_records(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:
     rows = read_csv(path, RECORD_FIELDS)
     if not rows:
         raise ValueError("记录 CSV 没有数据行")
@@ -68,6 +68,7 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
     records: dict[str, dict[str, Any]] = {}
     group_splits: dict[str, set[str]] = defaultdict(set)
     contributor_splits: dict[str, set[str]] = defaultdict(set)
+    missing_contributor_ids: dict[str, int] = defaultdict(int)
     for row in rows:
         record_id = row["record_id"]
         group_id = row["item_group_id"]
@@ -83,6 +84,8 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
         contributor_group_id = row.get("contributor_group_id", "")
         if contributor_group_id:
             contributor_splits[contributor_group_id].add(row["split"])
+        else:
+            missing_contributor_ids[row["split"]] += 1
         if row["category"] == "unknown":
             category = ""
         else:
@@ -116,7 +119,9 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
         raise ValueError(
             f"同一 contributor_group_id 出现在不同 split：{', '.join(sorted(leaked_contributors)[:5])}"
         )
-    return records
+    # Values may be blank, but the column itself must exist so missing IDs are
+    # visible in the final report instead of silently disabling this check.
+    return records, missing_contributor_ids
 
 
 def load_pairs(
@@ -514,7 +519,7 @@ def main() -> int:
         parser.error("--bootstrap-iterations 至少为 100")
 
     try:
-        records = load_records(args.records)
+        records, missing_contributor_ids_by_split = load_records(args.records)
         pairs_by_query, uncertain_count, confidence_excluded = load_pairs(
             args.pairs, records, args.split, args.min_confidence
         )
@@ -547,6 +552,11 @@ def main() -> int:
             "minimum_confidence": args.min_confidence,
             "candidate_pairs_in_pool": candidate_pair_count,
             "labeled_pairs": labeled_pair_count,
+            "records_missing_contributor_group_id": missing_contributor_ids_by_split.get(args.split, 0),
+            "contributor_leakage_check_note": (
+                "known contributor_group_id values were checked for split leakage; "
+                "blank values cannot be checked and are counted above"
+            ),
             "uncertain_candidates_ranked_but_not_counted": uncertain_count,
             "lower_confidence_candidates_ranked_but_not_counted": confidence_excluded,
             "unjudged_candidate_metric_note": (
