@@ -5,7 +5,7 @@
 ## 当前状态快照（2026-10-10）
 
 - **应用：** 已部署至 Vercel；Neon PostgreSQL、Neon Auth、Vercel Blob、DeepSeek 环境变量条目均已配置。已有登录会话读取个人记录成功；注册、发布、图片持久化、DeepSeek 真实调用/匹配、关闭/删除及 90 天清理仍没有完整端到端验收。不得称为已完成。
-- **Neon 目标：** 用户提供的 Neon 控制台截图显示项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支显示 Better Auth。此前“此项目找不到/生产 Auth 项目身份不明”的只读检查结论已被后续截图纠正；但生产注册曾报 `Invalid origin`，该域名/分支可信来源是否正确仍未通过真实注册确认。
+- **Neon 目标：** Neon 控制台显示生产项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支启用 Better Auth；其 trusted domains 列表现已确认包含 `https://lost-found-photo-matching-fyp.vercel.app`。生产 `/api/config` 返回的 Auth URL 与该控制台显示值一致，Auth 用户页显示已有 1 个账号。此前注册页面曾报 `Invalid origin`；域名配置现看起来正确，但没有重新提交注册表单，因此不能声称该报错已由真实注册验证解决。
 - **研究：** 暂定比较表单排序、视觉属性提取和候选照片比较的同物品分组 Top-K 效果；相关方法已有直接先例，新颖性没有系统检索或导师确认。研究数据、伦理审批、DeepSeek 第三方处理授权、实验和论文均未完成。
 - **操作边界：** 不伪造注册/发布/AI 验收，不用未经批准的参与者图片或调用 DeepSeek 进行研究数据实验；需先取得相应授权。研究方案草稿、评估脚本和论文材料不等于审批或实验结果。
 

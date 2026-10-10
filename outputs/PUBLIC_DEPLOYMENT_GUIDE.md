@@ -22,7 +22,7 @@
 
 2026-10-10 最新浏览器复核：当前已有登录会话打开首页后，导航正确切换为“我的记录”；“我的记录”页成功显示用户 `jie` 和 0 条记录。线上 `/api/health`、`/api/config`、`/api/me/records`（未带令牌时为预期的 401）、`/login` 与 `/my-records` 均有响应。结合此前 `auth.js` 的 `/token` 修复，这确认当前登录态取 JWT 及个人记录读取可用。此前发布时的 404 可能与同一旧 JWT 获取问题有关，但尚未通过登录后提交验证，不能称发布流程已修复。未创建公开记录或调用 DeepSeek。
 
-注册域名问题仍待确认：用户此前的生产注册页面显示 `Invalid origin`。后续用户提供的 Neon 控制台截图已显示生产集成项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`）及 `main` 分支上的 Better Auth；因此此前“项目找不到/控制台项目身份不明”说法已过时。尚未通过真实注册确认 `https://lost-found-photo-matching-fyp.vercel.app` 已列入该 Auth 分支的 Trusted origins，也未修改来源设置。需在上述已确认项目/分支中核对可信来源并再用真实注册验证。参见 [Neon Auth trusted origins 与 Vercel 自动配置说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews) 及 [Neon Auth 分支配置说明](https://neon.com/blog/neon-auth-branchable-identity-in-your-database)。
+注册来源状态（2026-10-10 后续核对）：Neon 控制台的 `neon-cordovan-ribbon` / `main` Better Auth 设置中，Trusted domains 已包含 `https://lost-found-photo-matching-fyp.vercel.app`；生产 `/api/config` 返回的 Auth URL 与该页的 Auth URL 完全一致。Auth 用户页还显示已有 1 个账号。由此可排除“生产环境连错 Neon Auth 项目”以及“生产域名完全未加入 trusted domains”这两个当前假设。用户此前仍曾看到 `Invalid origin`，但本次没有重新提交注册表单，故实际注册错误状态仍待端到端验证；不要重复添加域名或盲目改其他配置。参见 [Neon Auth trusted origins 与 Vercel 自动配置说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews) 及 [Neon Auth 分支配置说明](https://neon.com/blog/neon-auth-branchable-identity-in-your-database)。
 
 ## 数据放在哪里
 
