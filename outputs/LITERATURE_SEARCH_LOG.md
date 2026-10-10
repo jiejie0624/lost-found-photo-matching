@@ -12,6 +12,7 @@
 | `2024 2025 lost and found object image matching paper multimodal retrieval` | 找到 IEEE 2025 YOLO/LLM/CLIP 论文；另发现通用实例检索 IDMR (2025)。 | 前者查全文；后者仅用于界定“同一实例”任务，不作为失物领域证据。 |
 | `"Deep Learning-Based Image Retrieval System for School Lost and Found"` | 结果主要是非学术汇报材料，没有确认可引用的正式论文。 | 暂不纳入核心证据；若导师提供题名/来源再核查。 |
 | `"lost property" image matching dataset retrieval academic paper lost and found benchmark dataset` | 发现 IEICE 2022 只以图片登记/检索论文。 | 目前只核实官方英文摘要；须查全文及其可用性研究设计。 |
+| `lost and found item matching dataset paired images public dataset` | 发现 LostNet 论文数据声明链接到 Figshare 公共记录；另筛除道路遗落货物数据集，因为任务不是日常失物配对。 | Figshare 压缩包内容和标签尚未检查，不能视为已确认适用的数据集。 |
 | `site:arxiv.org "lost and found" item retrieval image matching` | 发现 IDMR 等同实例多模态检索工作；也命中与日常失物系统无关的多目标跟踪论文。 | 仅保留任务相关来源；记录排除理由，不把标题中 “Lost and Found” 当作相关性依据。 |
 | `"Proposal and Evaluation of a Lost Property Registration and Retrieval System" PDF` / `"MVE2021-52" PDF Hirose` | 搜索到 IEICE 官方技术报告页面，未取得可核实的全文 PDF。 | 通过学校图书馆或作者正式渠道找全文；不要推测其指标。 |
 | `"Lost and Found Registration and Inquiry Management System" "19" "25" 2018 pdf` / `"Automatic Image Classification and Ranking System" "Lost and Found" Jeong` | 找到 DBpia 期刊页面，确认 2018 年、作者/期刊页码和摘要，全文访问受限。 | 通过学校图书馆取得全文；补充层级分类数据、排名定义、可用性样本与结果。 |
@@ -27,6 +28,12 @@
 | Das et al. (2026), MobileNet 嵌入检索 | Springer 出版方摘要。 | 未取得全文；数值、样本和拆分方式未知。 |
 | IEEE IRCE (2025), YOLO/LLM/CLIP | IEEE 出版方摘要描述多阶段多模态检索。 | 未取得全文；数据、指标、消融、比较基线未知。 |
 | Liu et al. (2025), IDMR | arXiv 预印本摘要明确定义跨场景的同实例检索，并提出 IDMR-bench。 | 通用视觉检索而非失物系统；仅支持任务定义，不支持 DeepSeek 或本 FYP 的效果结论。 |
+
+## 公开数据集候选（待核验）
+
+LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figshare.24826740.v2](https://doi.org/10.6084/m9.figshare.24826740.v2)。Figshare API 元数据显示许可为 CC BY 4.0，并列出约 139 MB 的 `test.zip`。但论文正文同时把数据描述为私有数据集；本次没有下载或检查压缩包内容，因此尚不知道它是否包含同一实物的失物—拾获配对、可用身份标签或适合本研究的划分。不得据此声称数据集已可直接用于本项目。下一步应先检查文件说明、许可条件、标签结构和样本来源，并请导师确认是否可用于研究及第三方 API。当前结论应写作：**本轮没有确认一个公开且已验证适用于同一实物配对评估的数据集；LostNet 的公开文件是待核验候选。**
+
+筛选时也发现 `LostAndFoundDataset` 和 Fishyscapes Lost & Found 属于道路场景中的遗落货物/异常检测，不等同于日常物品失物招领配对，故不作为本项目的直接配对数据集。
 
 ## 暂定结论与检索空缺
 
@@ -44,6 +51,9 @@
 
 - [Ghazal et al. (2016) 机构仓储](https://repository.adu.ac.ae/items/50e44846-18b5-4d8b-a629-e9e85abec7c7)
 - [LostNet, PLOS ONE](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998)
+- [LostNet Figshare 数据记录](https://doi.org/10.6084/m9.figshare.24826740.v2)
+- [LostAndFoundDataset（道路场景数据集）](https://huggingface.co/datasets/iis-esslingen/LostAndFoundDataset)
+- [Fishyscapes Lost & Found 验证集](https://zenodo.org/records/6511227)
 - [Jeong et al. (2018), DBpia](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
 - [Hirose et al. (2022), IEICE](https://ken.ieice.org/ken/paper/20220309ICJm/eng/)
 - [Das et al. (2026), Springer](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32)
