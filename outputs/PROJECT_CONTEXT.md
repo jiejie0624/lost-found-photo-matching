@@ -123,6 +123,7 @@
 ### 研究材料与工具
 
 - 已有 Proposal、文献综述起步笔记、相关工作矩阵、数据/标注指南、算法和系统架构说明；这些是草案，不是导师批准的最终方案。2026-10-10 已根据 PLOS ONE 与 Springer 出版方全文/页面修正文献笔记：LostNet 同时有类别筛选和感知哈希候选排序；Springer 章节正式引用年份为 2026（2025 年首次在线）；当前研究空缺仍未通过系统检索证实。
+- 新增空白 API 实验调用日志模板及导师讨论清单，列出研究范围、数据/伦理、第三方 API、样本设计、标注和评估的待确认事项。它们用于准备研究与沟通，不代表已有调用记录、导师答复或学校审批。
 - 离线评估工具支持表单基线、视觉属性方法，以及导入 `photo_scores.csv` 的候选照片比较方法；会输出按物品组重抽样的配对 cluster bootstrap 置信区间。评估尚未用真实研究数据运行。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
