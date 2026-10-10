@@ -13,6 +13,7 @@
 | `"Deep Learning-Based Image Retrieval System for School Lost and Found"` | 结果主要是非学术汇报材料，没有确认可引用的正式论文。 | 暂不纳入核心证据；若导师提供题名/来源再核查。 |
 | `"lost property" image matching dataset retrieval academic paper lost and found benchmark dataset` | 发现 IEICE 2022 只以图片登记/检索论文。 | 目前只核实官方英文摘要；须查全文及其可用性研究设计。 |
 | `lost and found item matching dataset paired images public dataset` | 发现 LostNet 论文数据声明链接到 Figshare 公共记录；另筛除道路遗落货物数据集，因为任务不是日常失物配对。 | Figshare 压缩包内容和标签尚未检查，不能视为已确认适用的数据集。 |
+| `public paired object instance image dataset different views lighting CC BY` | 找到 Stanford 发布的 CUTE（Common paired objects Under differenT Extrinsics）数据集及其数据说明。 | 可作为同一实物跨视角/光照的辅助视觉压力测试候选；并非失物招领数据，也没有地点/时间元数据。下载包结构和研究适用性仍须核实，不能替代主要失物配对数据。 |
 | `site:arxiv.org "lost and found" item retrieval image matching` | 发现 IDMR 等同实例多模态检索工作；也命中与日常失物系统无关的多目标跟踪论文。 | 仅保留任务相关来源；记录排除理由，不把标题中 “Lost and Found” 当作相关性依据。 |
 | `"Proposal and Evaluation of a Lost Property Registration and Retrieval System" PDF` / `"MVE2021-52" PDF Hirose` | 搜索到 IEICE 官方技术报告页面，未取得可核实的全文 PDF。 | 通过学校图书馆或作者正式渠道找全文；不要推测其指标。 |
 | `"Lost and Found Registration and Inquiry Management System" "19" "25" 2018 pdf` / `"Automatic Image Classification and Ranking System" "Lost and Found" Jeong` | 找到 DBpia 期刊页面，确认 2018 年、作者/期刊页码和摘要，全文访问受限。 | 通过学校图书馆取得全文；补充层级分类数据、排名定义、可用性样本与结果。 |
@@ -34,6 +35,8 @@
 LostNet 论文的数据可用性声明链接到 Figshare 记录 [10.6084/m9.figshare.24826740.v2](https://doi.org/10.6084/m9.figshare.24826740.v2)。Figshare API 元数据显示许可为 CC BY 4.0，并列出约 139 MB 的 `test.zip`，以及模型代码、权重和技术说明文件；API 描述称研究做照片匹配，但报告的 96.8% 是准确率，不能由此推断有供本项目使用的同实物配对标签。本次尝试读取小型技术说明文件收到 HTTP 403，且没有下载或检查压缩包内容，因此尚不知道它是否包含同一实物的失物—拾获配对、可用身份标签或适合本研究的划分。不得据此声称数据集已可直接用于本项目。下一步应从可访问渠道取得并检查文件说明、许可条件、标签结构和样本来源，并请导师确认是否可用于研究及第三方 API。当前结论应写作：**本轮没有确认一个公开且已验证适用于同一实物配对评估的数据集；LostNet 的公开文件是待核验候选。**
 
 筛选时也发现 `LostAndFoundDataset` 和 Fishyscapes Lost & Found 属于道路场景中的遗落货物/异常检测，不等同于日常物品失物招领配对，故不作为本项目的直接配对数据集。
+
+另发现 Stanford 的 CUTE 数据集（[官方代码/数据说明仓库](https://github.com/s-tian/CUTE)，[Stanford 数据仓储下载页](https://purl.stanford.edu/gj714cj0414)）。维护者数据说明称其含 10,000 张常见物品图片，物品按相似配对收集，目录关系可表示相同物品的不同方向/光照；数据不涉及人物，发布许可为 CC BY 4.0，且数据整体被设计为测试集。它适合进一步核实是否能作为**冻结方法的补充同实例视觉压力测试**，测试拍摄角度和光照变化下的视觉比较；但它没有失物/拾获方向、地点、时间或用户描述，不能回答本项目的完整多模态失物检索问题，也不能当作主要研究集或据其结果推断真实失物应用效果。当前只核实了仓库中的数据说明和下载入口，未下载、检查文件结构或运行模型；采用前还须核对实际包内的身份/配对映射和许可文件，并确认导师认可及 DeepSeek 第三方处理安排。
 
 ## 暂定结论与检索空缺
 

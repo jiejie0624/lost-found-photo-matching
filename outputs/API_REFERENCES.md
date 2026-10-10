@@ -18,3 +18,5 @@
 - JSON 模式需设置 `response_format: {"type":"json_object"}`，并在提示词中明确要求输出 JSON；代码会校验和解析返回内容。
 - 价格会变化，费用依赖输入 token、输出 token、缓存情况和调用时间。
 - 线上每次照片比较目前最多使用 1 张新图片和 5 张候选图片；这与早期按 10 张候选计算的粗略费用估算不同。不要把旧估算当作当前报价；正式实验前按实际模型、图片尺寸、输出和 API 控制台用量重新核算。
+- 2026-10-10 再次核对官方 Vision 文档：当前模型 `deepseek-flash` 支持 Chat Completions 的文本加图片 `image_url` 内容块（图片需放在 `user` 消息），也支持多图；官方限制为每次请求正文 48 MiB、内联单图最多 32 MiB。当前实现把图像和指令放在 `user` 消息，并将每张比较图压到最多 3 MiB，因此协议和请求体设计与文档一致；此项文档核对不等于线上 API 调用已成功。 [DeepSeek Vision](https://api-docs.deepseek.com/guides/vision/)
+- 官方模型/价格页目前说明 API 名称 `deepseek-flash` 指向 DeepSeek-V4.1-Flash；旧名 `deepseek-v4-flash` 与 `deepseek-v4-flash-vision-exp` 已退役，虽为兼容暂时仍可调用。正式实验记录应同时记录 API model ID、调用日期与当时的官方版本/价格页，避免把可变别名写成不可变模型版本。 [Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing/) · [2026-09-10 更新公告](https://api-docs.deepseek.com/news/news260910/)
