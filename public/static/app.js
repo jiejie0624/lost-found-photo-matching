@@ -1,4 +1,6 @@
-import { authorizedFetch, currentSession } from "./auth.js";
+import { authorizedFetch, currentSession, showProductionNotice } from "./auth.js";
+
+showProductionNotice();
 
 const form = document.querySelector("#record-form");
 const statusLine = document.querySelector("#form-status");

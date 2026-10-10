@@ -1,5 +1,26 @@
 let clientPromise;
 let authBaseUrl;
+const PRODUCTION_ORIGIN = "https://lost-found-photo-matching-fyp.vercel.app";
+
+export function showProductionNotice() {
+  const hostname = window.location.hostname.toLowerCase();
+  if (window.location.origin === PRODUCTION_ORIGIN || !hostname.endsWith(".vercel.app")) return;
+
+  const notice = document.createElement("aside");
+  notice.setAttribute("role", "status");
+  notice.style.cssText = "max-width:1240px;margin:0 auto;padding:12px 24px;background:#fff2d5;color:#664b18;display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px";
+  const message = document.createElement("span");
+  message.textContent = "你现在打开的是 Vercel 预览版；登录和正式数据请使用正式网站。";
+  const link = document.createElement("a");
+  link.textContent = "前往正式网站 ↗";
+  link.style.cssText = "font-weight:700;text-decoration:underline;text-underline-offset:3px";
+  link.href = new URL(
+    `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    PRODUCTION_ORIGIN,
+  ).href;
+  notice.append(message, link);
+  document.querySelector(".topbar")?.insertAdjacentElement("afterend", notice);
+}
 
 export async function getAuthClient() {
   if (!clientPromise) {

@@ -1,4 +1,6 @@
-import { getAccessToken, getAuthClient, currentSession } from "./auth.js";
+import { getAccessToken, getAuthClient, currentSession, showProductionNotice } from "./auth.js";
+
+showProductionNotice();
 
 const grid = document.querySelector("#my-records-grid");
 const statusLine = document.querySelector("#records-status");

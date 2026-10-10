@@ -1,4 +1,6 @@
-import { getAuthClient, currentSession } from "./auth.js";
+import { getAuthClient, currentSession, showProductionNotice } from "./auth.js";
+
+showProductionNotice();
 
 const form = document.querySelector("#auth-form");
 const statusLine = document.querySelector("#auth-status");
