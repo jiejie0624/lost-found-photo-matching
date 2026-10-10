@@ -4,6 +4,12 @@
 
 更完整的受控物品配对采集步骤、分组、防泄漏、第三方 AI 授权与删除流程，见 [`CONTROLLED_DATA_COLLECTION_PROTOCOL_DRAFT.md`](CONTROLLED_DATA_COLLECTION_PROTOCOL_DRAFT.md)。该文件是讨论草案，不代表伦理或导师批准。
 
+## 公共数据集适用性结论（2026-10-11）
+
+目前没有核实到可直接用于主评估的公开数据集：主实验需要可访问的图片、同一件实物的 lost-found 配对真值、困难负例、完整的同候选池标签和可按实物身份划分的 test 集。LostNet 的 Figshare 记录虽列 CC BY 4.0 文件，但出版方文章主要描述分类任务，官方文件下载本次返回 HTTP 403，且没有核实到所需配对真值；不得把类别标签当作同实物配对。道路场景 LostAndFound 数据集做小障碍检测，也不符合任务。证据与链接见 [`LITERATURE_SEARCH_LOG.md`](LITERATURE_SEARCH_LOG.md)。
+
+Stanford CUTE 可考虑作为**补充、图像层面的同实例压力测试**：其官方说明称目录结构包含同一物件的视角/光照关系、使用 CC BY 4.0、目标是测试集；但它没有失物/拾获方向、地点时间和用户描述，且公开图数与当前档案清点不一致。不得用 CUTE 结果替代主研究结果，亦不得用于调参。是否采用以及 DeepSeek 第三方图像处理须先由导师/学校确认。
+
 ## 文件
 
 - [`records_template.csv`](records_template.csv)：每条失物或拾获记录一行。
