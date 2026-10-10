@@ -9,6 +9,14 @@ const switchCopy = document.querySelector("#switch-copy");
 const switchMode = document.querySelector("#switch-mode");
 let mode = "sign-in";
 
+function friendlyAuthError(error) {
+  const message = error?.message || "暂时无法完成操作，请稍后再试。";
+  if (/invalid origin/i.test(message)) {
+    return "登录服务拒绝了当前网站来源。请检查 Vercel 使用的 Neon Auth 分支，并确认该分支的可信来源包含本网站域名。";
+  }
+  return message;
+}
+
 function setMode(nextMode) {
   mode = nextMode;
   const registering = mode === "sign-up";
@@ -45,7 +53,7 @@ form.addEventListener("submit", async (event) => {
     statusLine.textContent = "登录成功，正在打开你的记录…";
     window.location.assign("/my-records.html");
   } catch (error) {
-    statusLine.textContent = error.message || "暂时无法完成操作，请稍后再试。";
+    statusLine.textContent = friendlyAuthError(error);
     statusLine.classList.add("error");
   } finally {
     submit.disabled = false;

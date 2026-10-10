@@ -22,7 +22,7 @@
 
 2026-10-10 最新浏览器复核：当前已有登录会话打开首页后，导航正确切换为“我的记录”；“我的记录”页成功显示用户 `jie` 和 0 条记录。线上 `/api/health`、`/api/config`、`/api/me/records`（未带令牌时为预期的 401）、`/login` 与 `/my-records` 均有响应。结合此前 `auth.js` 的 `/token` 修复，这确认当前登录态取 JWT 及个人记录读取可用。此前发布时的 404 可能与同一旧 JWT 获取问题有关，但尚未通过登录后提交验证，不能称发布流程已修复。未创建公开记录或调用 DeepSeek。
 
-注册域名问题仍待确认：用户此前的生产注册页面显示 `Invalid origin`。只读打开先前截图中的 Neon 项目 ID `flat-sky-86877676` 时控制台显示 “project not found”；当前登录的 Neon 组织项目列表只显示 `dawn-voice-63453865`，无法证明这是 Vercel 生产环境 `DATABASE_NEON_AUTH_BASE_URL` 对应的 Auth 项目。未修改 Auth 域名/来源设置。需要在与生产 Auth URL 对应的 Neon 项目中核对 Trusted origins，确保包含 `https://lost-found-photo-matching-fyp.vercel.app`，再由真实用户复查注册。Neon 与 Vercel 集成可自动配置生产域名，但当前项目关联情况未确认；参见 [Neon 对 Vercel Auth 域名的说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews)。
+注册域名问题仍待确认：用户此前的生产注册页面显示 `Invalid origin`。只读打开先前截图中的 Neon 项目 ID `flat-sky-86877676` 时控制台显示 “project not found”；当前登录的 Neon 组织项目列表只显示 `dawn-voice-63453865`，无法证明这是 Vercel 生产环境 `DATABASE_NEON_AUTH_BASE_URL` 对应的 Auth 项目。未修改 Auth 来源设置。Neon 官方说明 Auth 的可信来源按分支配置；Vercel-Neon 集成通常会自动把 Production deployment 域名加入可信来源。因此出现此错误时，优先核对 Vercel 当前 Auth URL 实际对应的 Neon 项目/分支及集成绑定，再检查其 Trusted origins 是否含 `https://lost-found-photo-matching-fyp.vercel.app`；不要在未确认关联的 Neon 项目上盲目更改。需由真实用户复查注册。参见 [Neon Auth trusted origins 与 Vercel 自动配置说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews) 及 [Neon Auth 分支配置说明](https://neon.com/blog/neon-auth-branchable-identity-in-your-database)。
 
 ## 数据放在哪里
 
