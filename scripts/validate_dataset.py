@@ -138,11 +138,14 @@ def validate(
             errors.append(f"记录 {record_id} 标为没有图片授权；不得纳入照片评估。")
         elif row["image_consent"] == "not_applicable":
             warnings.append(f"记录 {record_id} 的图片授权标为 not_applicable；请在受限的来源记录中说明理由。")
+        has_visual_data = any(
+            row[field] for field in ("vision_category", "vision_colors", "vision_brand", "vision_features")
+        )
+        if has_visual_data and row["image_consent"] != "yes":
+            errors.append(f"记录 {record_id} 含视觉分析数据，但 image_consent 不是 yes。")
         if row["external_ai_consent"] not in {"yes", "no", "pending", "not_applicable"}:
             errors.append(f"{prefix} ({record_id}): external_ai_consent 必须是 yes、no、pending 或 not_applicable。")
-        elif row["external_ai_consent"] != "yes" and any(
-            row[field] for field in ("vision_category", "vision_colors", "vision_brand", "vision_features")
-        ):
+        elif row["external_ai_consent"] != "yes" and has_visual_data:
             errors.append(f"记录 {record_id} 含视觉分析数据，但 external_ai_consent 不是 yes。")
 
     for group_id, splits in group_splits.items():
