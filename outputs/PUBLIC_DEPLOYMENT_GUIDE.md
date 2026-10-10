@@ -2,6 +2,8 @@
 
 > 当前状态（2026-10-10）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。线上首页、登录页、“我的记录”页、配置接口和健康接口均返回正常；未用真实账号完整重跑发布、AI 匹配和删除流程。维护或新部署时可参考下面的配置清单。
 
+2026-10-10 的补充只读检查：`/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config` 和 `/api/records` 均返回 HTTP 200；当时 `/api/records` 返回空数组。未带登录凭证请求 `/api/me/records` 返回 HTTP 401，符合该接口要求认证的行为。这只能确认公开路由和未认证拦截可达，不能证明真实登录、发布、AI 匹配、图片存储、关闭/删除或过期清理流程已通过。
+
 ## 数据放在哪里
 
 - **记录与账号：Neon PostgreSQL**，通过 Vercel Marketplace 连接。数据库保存失物/拾获记录、发布者 ID、状态、90 天过期时间和照片 URL；Neon Auth 在 `neon_auth` schema 管理账号与会话。
