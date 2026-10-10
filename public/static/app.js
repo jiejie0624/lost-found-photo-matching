@@ -87,8 +87,19 @@ async function prepareImageForUpload(file) {
 async function loadRecords() {
   try {
     const response = await fetch("/api/records");
-    if (!response.ok) throw new Error("记录暂时无法加载");
-    currentRecords = await response.json();
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // Vercel may return an HTML error page instead of the API's JSON body.
+    }
+    if (!response.ok) {
+      throw new Error(payload?.detail || `记录暂时无法加载（HTTP ${response.status}）`);
+    }
+    if (!Array.isArray(payload)) {
+      throw new Error(`记录接口返回格式异常（HTTP ${response.status}）`);
+    }
+    currentRecords = payload;
     renderRecords();
   } catch (error) {
     recordsGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}，请稍后刷新页面。</div>`;
@@ -166,9 +177,19 @@ form.addEventListener("submit", async (event) => {
     statusLine.textContent = sourceImage.size > 4 * 1024 * 1024 ? "正在压缩照片并保存记录…" : "正在保存记录并寻找相似线索。";
     formData.set("image", await prepareImageForUpload(sourceImage));
     const response = await authorizedFetch("/api/records", { method: "POST", body: formData });
-    const payload = await response.json();
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // Preserve the HTTP status when a platform-level error response is HTML.
+    }
     if (response.status === 401) throw new Error("请先登录或注册，然后再发布记录。");
-    if (!response.ok) throw new Error(payload.detail || "提交失败，请检查填写内容。");
+    if (!response.ok) {
+      throw new Error(payload?.detail || `发布失败（HTTP ${response.status}）。请稍后重试。`);
+    }
+    if (!payload || typeof payload !== "object" || typeof payload.id !== "string") {
+      throw new Error("服务器返回内容异常。请先打开“我的记录”确认是否已发布，再决定是否重试，以免重复提交。");
+    }
     const results = payload.matches || [];
     const analysisText = payload.analysis_status === "analyzed"
       ? "照片特征分析完成"
