@@ -1,6 +1,6 @@
 # 公开网站部署计划（Vercel）
 
-> 当前状态（2026-10-10）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。线上首页、登录页、“我的记录”页、配置接口和健康接口均返回正常；未用真实账号完整重跑发布、AI 匹配和删除流程。维护或新部署时可参考下面的配置清单。
+> 当前状态（2026-10-10）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。真实登录会话已成功读取个人记录（当前 0 条）；发布、AI 匹配、图片存储、关闭/删除等完整流程仍未验收。维护或新部署时可参考下面的配置清单。
 
 2026-10-10 的补充只读检查：`/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config` 和 `/api/records` 均返回 HTTP 200；当时 `/api/records` 返回空数组。未带登录凭证请求 `/api/me/records` 返回 HTTP 401，符合该接口要求认证的行为。这只能确认公开路由和未认证拦截可达，不能证明真实登录、发布、AI 匹配、图片存储、关闭/删除或过期清理流程已通过。
 
@@ -15,6 +15,8 @@
 2026-10-10 最新 Vercel 控制台只读核对：项目 `lost-found-photo-matching-fyp` 可见；最新 GitHub 提交 `2213f0d` 的 Production deployment 显示 Ready。环境变量列表中可见 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、Neon 集成提供的 `DATABASE_URL` 与 `DATABASE_NEON_AUTH_BASE_URL`、Blob 集成提供的 `BLOB_READ_WRITE_TOKEN`，以及 `CRON_SECRET`。只核对了变量名称和环境范围，没有显示或读取任何值；因此只能确认这些变量条目存在，不能确认 DeepSeek key 有效、模型值正确或实际 API 调用成功。Neon/Blob 变量行显示关联的集成资源。没有修改生产配置，也没有发起 DeepSeek 调用。
 
 随后将文档提交 `25ccce2` 推送到 GitHub；Vercel 最新 Production deployment 显示该提交 Ready。线上只读 GET 检查的 `/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config`、`/api/records` 和 `/static/auth.js` 均返回 HTTP 200，公开记录为空，Auth 配置为已启用。浏览器最初短暂显示 `/login` Internal Server Error，刷新后页面正常加载。此检查没有提交登录表单或发布记录，所以此前发布操作中出现的 HTTP 404 仍未定位；不能把它说成已修复。没有调用 DeepSeek。
+
+2026-10-10 登录凭证 404 修复：此前 `getJWTToken()` 实际返回会话标识，不能当作 API JWT；现改为在浏览器携带 Neon Auth 会话 cookie 请求 Auth `/token`，并只接受 JWT 格式的返回值。提交 `aacb208` 已推送到 `main` 并自动部署。生产静态脚本确认包含新 token 请求；刷新已有登录会话的“我的记录”页后，成功显示个人记录列表（0 条）。这验证了登录态、取 JWT 和只读个人记录接口。没有创建、修改或删除记录，也没有调用 DeepSeek。若浏览器仍显示旧错误，刷新页面即可加载新脚本。
 
 ## 数据放在哪里
 
