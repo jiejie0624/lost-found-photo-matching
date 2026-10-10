@@ -8,7 +8,7 @@
 |---|---|---|
 | 响应式公开网站 | 已部署；基础页面可访问 | 生产主页、登录页、个人记录页及主要只读接口可访问。需继续观察手机浏览器上的完整操作流程。 |
 | 登录、账号和记录归属 | 个人记录读取已恢复；其他权限边界仍待复核 | 生产会话曾因 SDK 请求不存在的 `/neondb/auth/get-jwt-token` 返回 404；现已恢复带会话 Cookie 的 Neon Auth `/token` 交换。最新生产页面成功显示该账号的 2 条合成记录。未新增、关闭或删除记录；跨账号隔离和其他账户边界仍待验证。 |
-| 注册来源报错 | 已定位为预览域名问题；引导修复待部署 | 用户截图对应 `lost-found-photo-matching-fnviksel0.vercel.app` 预览域名，而固定生产域名是 `lost-found-photo-matching-fyp.vercel.app`。生产 Auth 的只读来源探测允许固定生产来源；没有再次提交注册，也未改动 Neon trusted origins。登录页现在将对 Vercel 预览域名显示正式登录网址，需等部署后核对提示。 |
+| 注册来源报错 | 已定位；预览域名提示已部署 | 用户截图对应 `lost-found-photo-matching-fnviksel0.vercel.app` 预览域名，而固定生产域名是 `lost-found-photo-matching-fyp.vercel.app`。生产 Auth 的只读来源探测允许固定生产来源；没有再次提交注册，也未改动 Neon trusted origins。提交 `9472171` 的 Vercel 部署为 Ready，生产登录脚本已核对包含预览域名提示。 |
 | 发布与照片保存 | 已实现；曾用合成资料验收；当前待复验 | 既有两条合成记录曾写入 Neon 和 Blob，用户要求保留。新认证修复后没有再提交记录；有效登录后的发布、图片读取与匹配仍需一次端到端确认。 |
 | 基础匹配 | 已实现；合成资料曾返回候选 | 采用表单属性和启发式排序。权重未经研究数据调优，分数不是配对概率。 |
 | 同分排序与评估一致性 | 已修订并部署；端到端排序行为未复验 | 线上和离线脚本改为以查询/候选 ID 的 SHA-256 组合键稳定打破同分，避免连续编号自然靠前。提交 `7189a55` 已推送，Vercel 显示生产 Ready；本轮确认生产健康、配置、公开列表和认证脚本均为 HTTP 200。 |
@@ -34,7 +34,7 @@
 - 网站：<https://lost-found-photo-matching-fyp.vercel.app/>
 - 最新代码提交：`ef48daf`，修复认证凭证接口；生产域名静态脚本已确认包含 `/token` 交换实现。
 - 2026-10-11 生产会话复核：`/my-records.html` 成功加载并显示当前验收账号的 2 条合成记录。没有新增、关闭或删除数据，也没有触发 DeepSeek。
-- 2026-10-11 来源错误诊断：用户当前打开的是 Vercel 唯一部署预览域名 `https://lost-found-photo-matching-fnviksel0.vercel.app/login.html`，而不是正式域名。针对正式来源的 Auth `/get-session` 只读探测返回 HTTP 200 且允许该正式来源；这不是注册成功证据。没有重复注册或调整 Neon trusted origins。登录页已加预览域名专用提示，待部署确认。
+- 2026-10-11 来源错误诊断与修复：用户截图来自 Vercel 部署预览域名 `https://lost-found-photo-matching-fnviksel0.vercel.app/login.html`，而正式网址是 `https://lost-found-photo-matching-fyp.vercel.app`。生产 Auth `/get-session` 对正式来源返回 HTTP 200 并允许该来源；这不是注册成功证据。没有重复提交注册或调整 Neon trusted origins。提交 `9472171` 已在 Vercel 显示 Ready，正式网址登录脚本 HTTP 200 且包含预览域名提示。
 - 以上不是完整验收。有效登录后的发帖、关闭/删除、跨账号隔离、AI 图片分析成功及自动过期清理仍未验证。
 
 ## 研究交付物索引
