@@ -65,6 +65,7 @@
 ## 数据文件与质量门槛
 
 - 使用 `records_template.csv`、`annotation_round_template.csv`、`pair_labels_template.csv` 和 `experiment_log_template.csv`；照片留在受限目录，CSV 仅保存匿名图像 ID。
+- 参与者说明和分项同意清单工作模板见 `PARTICIPANT_INFORMATION_AND_CONSENT_DRAFT.md`；须用学校正式格式替换、审查和批准后才可招募。DeepSeek 的处理地区与保留安排需在同意文本定稿前核实。
 - 导入评估前，运行现有 `scripts/validate_dataset.py` 做结构检查，并人工核对图像映射、授权、物品身份和候选池完整性。脚本通过不等于 ground truth 正确或伦理获批。
 - 在 development 固定 A/B/C 排序版本和统计方案；当前建议以 C 对 A 的 Hit Rate@5 差值作为唯一确认性主要比较，组件对比和 Recall@5、MRR@5 作为次要/探索性分析。该方案及区间/多重比较处理须在查看 test 结果前由导师确认。
 - 采集不足、标签不确定、API 失败、退出/删除和排除记录均纳入流程图/实验日志，不能只报告成功样本。

@@ -140,6 +140,7 @@ python scripts/analyze_ranking_errors.py --details work/evaluation/development_d
 - 匹配算法：[`outputs/MATCHING_ALGORITHM.md`](outputs/MATCHING_ALGORITHM.md)
 - 研究评估方案：[`outputs/RESEARCH_AND_EVALUATION_PLAN.md`](outputs/RESEARCH_AND_EVALUATION_PLAN.md)
 - 导师讨论与确认清单：[`outputs/SUPERVISOR_REVIEW_CHECKLIST.md`](outputs/SUPERVISOR_REVIEW_CHECKLIST.md)
+- 参与者说明与同意清单工作模板：[`outputs/PARTICIPANT_INFORMATION_AND_CONSENT_DRAFT.md`](outputs/PARTICIPANT_INFORMATION_AND_CONSENT_DRAFT.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
 - 双人标注一致性分析：[`scripts/analyze_annotation_agreement.py`](scripts/analyze_annotation_agreement.py)
 - 完整匿名配对表生成：[`scripts/generate_annotation_pairs.py`](scripts/generate_annotation_pairs.py)
