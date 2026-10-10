@@ -16,10 +16,12 @@ I found a directly related 2025 study combining SBERT text similarity, Siamese i
 
 A 2024 study also combines ResNet-50 image features and NLP text similarity for lost-item report matching ([paper PDF copy](https://pdfs.semanticscholar.org/5f6b/8c20f604763404a1f51be376d8a528e749bc.pdf); [DOI](https://doi.org/10.32629/jai.v7i2.1381)). It reports classification accuracy separately from threshold-based image/text matching correctness, without enough detail to treat those results as fixed-candidate Top-K retrieval metrics. This further narrows the proposed contribution: a controlled, item-disjoint ranking comparison, rather than combining image and text similarity itself.
 
+I have also checked public-data options. I have not confirmed an accessible public dataset with reliable same-physical-item lost/found labels and a complete fixed candidate pool suitable for the proposed main evaluation. LostNet's article reports a classification-oriented dataset and links a Figshare record, but the files do not document the required item-disjoint lost/found pair labels in the materials I could verify; the official small technical-description download returned HTTP 403 in my check ([PLOS article](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998); [Figshare record](https://doi.org/10.6084/m9.figshare.24826740.v2)). Stanford's CUTE dataset has object-identity groups across views/lighting and a CC BY 4.0 datasheet, but it is not a lost-and-found dataset and has no location/time/report fields; its published and repository image counts also differ ([dataset datasheet](https://github.com/s-tian/CUTE/blob/main/datasheet.md); [paper](https://papers.nips.cc/paper_files/paper/2023/file/803c6ab3d62346e004ef70211d2d15b8-Paper-Datasets_and_Benchmarks.pdf)). I would use CUTE only as an optional image-only stress test if you consider that useful, not as evidence for the main lost/found research question.
+
 Could we discuss:
 
 1. Whether the proposed primary comparison (C versus A on Hit Rate@5), with B-versus-A and C-versus-B as secondary component analyses, is suitable for the FYP; whether the item-disjoint Top-K design or the primary metric should change.
-2. Whether controlled photos of the same ordinary item, photographed under different views/backgrounds, are an acceptable data source; how to establish positive and difficult-negative pairs; and what sample size is feasible.
+2. Given that I have not found a suitable public main dataset, whether the preferred path is (a) a controlled dataset of consented ordinary objects after approval, (b) a revised image-only question using CUTE as a supplementary benchmark, or (c) another dataset or narrower research question; how positive/difficult-negative pairs and a feasible sample size should be established.
 3. Whether ethics review is required, which office/process applies, and what work is allowed before approval.
 4. Whether photos and descriptions may be sent to the DeepSeek V4.1 Flash API, and what separate participant consent, storage region, access controls, retention, and deletion process are required.
 5. Whether to include a usability study; whether secondary component analyses need a multiple-comparison adjustment if formal hypothesis tests are expected; and the proposal, ethics, and interim-report milestones.
@@ -36,4 +38,5 @@ Kind regards,
 
 - 填写姓名、课程和导师称呼；按导师偏好调整语言。
 - 可把 `RESEARCH_AND_EVALUATION_PLAN.md`、`DATASET_AND_ANNOTATION_GUIDE.md`、`ETHICS_AND_DATA_HANDLING_DRAFT.md` 和 `SUPERVISOR_REVIEW_CHECKLIST.md` 作为讨论材料；发送前检查其中没有真实参与者数据、秘密答案或密钥。
+- 最新的数据集适用性核查和限制见 `LITERATURE_SEARCH_LOG.md`；不要把 CUTE 描述成失物招领数据集，也不要把 LostNet 的分类准确率当成同实物 Top-K 指标。
 - 不要把邮件草稿误作已联系导师。收到回复后，把确认内容、负责人和日期记录在 `SUPERVISOR_REVIEW_CHECKLIST.md` 的讨论记录中；若学校要求正式伦理申请，以学校表格和书面批准为准。

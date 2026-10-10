@@ -165,6 +165,7 @@
 - 2026-10-11 新增 `outputs/THESIS_CHAPTER_4_DRAFT.md`，按当前仓库代码整理系统架构、接口、认证、存储、图像处理、匹配和 DeepSeek 同意控制；区分代码实现与线上验收。用户已决定暂不删除两条线上合成测试记录；草稿未读取或披露其内容。仍缺真实线上端到端验收、配置证据和学校隐私表述确认。
 - 2026-10-11 新增 `outputs/THESIS_CHAPTER_5_TEMPLATE.md`：依据当前评估脚本字段与方法方案整理数据流、双人标注一致性、A/B/C Top-K 指标、C−A 配对区间、错误复核、API 失败与费用报告骨架。所有结果均为空；获批数据和冻结 test 实验完成前不可填入论文结果。
 - 2026-10-11 只读生产状态复核：`/`、`/login`、`/my-records`、`/api/health`、`/api/config` 和 `/api/records` 返回 HTTP 200；未认证的 `/api/me/records` 返回 HTTP 401。这里只记录路由状态，没有检查响应中的记录内容，没有创建/修改/删除数据，也没有调用 DeepSeek。该状态检查不能证明已登录发布、AI 匹配或自动过期清理已端到端验收。
+- 2026-10-11 公开数据集适用性复核：LostNet 的 Figshare API 显示 CC BY 4.0 文件，但其论文主要描述分类、同实物 lost-found 配对/固定候选池标签未获确认；官方技术说明下载本次 HTTP 403。Stanford CUTE 有按实物组织的跨视角图片和 CC BY 4.0 数据说明，可考虑辅助图像压力测试，但没有失物/拾获表单元数据且图数清单有差异。道路场景 LostAndFound 数据不适配。已把数据源决策和三种导师选项同步到 `LITERATURE_SEARCH_LOG.md`、`DATASET_AND_ANNOTATION_GUIDE.md`、`SUPERVISOR_EMAIL_DRAFT.md` 和 `SUPERVISOR_REVIEW_CHECKLIST.md`。邮件仍未发送；未采集数据。
 - 2026-10-11 研究方案一致性修订：建议将完整视觉流程 C 对表单基线 A 的 Hit Rate@5 差值设为唯一确认性主要比较；A 对 B 与 B 对 C 用于解释组件增量，归为次要/探索性分析；Recall@5、MRR@5 为次要指标。已同步 Proposal、研究评估计划、第一章草稿、写作路线图、导师邮件/清单和采集协议。仍待导师确认；test 数据不得用于事后选择。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
