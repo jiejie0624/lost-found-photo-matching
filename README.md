@@ -94,6 +94,14 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 
 结果还会输出按 `item_group_id` 重抽样的配对 cluster bootstrap 95% 置信区间，比较方法间 Hit Rate@K、Recall@K 和 MRR@K 的差异。默认抽样 2,000 次；物品组较少时，区间仅作谨慎参考。
 
+可把逐候选排名转成逐查询的人工错配复核表。表中列出前 K 名、漏掉的已确认正例、前 K 名中的已确认负例和未判定候选；原因和复核备注由研究者填写，不会自动推断。可自行使用一致的原因分类，例如视觉特征、类别、地点/时间、照片质量、标注不确定或其他：
+
+```powershell
+python scripts/analyze_ranking_errors.py --details work/evaluation/development_details.csv --out work/evaluation/development_error_review.csv --k 5
+```
+
+正式 test 结果应单独生成复核表。未判定候选也可能出现在前 K 名，因此阅读清单时不能把它们当作确认错配。
+
 冻结方法后，在 test 数据和已固定的 test 照片分数上执行同样命令，将 `--split development` 改为 `--split test`，输出到单独的结果文件。不要根据 test 结果继续调整方法。
 
 调用 DeepSeek 的 token、时延、失败和费用按 [`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md) 记录。模板只含表头；不得用未经批准的真实照片或个人资料做测试调用。
@@ -117,6 +125,7 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 - 导师讨论与确认清单：[`outputs/SUPERVISOR_REVIEW_CHECKLIST.md`](outputs/SUPERVISOR_REVIEW_CHECKLIST.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
 - 双人标注一致性分析：[`scripts/analyze_annotation_agreement.py`](scripts/analyze_annotation_agreement.py)
+- 排名错配人工复核表：[`scripts/analyze_ranking_errors.py`](scripts/analyze_ranking_errors.py)
 - API 实验调用日志指南：[`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
 - 相关工作对照表：[`outputs/RELATED_WORK_MATRIX.md`](outputs/RELATED_WORK_MATRIX.md)
