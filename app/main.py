@@ -259,7 +259,12 @@ def analyze_image(image_bytes: bytes, title: str, category: str, description: st
             payload = json.loads(response.read().decode("utf-8"))
         content = get_text_content(payload)
         return json.loads(content), "analyzed"
-    except (HTTPError, URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError):
+    except HTTPError as exc:
+        # Log only the provider HTTP status; never log the request, image, or API key.
+        logger.warning("DeepSeek image analysis request failed with HTTP %s", exc.code)
+        return {}, "unavailable"
+    except (URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError) as exc:
+        logger.warning("DeepSeek image analysis failed (%s)", type(exc).__name__)
         return {}, "unavailable"
 
 
@@ -426,7 +431,11 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
             if isinstance(uncertainty, str) and uncertainty.strip():
                 candidate["match_evidence"].append(f"照片比较不确定：{uncertainty[:100]}")
         return sorted(candidates, key=lambda item: (-item["match_score"], item["id"]))
-    except (HTTPError, URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError, OSError):
+    except HTTPError as exc:
+        logger.warning("DeepSeek image comparison request failed with HTTP %s", exc.code)
+        return candidates
+    except (URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError, OSError) as exc:
+        logger.warning("DeepSeek image comparison failed (%s)", type(exc).__name__)
         return candidates
 
 
