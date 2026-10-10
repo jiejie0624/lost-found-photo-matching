@@ -1,4 +1,5 @@
 let clientPromise;
+let authBaseUrl;
 
 export async function getAuthClient() {
   if (!clientPromise) {
@@ -8,52 +9,36 @@ export async function getAuthClient() {
       if (!response.ok || !config.auth_configured || !config.auth_url) {
         throw new Error("登录服务尚未启用。请先在 Neon 控制台启用 Auth，再部署网站。");
       }
+      authBaseUrl = config.auth_url.replace(/\/+$/, "");
       const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
-      return createAuthClient(config.auth_url);
+      return createAuthClient(authBaseUrl);
     })();
   }
   return clientPromise;
 }
 
 export async function getAccessToken() {
-  const auth = await getAuthClient();
-  let result = null;
-  let tokenError = null;
+  await getAuthClient();
+  if (!authBaseUrl) throw new Error("登录服务尚未配置。");
+
+  // Neon Auth's browser session cookie is opaque; exchange it for the short-lived
+  // JWT used by this app's API. `credentials: include` sends the Auth cookie.
+  const response = await fetch(`${authBaseUrl}/token`, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  let payload = null;
   try {
-    // @neondatabase/auth exposes getJWTToken() for the API bearer JWT.
-    // The session's `token` is only an opaque session identifier.
-    if (typeof auth.getJWTToken === "function") {
-      result = await auth.getJWTToken();
-    }
-  } catch (error) {
-    tokenError = error instanceof Error ? error.message : String(error);
+    payload = await response.json();
+  } catch {
+    // Keep the error below limited to the HTTP status; never expose token payloads.
   }
-  if (result?.error) {
-    tokenError = result.error.message || "Neon Auth 暂时无法签发 API 凭证。";
+  const token = payload?.data?.token || payload?.token || payload?.data?.access_token;
+  if (response.ok && typeof token === "string" && token.split(".").length === 3) {
+    return token;
   }
-
-  const directToken = typeof result === "string"
-    ? result
-    : result?.data?.token || result?.data?.access_token || result?.token;
-  if (typeof directToken === "string" && directToken.split(".").length === 3) {
-    return directToken;
-  }
-
-  // Some SDK versions include the bearer JWT in getSession() instead.
-  try {
-    const sessionResult = await currentSession();
-    const sessionToken = sessionResult?.session?.access_token
-      || sessionResult?.session?.accessToken
-      || sessionResult?.access_token
-      || sessionResult?.accessToken;
-    if (typeof sessionToken === "string" && sessionToken.split(".").length === 3) {
-      return sessionToken;
-    }
-  } catch (error) {
-    tokenError ||= error instanceof Error ? error.message : String(error);
-  }
-
-  throw new Error(`获取登录凭证失败：${tokenError || "请重新登录后再试。"}`);
+  throw new Error(`获取登录凭证失败：Neon Auth HTTP ${response.status}。请重新登录后再试。`);
 }
 
 export async function authorizedFetch(url, options = {}) {
