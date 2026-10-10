@@ -8,10 +8,15 @@ const nameField = document.querySelector("#name-field");
 const switchCopy = document.querySelector("#switch-copy");
 const switchMode = document.querySelector("#switch-mode");
 let mode = "sign-in";
+const PRODUCTION_ORIGIN = "https://lost-found-photo-matching-fyp.vercel.app";
 
 function friendlyAuthError(error) {
   const message = error?.message || "暂时无法完成操作，请稍后再试。";
   if (/invalid origin/i.test(message)) {
+    const currentOrigin = window.location.origin;
+    if (currentOrigin !== PRODUCTION_ORIGIN && currentOrigin.endsWith(".vercel.app")) {
+      return `当前是 Vercel 预览网址，登录服务不接受这个来源。请打开正式网站：${PRODUCTION_ORIGIN}/login.html`;
+    }
     return "登录服务拒绝了当前网站来源。请检查 Vercel 使用的 Neon Auth 分支，并确认该分支的可信来源包含本网站域名。";
   }
   return message;
