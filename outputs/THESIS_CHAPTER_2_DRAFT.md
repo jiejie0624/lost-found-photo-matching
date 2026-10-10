@@ -24,6 +24,8 @@ Prawira 与 Saputri 将 ResNet-50 图片特征与自然语言文本相似度用�
 
 IEEE IRCE 2025 的摘要描述 YOLO、LLM 与 CLIP 级联；IEEE MEDCOM 2025 摘要描述面向城市失物服务的系统；IEEE ICHORA 2026 摘要描述类别受限 FAISS 检索后以 CLIP 重排及安全监测。这些摘要表明，当前研究也在采用级联和多模态检索。[IRCE 摘要](https://ieeexplore.ieee.org/document/11203217/) · [MEDCOM 摘要](https://ieeexplore.ieee.org/document/11405255/) · [ICHORA DOI 记录](https://doi.org/10.1109/ICHORA69329.2026.11537024)。由于当前仅核实公开摘要或书目信息，样本、拆分、消融和检索指标仍属未知，不能据摘要推断其方法效果或本研究的创新性。
 
+Alruzuq 等人（2026）进一步在 Riyadh Metro 的智能数字孪生原型中加入乘客与员工使用的 AI 失物招领流程。[出版方页面](https://www.mdpi.com/2071-1050/18/15/7688)说明系统使用 AI 匹配乘客的失物报告与员工登记的拾获物，并用 OTP 做确认后的交接；失物模块报告了六个代表性情景，称示例预期和实际判定一致。该页面没有展示有身份真值的配对数据集、固定候选池或 Top-K 检索指标，因此这些情景应视作功能示例，不能当作受控检索性能验证。它也意味着“此前没有完整 AI 失物服务”的主张不成立。当前核实来自出版方页面及可检索正文片段，正式引用前仍需逐节核查全文。
+
 ## 2.3 同一实物的视觉相似性
 
 通用实例识别研究强调，视觉系统需要从光照、姿态、背景和拍摄条件的变化中识别物品本身的稳定特征。Kotar 等人提出 CUTE 数据集，论文称其包含 18,000 张、覆盖 180 件物品的照片，并比较预训练特征和前景处理方法。[NeurIPS 论文摘要](https://proceedings.neurips.cc/paper_files/paper/2023/hash/803c6ab3d62346e004ef70211d2d15b8-Abstract-Datasets_and_Benchmarks.html)；维护者数据说明则称共有 10,000 张图像，身份关系隐含在目录结构中，并说明整个数据集意图作为测试集、许可为 CC BY 4.0。[CUTE 数据说明](https://github.com/s-tian/CUTE/blob/main/datasheet.md)。
@@ -46,7 +48,7 @@ API 系统还应报告运行耗时、失败率、模型 API 名称、提示词�
 
 ## 2.5 综合讨论与暂定研究问题
 
-现有证据排除了若干过宽的创新主张：失物系统使用图片检索、图片与文字/地点/时间融合、视觉 API 分析、多阶段图像检索以及同实物照片排序都已有相关工作。不同论文的任务、数据和划分差异很大，当前不能把某个分类准确率或摘要级结果与本项目的 Top-K 指标直接比较。
+现有证据排除了若干过宽的创新主张：失物系统使用图片检索、图片与文字/地点/时间融合、视觉 API 分析、多阶段图像检索、同实物照片排序，以及端到端 AI 失物招领服务都已有相关工作。Alruzuq 等人的智能交通原型包含六个失物示例，但没有展示受控候选排名评估；不同论文的任务、数据和划分差异很大，不能把分类准确率或功能示例与本项目的 Top-K 指标直接比较。
 
 可继续调查的较窄问题是：在可靠的同一实物标签、困难负例和按身份隔离的固定候选池上，完整的 DeepSeek 视觉流程相较表单基线是否改善 Hit Rate@5；属性抽取和直接候选照片比较分别贡献多少；这种变化伴随多少 API 延迟、失败和费用。现有阅读尚未证明没有研究做过这一公平比较，因此该问题只能作为候选研究方向，必须通过学院认可的数据库系统检索和导师讨论后再作为正式研究空缺。
 
@@ -62,3 +64,4 @@ API 系统还应报告运行耗时、失败率、模型 API 名称、提示词�
 6. Kotar, K., Tian, S., Yu, H.-X., Yamins, D. L. K., & Wu, J. (2023). “Are These the Same Apple? Comparing Images Based on Object Intrinsics.” *NeurIPS 2023 Datasets and Benchmarks*. [论文](https://proceedings.neurips.cc/paper_files/paper/2023/file/803c6ab3d62346e004ef70211d2d15b8-Paper-Datasets_and_Benchmarks.pdf)
 7. Radenović, F., Iscen, A., Tolias, G., Avrithis, Y., & Chum, O. (2018). “Revisiting Oxford and Paris: Large-Scale Image Retrieval Benchmarking.” *CVPR 2018*, 5706–5715. [CVF](https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html)
 8. Matthé, M., et al. (2017). “Comparison of photo-matching algorithms commonly used for photographic capture–recapture studies.” *Ecology and Evolution*. [全文](https://pmc.ncbi.nlm.nih.gov/articles/PMC5552938/)
+9. Alruzuq, J., Alsuwayyid, M., Alajmi, H., Alfayez, H., & Alabduljabbar, R. (2026). “An AI-Powered Digital Twin Prototype for Predictive Crowd Management and Sustainable Operations in the Riyadh Metro.” *Sustainability, 18*(15), 7688. [出版方全文页面](https://www.mdpi.com/2071-1050/18/15/7688) · [DOI](https://doi.org/10.3390/su18157688)

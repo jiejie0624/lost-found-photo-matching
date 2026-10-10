@@ -73,6 +73,8 @@ Voorhees, E. M. (2001). “The TREC-10 Question Answering Track Report.” 见 N
 
 另有 IEEE MEDCOM 2025 论文 *An AI-Driven Intelligent Communication Framework for Lost-and-Found Services in Smart Cities*（[DOI](https://doi.org/10.1109/MEDCOM67532.2025.11405255)）。出版方摘要提到 Android 前端、Flask 后端、MongoDB、图片与文字登记，以及 dlib 人脸识别库；摘要称初步实验改善找回时间、可扩展性和用户满意度，但没有样本数或可核实的检索指标。摘要没有说明人脸识别具体用于物品配对的哪一步，且 IEEE 全文页面本次访问触发 JavaScript 验证，尚未读全文。应将它视为直接相关的系统工作线索，而不是其照片配对效果或本项目研究空缺的证据。
 
+2026 年 Alruzuq 等人在 Riyadh Metro 智能数字孪生原型中也集成乘客/员工使用的 AI Lost & Found 流程（[MDPI 出版方页面](https://www.mdpi.com/2071-1050/18/15/7688)；*Sustainability*, 18(15), 7688；[DOI](https://doi.org/10.3390/su18157688)）。系统将乘客失物报告与员工登记拾获物交叉匹配，并在员工确认后用 OTP 处理领取。论文的失物模块只展示 6 个代表性情景，并称这些展示的预期与实际判定一致；没有说明固定候选池、同实物标签数据集、身份隔离测试或 Top-K 检索指标。故它进一步排除“端到端 AI 失物服务无人实现”的宽泛主张，但六个示例不能证明排序效果。当前据出版方页面/检索正文片段整理，需正式引用前核对全文。
+
 ### 7.1 直接相关：SBERT、Siamese 图片模型与时空融合（2025）
 
 Dhanawardhana, B. M. P., Chalana, K. A. D., Abeywardena, I. D. S. P., Lankasena, N., & Paul, M. H. (2025). “Enhancing Lost and Found Systems with Multi-Modal Deep Learning: Integrating SBERT and Siamese Networks for Improved Semantic Matching.” *Advances in Artificial Intelligence and Machine Learning, 5*(2), 3736–3754. [出版方全文 PDF](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf) · [DOI](https://doi.org/10.54364/AAIML.2025.52212)
@@ -133,7 +135,7 @@ Kotar, K., Tian, S., Yu, H.-X., Yamins, D. L. K., & Wu, J. (2023). “Are These 
 
 ## 当前研究问题的文献定位（暂定）
 
-现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索、YOLO/LLM/CLIP 与不确定性感知级联，以及图片/文字登记的端到端智能失物框架。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
+现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索、YOLO/LLM/CLIP 与不确定性感知级联、SBERT/Siamese 时空融合，以及智能交通数字孪生中的端到端 AI 失物服务。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”“首次用视觉语言模型做失物匹配”或“首个完整 AI 失物服务”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
 
 > 在相同查询、候选记录和人工配对标签下，加入照片提取的结构化属性，或对初筛候选做照片直接比较，是否比只使用用户填写的类别、地点、时间和说明，更常把正确的失物/拾获记录排入前 5 名？
 
@@ -168,6 +170,7 @@ Kotar, K., Tian, S., Yu, H.-X., Yamins, D. L. K., & Wu, J. (2023). “Are These 
 - IEEE IRCE (2025), YOLO-LLM-CLIP: https://doi.org/10.1109/IRCE66030.2025.11203217
 - IEEE MEDCOM (2025), AI-Driven Intelligent Communication Framework: https://doi.org/10.1109/MEDCOM67532.2025.11405255
 - Weerakoon et al. (2026), IEEE ICHORA: https://doi.org/10.1109/ICHORA69329.2026.11537024
+- Alruzuq et al. (2026), Riyadh Metro digital twin with AI Lost & Found: https://doi.org/10.3390/su18157688
 - Jeong et al. (2018), Journal of the Korea Convergence Security Association, DBpia record: https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974
 - Hirose, Hara, & Saito (2022), IEICE Technical Report: https://ken.ieice.org/ken/paper/20220309ICJm/eng/
 - Liu et al. (2025), IDMR, arXiv:2504.00954: https://arxiv.org/abs/2504.00954

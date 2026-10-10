@@ -1,6 +1,6 @@
 # 文献检索记录（起步版）
 
-> 状态：定向网络检索记录，不是系统综述，也不证明研究空缺。检索日期：2026-10-10。检索者：FYP 学生。使用一般网络搜索发现论文，再打开出版社、会议、期刊或 arXiv 原始页面核对可见书目信息/摘要；没有系统检索 Scopus、Web of Science、ACM DL、IEEE Xplore 全库或学校订阅数据库，没有执行正式去重。
+> 状态：定向网络检索记录，不是系统综述，也不证明研究空缺。检索与更新日期：2026-10-10 至 2026-10-11。检索者：FYP 学生。使用一般网络搜索发现论文，再打开出版社、会议、期刊或 arXiv 原始页面核对可见书目信息/摘要；没有系统检索 Scopus、Web of Science、ACM DL、IEEE Xplore 全库或学校订阅数据库，没有执行正式去重。
 
 ## 已执行的定向检索
 
@@ -24,6 +24,7 @@
 | `"Lost and Found Registration and Inquiry Management System" "19" "25" 2018 pdf` / `"Automatic Image Classification and Ranking System" "Lost and Found" Jeong` | 找到 DBpia 期刊页面，确认 2018 年、作者/期刊页码和摘要，全文访问受限。 | 通过学校图书馆取得全文；补充层级分类数据、排名定义、可用性样本与结果。 |
 | `photo matching algorithms top-k known identity ranking evaluation dataset effects` | 找到 Matthé et al. (2017) 同一实例照片匹配算法比较研究，已读 PMC 开放全文。 | 该研究比较四种算法和多个两栖动物照片库，以已知配对 rank-CDF 报告 Top-1/Top-10 识别率；不同算法/数据库的 Top-10 结果从 22.6% 到 100%。可支持“必须在目标数据上评估”的方法论理由，但动物纹理识别与普通失物照片不同，不能移作本 FYP 基线、性能预期或直接领域先例。 |
 | `site:aissmsioitesci.edu.in 2026 ESCI "Automated Lost and Found Retrieval System"` | 会议主办方的 2026 ESCI 日程列出一篇同名报告。 | 只把它记为待查全文的最新领域线索；日程只能证明报告题名/安排，不能核实技术、数据、指标或研究贡献。当前不据第三方摘要推断方法，也不据此改变研究空缺判断。 |
+| `site:mdpi.com/2071-1050/18/15/7688 lost and found matching evaluation` | 发现 Alruzuq et al. (2026) 的 Riyadh Metro AI digital-twin 原型，包含乘客与员工使用的 AI 辅助 Lost & Found 流程。 | 核对 MDPI 出版方页面和可检索到的论文内容：论文展示 6 个代表性配对情景，并称这些示例的预期/实际判定一致；未找到固定查询候选池、同实物标签集、身份隔离划分或 Hit Rate@K/MRR 等检索结果。它是相关系统原型证据，不是受控检索性能证据，也进一步排除“已经没有端到端 AI 失物服务”的宽泛主张。页面部分区域本次无法直接加载，正式引用前仍应下载/逐节核全文。 [MDPI](https://www.mdpi.com/2071-1050/18/15/7688) · [DOI](https://doi.org/10.3390/su18157688) |
 
 ## 当前筛选出的核心来源
 
@@ -56,9 +57,9 @@ Stanford CUTE ([官方代码与数据说明](https://github.com/s-tian/CUTE)、[
 
 ## 暂定结论与检索空缺
 
-已查到多种失物系统采用了图像分类、加权排名、感知哈希、ResNet 欧氏距离加文本余弦相似度、视觉 API、YOLO/LLM/CLIP 级联，以及 SBERT/Siamese 的文字、图片、地点和时间融合；因此不能声称“首个失物照片配对系统”“首次把视觉与元数据结合”或“首次做失物多模态融合”。Prawira & Saputri (2024) 分别报告验证集分类准确率和阈值匹配正确率，进一步显示这些数字不可与 Top-K 检索指标混用。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、API 提取的结构化视觉属性和照片直接重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
+已查到多种失物系统采用了图像分类、加权排名、感知哈希、ResNet 欧氏距离加文本余弦相似度、视觉 API、YOLO/LLM/CLIP 级联、SBERT/Siamese 的文字/图片/地点/时间融合，以及包含 Lost & Found 流程的智能交通原型；因此不能声称“首个失物照片配对系统”“首次把视觉与元数据结合”或“首次做端到端 AI 失物服务”。Prawira & Saputri (2024) 的分类准确率和阈值匹配结果不可与 Top-K 检索指标混用；Alruzuq et al. (2026) 报告的 6 个代表性情景也不是固定候选池检索基准。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、API 提取的结构化视觉属性和照片直接重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
 
-本轮读到 Dhanawardhana et al. (2025) 的多模态融合全文，并发现其使用合成文字、随机生成的时间相似特征和 170 条融合样本，且分类结果报告不一致；另有 IEEE MEDCOM 2025 服务框架和 IEEE ICHORA 2026 自适应检索系统。因此“多模态失物检索/融合方法缺失”不能作为研究空缺。可检验的窄问题仍是：是否有研究在同一人工配对集合、同一候选池上对 A 表单、B API 提取的结构化视觉属性、C 候选照片比较做受控增量排序，并按实物身份隔离、报告 Top-K 指标及运行成本。现有证据尚不足以回答“没有”，必须继续系统检索并请导师确认。
+本轮读到 Dhanawardhana et al. (2025) 的多模态融合全文，且核对 Alruzuq et al. (2026) 的智能交通原型摘要和可检索页面内容：前者使用合成文字、随机时间相似特征和 170 条融合样本且报告分类；后者有 AI 失物流程及 6 个示例情景，但没有受控候选排序指标。因此“多模态失物检索/融合方法缺失”或“无人实现端到端 AI 失物服务”均不能作为研究空缺。可检验的窄问题仍是：是否有研究在同一人工配对集合、同一候选池上对 A 表单、B API 提取的结构化视觉属性、C 候选照片比较做受控增量排序，并按实物身份隔离、报告 Top-K 指标及运行成本。现有证据尚不足以回答“没有”，必须继续系统检索并请导师确认。
 
 这一点目前只是**待查的问题**，并非已证明的空白。系统检索至少还需要：
 
@@ -82,4 +83,5 @@ Stanford CUTE ([官方代码与数据说明](https://github.com/s-tian/CUTE)、[
 - [IEEE MEDCOM (2025), AI-Driven Intelligent Communication Framework](https://ieeexplore.ieee.org/document/11405255/)
 - [Dhanawardhana et al. (2025), SBERT + Siamese fusion, publisher full text](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf)
 - [Weerakoon et al. (2026), IEEE ICHORA](https://doi.org/10.1109/ICHORA69329.2026.11537024)
+- [Alruzuq et al. (2026), AI-powered Riyadh Metro digital twin and Lost & Found, MDPI](https://www.mdpi.com/2071-1050/18/15/7688) · [DOI](https://doi.org/10.3390/su18157688)
 - [IDMR, arXiv:2504.00954](https://arxiv.org/abs/2504.00954)
