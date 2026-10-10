@@ -1,0 +1,1 @@
+run_id,timestamp_utc,dataset_version,split,query_record_id,item_group_id,method,request_type,model_id,prompt_version,image_preprocess_version,image_count,input_tokens,cache_hit_input_tokens,output_tokens,latency_ms,http_status,retry_count,outcome,estimated_cost_usd,pricing_checked_date_utc,notes

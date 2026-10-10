@@ -118,13 +118,13 @@
 - Neon Auth 注册/登录，Neon PostgreSQL 保存记录，Vercel Blob 保存图片；登录用户可管理自己发布的记录。
 - 记录 90 天期限和每日 Vercel Cron 清理。未带密钥访问清理端点得到 401，确认其密钥校验已开启。
 - GitHub `main` 已与本地 `main` 同步。当前线上网站为 `https://lost-found-photo-matching-fyp.vercel.app/`。
-- 2026-10-10 对线上首页、登录页、“我的记录”页、Auth 配置状态和健康接口进行只读检查，均可访问且 Auth 已配置。此检查没有验证真实注册、发布、AI 调用、匹配、删除完整流程。
+- 2026-10-10 对线上首页、`/login`、`/my-records`、静态登录脚本、静态记录脚本、Auth 配置、健康接口和公开记录接口进行只读检查，均返回 HTTP 200；已登录的“我的记录”页正常显示，当前账号没有记录。该检查没有验证注册/登录提交、发布、AI 调用、匹配、关闭/删除或过期清理完整流程，也没有发送 DeepSeek 请求。
 
 ### 研究材料与工具
 
 - 已有 Proposal、文献综述起步笔记、相关工作矩阵、数据/标注指南、算法和系统架构说明；这些是草案，不是导师批准的最终方案。2026-10-10 已根据 PLOS ONE 与 Springer 出版方全文/页面修正文献笔记：LostNet 同时有类别筛选和感知哈希候选排序；Springer 章节正式引用年份为 2026（2025 年首次在线）；当前研究空缺仍未通过系统检索证实。
 - 离线评估工具支持表单基线、视觉属性方法，以及导入 `photo_scores.csv` 的候选照片比较方法；会输出按物品组重抽样的配对 cluster bootstrap 置信区间。评估尚未用真实研究数据运行。
-- `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
+- `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
 ### 尚待完成（不能代替学校/导师确认）
 

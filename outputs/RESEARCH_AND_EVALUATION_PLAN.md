@@ -40,6 +40,8 @@
 
 当前离线评估脚本按查询计算 Hit Rate@K、Recall@K 和 MRR@K，再对查询取宏平均；默认只使用高置信度的 `0`/`1` 候选，跳过 `uncertain`，也可降低置信度门槛做敏感性分析。提供照片比较分数时，脚本会额外评估第三种方法，并导出逐候选名次、参考分、标签和匹配依据，以便分析错配。评估工具的存在不代表已有数据或实验结果。
 
+模型调用耗时、返回 token、失败和费用的逐次记录模板见 [`EXPERIMENT_LOG_GUIDE.md`](EXPERIMENT_LOG_GUIDE.md) 与 [`experiment_log_template.csv`](experiment_log_template.csv)。模板目前为空；未获学校批准前不使用真实研究照片或参与者资料填表。
+
 ## 执行步骤
 
 1. 与导师确定研究问题、伦理要求、数据规模和参与者安排。

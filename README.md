@@ -58,6 +58,7 @@ New-Item -ItemType Directory -Force work/evaluation
 Copy-Item outputs/records_template.csv work/evaluation/records.csv
 Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
 Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
+Copy-Item outputs/experiment_log_template.csv work/evaluation/experiment_log.csv
 ```
 
 不提供照片分数时，脚本比较表单基线和加入视觉属性的方法：
@@ -78,6 +79,8 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 
 冻结方法后，在 test 数据和已固定的 test 照片分数上执行同样命令，将 `--split development` 改为 `--split test`，输出到单独的结果文件。不要根据 test 结果继续调整方法。
 
+调用 DeepSeek 的 token、时延、失败和费用按 [`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md) 记录。模板只含表头；不得用未经批准的真实照片或个人资料做测试调用。
+
 ## FYP 尚未完成的部分
 
 - 研究问题、数据来源、样本规模和评估范围需由导师确认；真实图片收集前需确认学校伦理与同意流程。
@@ -95,6 +98,7 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 - 匹配算法：[`outputs/MATCHING_ALGORITHM.md`](outputs/MATCHING_ALGORITHM.md)
 - 研究评估方案：[`outputs/RESEARCH_AND_EVALUATION_PLAN.md`](outputs/RESEARCH_AND_EVALUATION_PLAN.md)
 - 数据集与标注指南：[`outputs/DATASET_AND_ANNOTATION_GUIDE.md`](outputs/DATASET_AND_ANNOTATION_GUIDE.md)
+- API 实验调用日志指南：[`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
 - 相关工作对照表：[`outputs/RELATED_WORK_MATRIX.md`](outputs/RELATED_WORK_MATRIX.md)
 - 公开演示部署指南：[`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)
