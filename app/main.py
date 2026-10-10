@@ -218,6 +218,31 @@ def get_text_content(response: dict[str, Any]) -> str:
     return response["choices"][0]["message"]["content"]
 
 
+def log_deepseek_http_error(operation: str, exc: HTTPError) -> None:
+    # Provider messages may echo request details. Log only allowlisted metadata,
+    # and never the message body, image, prompt, or API key.
+    metadata = {"type": "-", "code": "-", "param": "-"}
+    try:
+        payload = json.loads(exc.read(4096).decode("utf-8", errors="replace"))
+        error = payload.get("error", {}) if isinstance(payload, dict) else {}
+        if isinstance(error, dict):
+            for key in metadata:
+                value = error.get(key)
+                if value is not None:
+                    safe_value = re.sub(r"[^A-Za-z0-9_.-]", "_", str(value)[:64])
+                    metadata[key] = safe_value or "-"
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, AttributeError):
+        pass
+    logger.warning(
+        "DeepSeek %s request failed: HTTP %s, error_type=%s, error_code=%s, error_param=%s",
+        operation,
+        exc.code,
+        metadata["type"],
+        metadata["code"],
+        metadata["param"],
+    )
+
+
 def analyze_image(image_bytes: bytes, title: str, category: str, description: str) -> tuple[dict[str, Any], str]:
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     if not api_key:
@@ -260,8 +285,7 @@ def analyze_image(image_bytes: bytes, title: str, category: str, description: st
         content = get_text_content(payload)
         return json.loads(content), "analyzed"
     except HTTPError as exc:
-        # Log only the provider HTTP status; never log the request, image, or API key.
-        logger.warning("DeepSeek image analysis request failed with HTTP %s", exc.code)
+        log_deepseek_http_error("image analysis", exc)
         return {}, "unavailable"
     except (URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError) as exc:
         logger.warning("DeepSeek image analysis failed (%s)", type(exc).__name__)
@@ -432,7 +456,7 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
                 candidate["match_evidence"].append(f"照片比较不确定：{uncertainty[:100]}")
         return sorted(candidates, key=lambda item: (-item["match_score"], item["id"]))
     except HTTPError as exc:
-        logger.warning("DeepSeek image comparison request failed with HTTP %s", exc.code)
+        log_deepseek_http_error("image comparison", exc)
         return candidates
     except (URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, UnicodeDecodeError, OSError) as exc:
         logger.warning("DeepSeek image comparison failed (%s)", type(exc).__name__)
