@@ -154,7 +154,7 @@
 - 2026-10-10 已取得并阅读 Dhanawardhana et al. (2025) 的出版方全文 *Enhancing Lost and Found Systems with Multi-Modal Deep Learning*（DOI `10.54364/AAIML.2025.52212`）。该文已实现 SBERT + Siamese 图片相似度 + 地点/时间融合 PWA，直接排除“多模态融合本身新颖”的表述；全文同时报告合成文字、170 条融合记录/随机模拟时间，以及彼此不一致的分类结果数字。其任务为配对分类，不是相同候选池下的 Top-K 排序。Proposal/导师草稿已收窄为 DeepSeek API 视觉属性和照片比较的 item-disjoint Top-K 增量评估候选，但新颖性仍待系统检索和导师确认。
 - 新增空白 API 实验调用日志模板、导师讨论清单及伦理/数据处理草案，列出研究范围、数据/伦理、第三方 API、样本设计、标注和评估的待确认事项。它们用于准备研究与沟通，不代表已有调用记录、导师答复或学校审批。
 - 新增 `outputs/CONTROLLED_DATA_COLLECTION_PROTOCOL_DRAFT.md`：把同一件实物的独立拍摄、困难负例、盲标、按贡献者/物品防泄漏、AI 单独授权和退出删除整理成可操作流程。该方案仍需导师/学校审批，尚未招募或采集。
-- 新增 `scripts/generate_annotation_pairs.py`，按 development/test 分组为所有 lost 查询和同 split found 候选生成匿名双人标注表；空标签由人填写，默认限制 50,000 行且拒绝覆盖。记录模板增加可选匿名 `contributor_group_id`；数据预检与评估入口会拒绝已知贡献者跨 split，预检对缺少贡献者分组的记录发出提醒。尚未用真实数据运行。
+- 新增 `scripts/generate_annotation_pairs.py`，按 development/test 分组为所有 lost 查询和同 split found 候选生成匿名双人标注表；空标签由人填写，默认限制 50,000 行且拒绝覆盖。记录模板要求保留 `contributor_group_id` 列，字段值可空；数据预检与评估入口会拒绝已知贡献者跨 split，并对空白值提示/计数，无法检查对应泄漏。尚未用真实数据运行。
 - `SUPERVISOR_EMAIL_DRAFT.md` 含英文讨论邮件草稿；已补入 2026 IEEE 失物检索相关工作及“全篇尚未阅读、研究空缺未证实”的限制，并在导师清单中新增研究空缺确认项。邮件没有发送，也没有导师或学校回复。
 - 离线评估工具支持表单基线、视觉属性方法，以及导入 `photo_scores.csv` 的候选照片比较方法；视觉属性/照片比较评估会强制检查相关记录的 `external_ai_consent=yes`。评估入口也会拒绝与 `item_group_id` 实物身份分组矛盾的 0/1 配对标签，避免绕过预检时产出自相矛盾的指标。评估会输出按物品组重抽样的配对 cluster bootstrap 置信区间；不确定和低置信度候选仍留在排名中，但只有达到阈值的 0/1 标签计入指标；每个查询必须标注同一 split 中的全部拾获候选。另有只读 CSV 数据预检脚本和双人标注一致性分析工具；前者检查字段、时间、授权标记、物品分组、配对标签结构和候选覆盖，后者报告原始一致率、混淆表与 Cohen's kappa。二者都不能替代人工核验或伦理审批。评估尚未用真实研究数据运行。
 - 新增 `scripts/analyze_ranking_errors.py`，可将逐候选排名详情整理为逐查询人工复核表，列出漏掉的确认正例、前 K 名的确认负例和未判定候选；错配原因仍需研究者人工填写。尚未用真实数据生成或核对复核表。
