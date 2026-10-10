@@ -9,11 +9,14 @@
 | Zhou et al. (2024), **LostNet**，PLOS ONE | MobileNetV2 与 CBAM 做失物类别识别；系统先按预测类别取候选照片，再用感知哈希按相似度排序。 | 论文报告 10 类、10,499 张照片和 70%/30% 训练/验证划分；原文对数据增强与该总数的关系表述不清。报告分类准确率最高 96.8%。 | 最直接的领域工作，证明已有失物图像分类与照片候选检索系统。 | 不能把它简化成“只有分类”，但 96.8% 是分类结果，不等同本 FYP 的 Top-K 配对排序指标。已核对段落描述训练/验证划分，独立测试集与身份隔离方式仍需进一步核查。 [PLOS ONE 全文](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998) |
 | Das et al. (2026), **Building a Smarter Lost and Found Systems: Leveraging TensorFlow.js for Image-Based Item Matching**，Springer 会议论文 | 用 TensorFlow.js 和预训练 MobileNet 生成图像嵌入，以欧氏距离检索，并可按阈值过滤。 | 公开摘要没有可核实的数据量和具体排序数字。Springer 正式引用年份为 2026；首次在线日期为 2025-10-02；论文集系列为 ICDMIS 2024。 | 与本 FYP 同属查询照片检索；提供客户端嵌入检索的路线参照。 | 目前只读到出版方摘要，不能据此断言优于文本基线。需取得全文核实配对定义、候选集合、数据划分和指标。 [Springer 页面](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32) |
 | **Cascaded YOLO-LLM-CLIP Model for Robust Multimodal Retrieval in Intelligent Lost & Found System** (2025)，IEEE IRCE | 摘要提出级联 YOLOv12、LLM 与 CLIP：检测小物体、改善文字描述，再做跨模态检索。 | IEEE 页面摘要称方法针对杂乱背景并采用模块融合；摘要未给出可核实的数据量、数字指标和消融结果。 | 说明近期也有多模态 lost-and-found 检索研究；因此不能把“使用视觉语言模型做失物匹配”作为新颖性。 | 当前依据 IEEE 摘要；需全文核实数据、基线、评估协议和数字结果。 [IEEE Xplore 页面](https://ieeexplore.ieee.org/document/11203217/) |
+| Jeong et al. (2018), **Lost and Found Registration and Inquiry Management System…**，韩国融合安全学会期刊 | 层级深度学习图像分类与加权排名；摘要称从照片识别类别、品牌和标签。 | DBpia 出版方页面可核实期刊、作者、卷期和摘要；可读摘要未列配对排序指标。 | 证明图像分类、品牌/标签提取与排名用于失物系统已有先例。 | 目前只有摘要；取全文核查数据来源、指标和基线。[DBpia](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974) |
+| Hirose, Hara, & Saito (2022), **Proposal and Evaluation of a Lost Property Registration and Retrieval System in Which Only Images Are Registered**，IEICE | 拾获者只提交图片；使用 Google Cloud Vision API 分析，再排序失物候选；报告做过可用性研究。 | IEICE 官方摘要和技术报告书目信息；可读摘要未提供 Top-K 配对数值、标签细节或候选规模。 | 与减少手动描述、用视觉 API 检索失物直接相关，避免把此类功能写成首创。 | 摘要是日文论文的英文概要；需取得全文了解可用性设计与检索评估。[IEICE](https://ken.ieice.org/ken/paper/20220309ICJm/eng/) |
+| Liu et al. (2025), **IDMR: Towards Instance-Driven Precise Visual Correspondence in Multimodal Retrieval**，arXiv | 定义跨场景的同一实例多模态检索任务，区别类别/全局相似度；提出基于真实追踪与第一人称视频的 IDMR-bench。 | 预印本摘要称含 557K 合成训练样本，测试跨域实例级检索；不是失物数据集。 | 支持把“同一件实物”作为正例定义，并把同类别不同实物设为困难负例。 | 通用检索论文，不能证明具体 API 或失物系统在此任务上有效；预印本状态。[arXiv](https://arxiv.org/abs/2504.00954) |
 | Radenović et al. (2018), **Revisiting Oxford and Paris: Large-Scale Image Retrieval Benchmarking**，CVPR | 研究图像检索评估基准，更新标注，设置不同难度协议并加入困难干扰图像。 | 论文重点是基准、标注和检索评估设计。 | 虽非失物领域，但可借鉴评估实验：可靠标签、固定测试集和困难负例对可信比较很重要。 | Oxford/Paris 是地点图像检索任务，不能直接拿来代表日常物品照片。 [CVF 论文页](https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html) |
 
 ## 比较后形成的 FYP 设计
 
-建议把本科研究范围定在**公平评估不同检索排序方法，而非重新训练大型视觉模型**：
+建议把本科研究范围定在**公平评估不同检索排序方法，而非重新训练大型视觉模型**，并把类别识别与同一实物身份区分开：
 
 1. 建立经过人工确认的查询—候选配对集合，包含真正配对、确认不匹配以及标为不确定的记录。
 2. **基线 A：** 用户表单类别、描述、地点和时间排序。
@@ -21,7 +24,7 @@
 4. 对同一批查询与候选记录比较 Hit Rate@5、Recall@5、MRR@5，并记录响应时间、失败率和实际 API 用量。
 5. 以物品身份划分开发集和测试集；不让同一物品或近重复照片同时进入两边。
 
-本项目的研究重点暂定为：在相同且人工确认的候选配对上，比较表单基线、加入结构化视觉属性、以及初筛后进行照片直接比较这三种方法。已有工作已经把文字搜索、GIS 过滤、传统局部特征和颜色验证用于失物检索；LostNet 使用类别筛选加感知哈希，另有 MobileNet 嵌入检索及 YOLO/LLM/CLIP 级联方案。因此不能声称“首次把照片与地点/时间结合”或“此前没有失物照片匹配”。**目前没有足够证据确认研究空缺**；需查全文并系统检索，重点核实公开工作是否在同一人工配对集合上比较表单基线、结构化视觉属性与照片直接比较，是否按物品身份隔离测试集，以及是否报告 Top-K 排序指标。这个候选空缺只是一项待验证的比较设计，不是已证实的新颖性。
+本项目的研究重点暂定为：在相同且人工确认的候选配对上，比较表单基线、加入结构化视觉属性、以及初筛后进行照片直接比较这三种方法。已有工作已涵盖文字/GIS 与局部特征、图像分类与加权排名、视觉 API 失物检索、类别筛选与感知哈希、MobileNet 嵌入及 YOLO/LLM/CLIP 级联。因此不能声称“首次把照片与地点/时间结合”或“此前没有失物照片匹配”。**目前没有足够证据确认研究空缺**；需查全文并系统检索，重点核实公开工作是否在同一人工配对集合上比较表单基线、结构化视觉属性与照片直接比较，是否按物品身份隔离测试集，以及是否报告 Top-K 排序指标。这个候选空缺只是一项待验证的比较设计，不是已证实的新颖性。
 
 ## 后续阅读顺序
 

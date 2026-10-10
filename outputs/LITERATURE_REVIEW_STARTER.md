@@ -69,13 +69,37 @@ Voorhees, E. M. (2001). “The TREC-10 Question Answering Track Report.” 见 N
 - **研究做法：** IEEE 摘要描述 YOLOv12、LLM 与 CLIP 的级联，用于小目标、文字描述增强和跨模态检索。
 - **阅读限制：** 当前只核实摘要；未取得足够的样本、基线、划分、消融或 Top-K 数字。不能据摘要判断效果大小或与本项目比较。
 
+### 8. 直接相关：图像分类与加权排名（2018）
+
+Jeong, H. et al. (2018). “Lost and Found Registration and Inquiry Management System for User-dependent Interface using Automatic Image Classification and Ranking System based on Deep Learning.” *Journal of the Korea Convergence Security Association, 18*(4), 19–25. [DBpia 出版方页面](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
+
+- **研究做法：** 摘要描述以深度学习进行层级图片分类，并用权重排名整理失物信息；登记时还尝试从一张照片自动识别类别、品牌和相关标签。
+- **对本项目的影响：** “从照片自动取得类别/品牌并排序”的总体想法已有相关先例。FYP 应强调可复现的配对排序比较，而非声称图像自动分类/排名本身是新颖贡献。
+- **阅读限制：** 当前仅核实 DBpia 的书目信息与摘要，页面没有给出可复核的配对数据、Top-K 指标或身份隔离测试细节；不要拿其“可用性”结论当作本项目的检索效果证据。
+
+### 9. 直接相关：只用图片登记并进行失物检索（2022）
+
+Hirose, K., Hara, T., & Saito, H. (2022). “Proposal and Evaluation of a Lost Property Registration and Retrieval System in Which Only Images Are Registered.” *IEICE Technical Report*, 121(423), MVE2021-52, 70–75. [IEICE 出版方记录](https://ken.ieice.org/ken/paper/20220309ICJm/eng/)
+
+- **研究做法：** IEICE 摘要说明拾获者只提交图片，系统用 Google Cloud Vision API 自动分析，再按成为目标失物的可能性排序；作者报告进行过可用性研究。
+- **对本项目的影响：** 已有工作不仅做图片分类，也研究过视觉 API 驱动的失物登记/检索和可用性；不能把“用视觉 API 减少手填”或“做一个系统”作为已证实的新颖点。
+- **阅读限制：** 当前只核实 IEICE 官方书目和摘要，摘要未给出 Top-K 排序指标、配对标签细节、数据规模或对照基线。论文语言为日语，需取得全文再核对方法。
+
+### 10. 通用多模态检索：同类不等于同一件实物
+
+Liu, B. et al. (2025). “IDMR: Towards Instance-Driven Precise Visual Correspondence in Multimodal Retrieval.” [arXiv:2504.00954](https://arxiv.org/abs/2504.00954)
+
+- **研究重点：** 作者将任务定义为跨场景检索同一个具体实例，并明确区别于全局图像相似或类别层级匹配；其 IDMR-bench 基于真实物体追踪和第一人称视频资料。
+- **对本项目的影响：** 失物配对的正例应代表同一件实物；同类别、同颜色但不同物品是重要困难负例。只识别“这是水瓶”并不等于识别“这是同一个水瓶”。
+- **限制：** 这是通用多模态检索预印本，不是失物/拾获数据上的研究，也不证明 DeepSeek API 能可靠完成具体物品身份匹配。可用其支持任务定义，不可用来声称本方法有效。
+
 ## 当前研究问题的文献定位（暂定）
 
-现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统，也包括 LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索和 YOLO/LLM/CLIP 多模态路线。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
+现有资料已包括把文字和 GIS 过滤与 SURF、颜色验证结合的系统、图像分类与加权排名、只用图片和视觉 API 的失物检索、LostNet 的类别筛选与感知哈希、MobileNet 嵌入检索，以及 YOLO/LLM/CLIP 多模态路线。因此不能声称“首次把照片与地点/时间结合”“此前没有失物照片检索”或“首次用视觉语言模型做失物匹配”。通用实例检索文献也指出同类相似与同一实物匹配不是同一任务。对本项目更具体、可检验但尚未证实新颖的问题可以表述为：
 
 > 在相同查询、候选记录和人工配对标签下，加入照片提取的结构化属性，或对初筛候选做照片直接比较，是否比只使用用户填写的类别、地点、时间和说明，更常把正确的失物/拾获记录排入前 5 名？
 
-目前不声称这是“首个”或“尚无人研究”的问题。要在论文中提出研究空缺，仍需系统搜索数据库和会议论文，取得早期多特征方法及 IEEE/Springer 论文全文，并与导师讨论范围。可能的具体贡献是：在本项目的数据和检索设定下，公平比较表单基线、视觉属性增强方法，以及对初筛候选做照片直接比较的方法，并分析错误案例、费用和响应时间。此定位仍属暂定，须经系统检索和导师确认。
+目前不声称这是“首个”或“尚无人研究”的问题。要在论文中提出研究空缺，仍需系统搜索数据库和会议论文，取得早期多特征、IEEE/Springer、IEICE 与韩文学术论文全文，并与导师讨论范围。可能的具体贡献是：在同一组跨场景、同一实物身份有可靠标签的查询/候选数据上，公平比较表单基线、视觉属性增强方法，以及对初筛候选做照片直接比较的方法，并分析困难负例、错误案例、费用和响应时间。此定位仍属暂定，须经系统检索和导师确认。
 
 ## 后续检索词
 
@@ -104,6 +128,9 @@ Voorhees, E. M. (2001). “The TREC-10 Question Answering Track Report.” 见 N
 - Ghazal et al. (2015), FiCloud: https://doi.org/10.1109/FiCloud.2015.80
 - Ghazal et al. (2016), IJCDS: https://doi.org/10.12785/IJCDS/050107
 - IEEE IRCE (2025), YOLO-LLM-CLIP: https://doi.org/10.1109/IRCE66030.2025.11203217
+- Jeong et al. (2018), Journal of the Korea Convergence Security Association, DBpia record: https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974
+- Hirose, Hara, & Saito (2022), IEICE Technical Report: https://ken.ieice.org/ken/paper/20220309ICJm/eng/
+- Liu et al. (2025), IDMR, arXiv:2504.00954: https://arxiv.org/abs/2504.00954
 - Das et al. (2026; first online 2025), Springer: https://doi.org/10.1007/978-981-96-6046-9_32
 - Radenović et al. (2018), CVPR / CVF Open Access: https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html
 - Radford et al. (2021), arXiv: https://arxiv.org/abs/2103.00020

@@ -294,7 +294,10 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
     for row in rows:
         candidate = row_to_record(row)
         candidate["_ai_processing_allowed"] = bool(row["ai_processing_allowed"])
-        score, evidence = match_score(record, {**candidate, "analysis": candidate["analysis"]})
+        candidate_for_scoring = candidate
+        if not record.get("_ai_processing_allowed"):
+            candidate_for_scoring = {**candidate, "analysis": {}}
+        score, evidence = match_score(record, candidate_for_scoring)
         candidate["match_score"] = score
         candidate["match_evidence"] = evidence
         scored.append(candidate)
