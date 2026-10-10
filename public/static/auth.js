@@ -2,6 +2,36 @@ let clientPromise;
 let authBaseUrl;
 const authRequestDiagnostics = [];
 
+async function withAuthFetchTrace(action) {
+  const originalFetch = globalThis.fetch;
+  const authOrigin = new URL(authBaseUrl).origin;
+  const tracedFetch = async (input, init) => {
+    const requestUrl = new URL(input instanceof Request ? input.url : String(input), authBaseUrl);
+    try {
+      const result = await originalFetch.call(globalThis, input, init);
+      if (requestUrl.origin === authOrigin && !result.ok) {
+        const message = `${requestUrl.pathname} HTTP ${result.status}`;
+        authRequestDiagnostics.push(message);
+        console.warn(`[Neon Auth] ${message}`);
+      }
+      return result;
+    } catch (error) {
+      if (requestUrl.origin === authOrigin) {
+        const message = `${requestUrl.pathname} request failed (${error?.name || "Error"})`;
+        authRequestDiagnostics.push(message);
+        console.warn(`[Neon Auth] ${message}`);
+      }
+      throw error;
+    }
+  };
+  globalThis.fetch = tracedFetch;
+  try {
+    return await action();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 export async function getAuthClient() {
   if (!clientPromise) {
     clientPromise = (async () => {
@@ -11,34 +41,8 @@ export async function getAuthClient() {
         throw new Error("登录服务尚未启用。请先在 Neon 控制台启用 Auth，再部署网站。");
       }
       authBaseUrl = config.auth_url.replace(/\/+$/, "");
-      const originalFetch = globalThis.fetch;
-      const authOrigin = new URL(authBaseUrl).origin;
-      const tracedFetch = async (input, init) => {
-        const requestUrl = new URL(input instanceof Request ? input.url : String(input), authBaseUrl);
-        try {
-          const result = await originalFetch.call(globalThis, input, init);
-          if (requestUrl.origin === authOrigin && !result.ok) {
-            const message = `${requestUrl.pathname} HTTP ${result.status}`;
-            authRequestDiagnostics.push(message);
-            console.warn(`[Neon Auth] ${message}`);
-          }
-          return result;
-        } catch (error) {
-          if (requestUrl.origin === authOrigin) {
-            const message = `${requestUrl.pathname} request failed (${error?.name || "Error"})`;
-            authRequestDiagnostics.push(message);
-            console.warn(`[Neon Auth] ${message}`);
-          }
-          throw error;
-        }
-      };
-      globalThis.fetch = tracedFetch;
-      try {
-        const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
-        return createAuthClient(authBaseUrl);
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
+      return createAuthClient(authBaseUrl);
     })();
   }
   return clientPromise;
@@ -52,7 +56,7 @@ export async function getAccessToken() {
   const diagnosticStart = authRequestDiagnostics.length;
   let token;
   try {
-    token = await auth.getJWTToken();
+    token = await withAuthFetchTrace(() => auth.getJWTToken());
   } catch (error) {
     const diagnostic = authRequestDiagnostics.slice(diagnosticStart).at(-1);
     if (diagnostic) {
@@ -73,7 +77,7 @@ export async function authorizedFetch(url, options = {}) {
 
 export async function currentSession() {
   const auth = await getAuthClient();
-  const result = await auth.getSession();
+  const result = await withAuthFetchTrace(() => auth.getSession());
   if (result?.error) throw new Error(result.error.message || "无法读取登录状态。");
   return result?.data || result;
 }
