@@ -10,7 +10,7 @@ Dear Supervisor,
 
 I am developing my FYP on a lost-and-found photo-matching web prototype. I would like to confirm the research scope and the approvals needed before collecting or processing any research data.
 
-The current study idea is to compare three ranking approaches on the same lost-item queries and found-item candidates: (A) user-provided form details, (B) form details plus structured attributes extracted from photos, and (C) direct comparison of the query photo with a shortlist of candidate photos. The draft metrics are Hit Rate@5, Recall@5, and MRR@5. These are proposals for discussion, not a finalized or approved protocol.
+The current study idea is to compare three ranking approaches on the same lost-item queries and found-item candidates: (A) user-provided form details, (B) form details plus structured attributes extracted from photos, and (C) direct comparison of the query photo with a shortlist of candidate photos. I propose one confirmatory primary comparison: C versus A on Hit Rate@5. The component comparisons (B versus A and C versus B), Recall@5, and MRR@5 would be secondary/exploratory; latency, failure rate, and actual API cost would also be recorded. This is a proposal for discussion, not a finalized or approved protocol.
 
 I found a directly related 2025 study combining SBERT text similarity, Siamese image similarity, and location/time features in a lost-and-found PWA ([full text](https://www.oajaiml.com/uploads/archivepdf/299052212.pdf); [DOI](https://doi.org/10.54364/AAIML.2025.52212)). The paper describes template-generated text pairs, a 170-row fusion dataset with randomly simulated time similarity, pairwise classification metrics, and inconsistent fusion-result figures across sections. I also found IEEE abstracts describing an AI lost-and-found service framework (MEDCOM 2025, [DOI](https://doi.org/10.1109/MEDCOM67532.2025.11405255)) and adaptive FAISS-to-CLIP retrieval (ICHORA 2026, [DOI](https://doi.org/10.1109/ICHORA69329.2026.11537024)). I therefore do not claim that an AI or multimodal lost-and-found system is novel. Could a controlled, item-disjoint Top-K ranking evaluation of a DeepSeek API pipeline, including its cost and latency, be a suitable FYP scope? I have not confirmed that this narrower comparison is novel.
 
@@ -18,11 +18,11 @@ A 2024 study also combines ResNet-50 image features and NLP text similarity for 
 
 Could we discuss:
 
-1. Whether an item-disjoint Top-K comparison of form details, API-extracted visual attributes, and direct candidate-photo comparison is suitable for the FYP, and which comparison should be primary.
+1. Whether the proposed primary comparison (C versus A on Hit Rate@5), with B-versus-A and C-versus-B as secondary component analyses, is suitable for the FYP; whether the item-disjoint Top-K design or the primary metric should change.
 2. Whether controlled photos of the same ordinary item, photographed under different views/backgrounds, are an acceptable data source; how to establish positive and difficult-negative pairs; and what sample size is feasible.
 3. Whether ethics review is required, which office/process applies, and what work is allowed before approval.
 4. Whether photos and descriptions may be sent to the DeepSeek V4.1 Flash API, and what separate participant consent, storage region, access controls, retention, and deletion process are required.
-5. Whether to include a usability study, and the expected proposal, ethics, and interim-report milestones.
+5. Whether to include a usability study; whether secondary component analyses need a multiple-comparison adjustment if formal hypothesis tests are expected; and the proposal, ethics, and interim-report milestones.
 
 I have not started research-participant recruitment or research-data collection, and I do not yet have ethics approval or authorization to send research photos to a third-party AI service. I will wait for guidance before doing those activities.
 

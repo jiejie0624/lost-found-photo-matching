@@ -20,6 +20,8 @@
 
 2026-10-10 后续生产路由复核：`/api/health`、`/api/config`、`/api/records`、`/login`、`/my-records` 和 `/static/app.js` 均返回 HTTP 200；Auth 配置为已启用，公开记录列表为空。对 `/api/records` 发送不完整请求得到 HTTP 422；发送字段完整但无登录凭证的合成 multipart 请求得到 HTTP 401（“请先登录后再操作”），未创建记录、未上传有效照片，也未调用 DeepSeek。这证明当前发布路由存在且要求登录，**不能**解释或证明此前真实登录发布时截图中的 HTTP 404 已解决。注册、真实 JWT 下发布、Blob 保存、DeepSeek 两阶段视觉流程和删除仍需端到端验收。
 
+2026-10-11 最新只读复核：`/`、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 均返回 HTTP 200；无凭证访问 `/api/me/records` 返回 HTTP 401。Auth 和数据库健康检查正常。两条合成测试记录仍保留在线上（用户要求暂不删除）；本次未读取记录详情、未新增或删除记录，也未调用 DeepSeek。以上仅证明路由可达及无凭证个人记录访问被拒绝，不能证明此前截图中的登录后 HTTP 404 已解决，或 DeepSeek、Blob 发布、授权边界和过期清理已完整验收。
+
 2026-10-10 最新浏览器复核：当前已有登录会话打开首页后，导航正确切换为“我的记录”；“我的记录”页成功显示用户 `jie` 和 0 条记录。线上 `/api/health`、`/api/config`、`/api/me/records`（未带令牌时为预期的 401）、`/login` 与 `/my-records` 均有响应。结合此前 `auth.js` 的 `/token` 修复，这确认当前登录态取 JWT 及个人记录读取可用。此前发布时的 404 可能与同一旧 JWT 获取问题有关，但尚未通过登录后提交验证，不能称发布流程已修复。未创建公开记录或调用 DeepSeek。
 
 注册来源状态（2026-10-10 后续核对）：Neon 控制台的 `neon-cordovan-ribbon` / `main` Better Auth 设置中，Trusted domains 已包含 `https://lost-found-photo-matching-fyp.vercel.app`；生产 `/api/config` 返回的 Auth URL 与该页的 Auth URL 完全一致。Auth 用户页还显示已有 1 个账号。由此可排除“生产环境连错 Neon Auth 项目”以及“生产域名完全未加入 trusted domains”这两个当前假设。用户此前仍曾看到 `Invalid origin`，但本次没有重新提交注册表单，故实际注册错误状态仍待端到端验证；不要重复添加域名或盲目改其他配置。参见 [Neon Auth trusted origins 与 Vercel 自动配置说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews) 及 [Neon Auth 分支配置说明](https://neon.com/blog/neon-auth-branchable-identity-in-your-database)。
