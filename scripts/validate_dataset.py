@@ -134,6 +134,7 @@ def validate(
 
     seen_pairs: set[tuple[str, str]] = set()
     labels_by_query: dict[str, list[str]] = defaultdict(list)
+    candidate_ids_by_query: dict[str, set[str]] = defaultdict(set)
     queries_seen: set[str] = set()
     for line_number, row in enumerate(pair_rows, start=2):
         query_id = row["query_record_id"]
@@ -170,6 +171,7 @@ def validate(
         if not row["reason"]:
             warnings.append(f"{prefix}: reason 为空；建议记录简短、非敏感的判定依据。")
 
+        candidate_ids_by_query[query_id].add(candidate_id)
         if label in {"0", "1"} and query["item_group_id"] and candidate["item_group_id"]:
             same_item = query["item_group_id"] == candidate["item_group_id"]
             if (label == "1") != same_item:
@@ -183,6 +185,18 @@ def validate(
                 labels_by_query[query_id].append(label)
 
     for query_id in sorted(queries_seen):
+        query = records[query_id]
+        expected_candidates = {
+            record_id
+            for record_id, record in records.items()
+            if record["split"] == query["split"] and record["direction"] == "found"
+        }
+        missing_candidates = expected_candidates - candidate_ids_by_query[query_id]
+        if missing_candidates:
+            errors.append(
+                f"查询 {query_id} 的配对表未覆盖同一 split 的全部 found 候选："
+                f"{', '.join(sorted(missing_candidates)[:5])}。"
+            )
         labels = set(labels_by_query.get(query_id, []))
         if "1" not in labels:
             errors.append(f"查询 {query_id} 没有达到 {min_confidence} 置信度门槛的确认正例。")
@@ -192,10 +206,17 @@ def validate(
 
     if records and not queries_seen:
         warnings.append("配对标签中没有可用查询；尚不能运行排序评估。")
+    missing_queries = {
+        record_id
+        for record_id, record in records.items()
+        if record["split"] in SPLITS and record["direction"] == "lost"
+    } - queries_seen
+    for query_id in sorted(missing_queries):
+        errors.append(f"lost 记录 {query_id} 没有配对标签，未进入评估。")
 
     warnings.append(
-        "请确认每个查询的 pair_labels.csv 覆盖了研究方案定义的完整固定候选集合；"
-        "本工具无法推断被省略的候选，也不会验证测试标签是否已冻结。"
+        "预检按 records.csv 中同一 split 的全部 found 记录作为候选池；"
+        "它无法发现 records.csv 自身遗漏的候选，也不会验证测试标签是否已冻结。"
     )
     warnings.append("检查通过也不代表获得学校伦理批准、图片授权或第三方 API 处理许可。")
     return errors, warnings, dict(counts)

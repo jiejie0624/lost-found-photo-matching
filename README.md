@@ -61,7 +61,7 @@ Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
 Copy-Item outputs/experiment_log_template.csv work/evaluation/experiment_log.csv
 ```
 
-录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和正负例结构。它不能代替伦理审批，也不能确认标签是否真实：
+录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和达到置信度门槛的正负例结构。它不能代替伦理审批，也不能确认标签是否真实：
 
 ```powershell
 python scripts/validate_dataset.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv
@@ -81,7 +81,7 @@ python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pair
 python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --photo-scores work/evaluation/photo_scores.csv --split development --details-out work/evaluation/development_details.csv
 ```
 
-第三种方法按线上当前规则把视觉属性分数的 45% 与照片比较分数的 55% 合并。评估脚本不会调用 DeepSeek；分数需先按学校批准的数据处理流程生成，并记录模型、提示词版本、日期和 API 用量。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存各方法的候选名次、参考分、标签和依据，供错误分析。只在 `development` 集调参；锁定方法后在 `test` 集做一次最终评估。
+第三种方法按线上当前规则把视觉属性分数的 45% 与照片比较分数的 55% 合并。评估脚本不会调用 DeepSeek；分数需先按学校批准的数据处理流程生成，并记录模型、提示词版本、日期和 API 用量。候选池是 `records.csv` 中同一 split 的全部拾获记录；每条失物记录都是一条查询，必须有池内每个候选的标签。`uncertain` 和低置信度候选仍参与排序并占据排名，但不作为正例或负例计入指标。默认只统计高置信度的 `0`/`1`，可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存各方法的候选名次、参考分、标签置信度、是否计入指标和依据，供错误分析。只在 `development` 集调参；锁定方法后在 `test` 集做一次最终评估。
 
 结果还会输出按 `item_group_id` 重抽样的配对 cluster bootstrap 95% 置信区间，比较方法间 Hit Rate@K、Recall@K 和 MRR@K 的差异。默认抽样 2,000 次；物品组较少时，区间仅作谨慎参考。
 

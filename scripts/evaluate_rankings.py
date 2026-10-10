@@ -113,9 +113,9 @@ def load_pairs(
     records: dict[str, dict[str, Any]],
     selected_split: str,
     min_confidence: str,
-) -> tuple[dict[str, list[tuple[str, int]]], int, int]:
+) -> tuple[dict[str, dict[str, dict[str, Any]]], int, int]:
     rows = read_csv(path, PAIR_FIELDS)
-    pairs_by_query: dict[str, list[tuple[str, int]]] = defaultdict(list)
+    pairs_by_query: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     seen: set[tuple[str, str]] = set()
     uncertain_count = 0
     confidence_excluded = 0
@@ -132,46 +132,76 @@ def load_pairs(
         if query_id not in records or candidate_id not in records:
             raise ValueError(f"配对引用了不存在的记录：{query_id}, {candidate_id}")
         query, candidate = records[query_id], records[candidate_id]
-        if query["split"] != selected_split or candidate["split"] != selected_split:
+        if query["split"] != candidate["split"]:
+            raise ValueError(f"配对跨越 development/test：{query_id}, {candidate_id}")
+        if query["split"] != selected_split:
             continue
-        if label == "uncertain":
-            uncertain_count += 1
-            continue
-        if label not in {"0", "1"}:
+        if query["kind"] != "lost" or candidate["kind"] != "found":
+            raise ValueError(f"配对方向必须是 lost 查询对 found 候选：{query_id}, {candidate_id}")
+        if label not in {"0", "1", "uncertain"}:
             raise ValueError(f"配对标签必须是 0、1 或 uncertain：{query_id}, {candidate_id}")
         confidence = row["label_confidence"].lower()
         if confidence not in CONFIDENCE_RANK:
             raise ValueError(f"配对置信度必须是 high、medium 或 low：{query_id}, {candidate_id}")
-        if CONFIDENCE_RANK[confidence] < CONFIDENCE_RANK[min_confidence]:
+        if label == "uncertain":
+            uncertain_count += 1
+        elif CONFIDENCE_RANK[confidence] < CONFIDENCE_RANK[min_confidence]:
             confidence_excluded += 1
-            continue
-        if query["kind"] != "lost" or candidate["kind"] != "found":
-            raise ValueError(f"配对方向必须是 lost 查询对 found 候选：{query_id}, {candidate_id}")
-        pairs_by_query[query_id].append((candidate_id, int(label)))
+        metric_label = (
+            int(label)
+            if label in {"0", "1"} and CONFIDENCE_RANK[confidence] >= CONFIDENCE_RANK[min_confidence]
+            else None
+        )
+        pairs_by_query[query_id][candidate_id] = {
+            "label": label,
+            "confidence": confidence,
+            "metric_label": metric_label,
+        }
 
     if not pairs_by_query:
-        raise ValueError(f"在 {selected_split} split 中没有可评估的已标注配对")
-    for query_id, pairs in pairs_by_query.items():
-        labels = {label for _, label in pairs}
+        raise ValueError(f"在 {selected_split} split 中没有配对候选")
+    expected_query_ids = {
+        record_id
+        for record_id, record in records.items()
+        if record["split"] == selected_split and record["kind"] == "lost"
+    }
+    missing_query_ids = expected_query_ids - set(pairs_by_query)
+    if missing_query_ids:
+        raise ValueError(
+            f"以下 lost 记录没有完整配对标签，未进入评估：{', '.join(sorted(missing_query_ids)[:5])}"
+        )
+    expected_candidate_ids = {
+        record_id
+        for record_id, record in records.items()
+        if record["split"] == selected_split and record["kind"] == "found"
+    }
+    for query_id, candidates in pairs_by_query.items():
+        missing_candidate_ids = expected_candidate_ids - set(candidates)
+        if missing_candidate_ids:
+            raise ValueError(
+                f"查询 {query_id} 的配对表未覆盖同一 split 的全部 found 候选："
+                f"{', '.join(sorted(missing_candidate_ids)[:5])}"
+            )
+        labels = {item["metric_label"] for item in candidates.values()}
         if 1 not in labels:
-            raise ValueError(f"查询 {query_id} 没有确认的正例")
+            raise ValueError(f"查询 {query_id} 没有达到 {min_confidence} 置信度门槛的确认正例")
         if 0 not in labels:
-            raise ValueError(f"查询 {query_id} 没有确认的负例")
+            raise ValueError(f"查询 {query_id} 没有达到 {min_confidence} 置信度门槛的确认负例")
     return pairs_by_query, uncertain_count, confidence_excluded
 
 
 def load_photo_scores(
     path: Path,
     records: dict[str, dict[str, Any]],
-    pairs_by_query: dict[str, list[tuple[str, int]]],
+    pairs_by_query: dict[str, dict[str, dict[str, Any]]],
     selected_split: str,
 ) -> dict[tuple[str, str], int]:
-    """Load precomputed model scores for labeled query/candidate photo pairs."""
+    """Load precomputed model scores for candidates in the fixed judged pool."""
     rows = read_csv(path, {"query_record_id", "candidate_record_id", "visual_score"})
-    evaluated_pairs = {
+    candidate_pool_pairs = {
         (query_id, candidate_id)
-        for query_id, pairs in pairs_by_query.items()
-        for candidate_id, _ in pairs
+        for query_id, candidates in pairs_by_query.items()
+        for candidate_id in candidates
     }
     scores: dict[tuple[str, str], int] = {}
     for row in rows:
@@ -181,8 +211,8 @@ def load_photo_scores(
             raise ValueError(f"照片比较分数重复：{query_id}, {candidate_id}")
         if query_id not in records or candidate_id not in records:
             raise ValueError(f"照片比较分数引用了不存在的记录：{query_id}, {candidate_id}")
-        if key not in evaluated_pairs:
-            raise ValueError(f"照片比较分数不属于当前 split 的已评估配对：{query_id}, {candidate_id}")
+        if key not in candidate_pool_pairs:
+            raise ValueError(f"照片比较分数不属于当前 split 的固定候选集合：{query_id}, {candidate_id}")
         if records[query_id]["split"] != selected_split or records[candidate_id]["split"] != selected_split:
             raise ValueError(f"照片比较分数跨越或不属于当前 split：{query_id}, {candidate_id}")
         if records[query_id]["kind"] != "lost" or records[candidate_id]["kind"] != "found":
@@ -201,7 +231,7 @@ def load_photo_scores(
 
 def evaluate(
     records: dict[str, dict[str, Any]],
-    pairs_by_query: dict[str, list[tuple[str, int]]],
+    pairs_by_query: dict[str, dict[str, dict[str, Any]]],
     k: int,
     use_vision: bool,
     photo_scores: dict[tuple[str, str], int] | None = None,
@@ -222,15 +252,15 @@ def evaluate(
     for query_id, pairs in pairs_by_query.items():
         query = records[query_id]
         source = query if use_vision else {**query, "analysis": {}}
-        ranked: list[tuple[str, int, int, list[str]]] = []
-        for candidate_id, label in pairs:
+        ranked: list[tuple[str, int, int | None, dict[str, Any], list[str]]] = []
+        for candidate_id, judgment in pairs.items():
             candidate = records[candidate_id]
             candidate_for_scoring = candidate if use_vision else {**candidate, "analysis": {}}
             score, evidence = match_score(source, candidate_for_scoring)
-            ranked.append((candidate_id, score, label, evidence))
+            ranked.append((candidate_id, score, judgment["metric_label"], judgment, evidence))
         ranked.sort(key=lambda item: (-item[1], item[0]))
         if photo_scores is not None:
-            shortlist_ids = {candidate_id for candidate_id, _, _, _ in ranked[:photo_shortlist_k]}
+            shortlist_ids = {candidate_id for candidate_id, _, _, _, _ in ranked[:photo_shortlist_k]}
             missing_scores = [
                 candidate_id for candidate_id in shortlist_ids
                 if (query_id, candidate_id) not in photo_scores
@@ -241,23 +271,27 @@ def evaluate(
                     f"{', '.join(missing_scores[:5])}"
                 )
             blended_ranked = []
-            for candidate_id, score, label, evidence in ranked:
+            for candidate_id, score, metric_label, judgment, evidence in ranked:
                 if candidate_id in shortlist_ids:
                     visual_score = photo_scores[(query_id, candidate_id)]
                     score = round(score * 0.45 + visual_score * 0.55)
                     evidence = [*evidence, f"照片直接比较参考分：{visual_score}/100"]
-                blended_ranked.append((candidate_id, score, label, evidence))
+                blended_ranked.append((candidate_id, score, metric_label, judgment, evidence))
             ranked = sorted(blended_ranked, key=lambda item: (-item[1], item[0]))
 
-        relevant = sum(label for _, _, label, _ in ranked)
+        relevant = sum(metric_label == 1 for _, _, metric_label, _, _ in ranked)
         top = ranked[:k]
-        retrieved = sum(label for _, _, label, _ in top)
+        retrieved = sum(metric_label == 1 for _, _, metric_label, _, _ in top)
         hit_rate = float(retrieved > 0)
         recall = retrieved / relevant
         hits += int(hit_rate)
         recall_sum += recall
         first_relevant_rank = next(
-            (rank for rank, (_, _, label, _) in enumerate(ranked[:k], start=1) if label == 1),
+            (
+                rank
+                for rank, (_, _, metric_label, _, _) in enumerate(ranked[:k], start=1)
+                if metric_label == 1
+            ),
             None,
         )
         reciprocal_rank = 0.0
@@ -269,7 +303,10 @@ def evaluate(
             f"recall@{k}": recall,
             f"mrr@{k}": reciprocal_rank,
         }
-        for rank, (candidate_id, score, label, evidence) in enumerate(ranked, start=1):
+        for rank, (candidate_id, score, metric_label, judgment, evidence) in enumerate(ranked, start=1):
+            display_label = judgment["label"]
+            if metric_label is None and display_label in {"0", "1"}:
+                display_label = f"unjudged_{display_label}_confidence_{judgment['confidence']}"
             detail_rows.append({
                 "split": records[query_id]["split"],
                 "method": method,
@@ -277,7 +314,9 @@ def evaluate(
                 "candidate_record_id": candidate_id,
                 "rank": rank,
                 "reference_score": score,
-                "label": label,
+                "label": display_label,
+                "label_confidence": judgment["confidence"],
+                "judged_for_metrics": metric_label is not None,
                 "evidence": "；".join(evidence),
             })
 
@@ -365,7 +404,7 @@ def write_details(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = [
         "split", "method", "query_record_id", "candidate_record_id", "rank",
-        "reference_score", "label", "evidence",
+        "reference_score", "label", "label_confidence", "judged_for_metrics", "evidence",
     ]
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -409,7 +448,12 @@ def main() -> int:
         pairs_by_query, uncertain_count, confidence_excluded = load_pairs(
             args.pairs, records, args.split, args.min_confidence
         )
-        labeled_pair_count = sum(len(pairs) for pairs in pairs_by_query.values())
+        candidate_pair_count = sum(len(pairs) for pairs in pairs_by_query.values())
+        labeled_pair_count = sum(
+            judgment["metric_label"] is not None
+            for pairs in pairs_by_query.values()
+            for judgment in pairs.values()
+        )
         photo_scores = (
             load_photo_scores(args.photo_scores, records, pairs_by_query, args.split)
             if args.photo_scores else None
@@ -429,9 +473,14 @@ def main() -> int:
             "split": args.split,
             "k": args.k,
             "minimum_confidence": args.min_confidence,
+            "candidate_pairs_in_pool": candidate_pair_count,
             "labeled_pairs": labeled_pair_count,
-            "uncertain_pairs_excluded": uncertain_count,
-            "lower_confidence_pairs_excluded": confidence_excluded,
+            "uncertain_candidates_ranked_but_not_counted": uncertain_count,
+            "lower_confidence_candidates_ranked_but_not_counted": confidence_excluded,
+            "unjudged_candidate_metric_note": (
+                "uncertain and below-threshold candidates remain in ranks and occupy top-K positions; "
+                "they are not treated as confirmed negatives or positives"
+            ),
             "form_only_baseline": form_metrics,
             "with_vision_attributes": vision_metrics,
         }
