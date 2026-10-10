@@ -14,6 +14,8 @@
 
 2026-10-10 最新 Vercel 控制台只读核对：项目 `lost-found-photo-matching-fyp` 可见；最新 GitHub 提交 `2213f0d` 的 Production deployment 显示 Ready。环境变量列表中可见 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、Neon 集成提供的 `DATABASE_URL` 与 `DATABASE_NEON_AUTH_BASE_URL`、Blob 集成提供的 `BLOB_READ_WRITE_TOKEN`，以及 `CRON_SECRET`。只核对了变量名称和环境范围，没有显示或读取任何值；因此只能确认这些变量条目存在，不能确认 DeepSeek key 有效、模型值正确或实际 API 调用成功。Neon/Blob 变量行显示关联的集成资源。没有修改生产配置，也没有发起 DeepSeek 调用。
 
+随后将文档提交 `25ccce2` 推送到 GitHub；Vercel 最新 Production deployment 显示该提交 Ready。线上只读 GET 检查的 `/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config`、`/api/records` 和 `/static/auth.js` 均返回 HTTP 200，公开记录为空，Auth 配置为已启用。浏览器最初短暂显示 `/login` Internal Server Error，刷新后页面正常加载。此检查没有提交登录表单或发布记录，所以此前发布操作中出现的 HTTP 404 仍未定位；不能把它说成已修复。没有调用 DeepSeek。
+
 ## 数据放在哪里
 
 - **记录与账号：Neon PostgreSQL**，通过 Vercel Marketplace 连接。数据库保存失物/拾获记录、发布者 ID、状态、90 天过期时间和照片 URL；Neon Auth 在 `neon_auth` schema 管理账号与会话。

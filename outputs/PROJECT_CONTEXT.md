@@ -125,6 +125,7 @@
 - 后续检查（2026-10-10）：当前浏览器的“我的记录”页面显示已登录用户 `jie`，并显示 0 条记录；这说明该会话能读取受保护的个人记录页面/API，但不证明新注册、退出后重新登录或发布流程成功。线上首页、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 和前端静态 JS/CSS 均返回 HTTP 200，Auth 配置标记为已启用；未发起 DeepSeek 调用。此前注册截图中的 `Invalid origin` 仍需退出后重新注册/登录才能最终确认。
 - 2026-10-10 较早检查时曾看到 Neon 项目 `dawn-voice-63453865`，其 Auth 未启用；当时线上 Auth URL 指向另一个区域，因此记录了数据库/Auth 目标疑点。之后用户提供的 Neon 控制台画面显示实际集成项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），其 `main` 分支已启用 Better Auth；Vercel 控制台目前也显示目标项目已连接 Neon 集成，并有 `DATABASE_URL`、`DATABASE_NEON_AUTH_BASE_URL` 等变量条目。此前疑点应视为由查看了不同 Neon 项目造成，不能再把 `dawn-voice` 当成生产项目。未显示或读取数据库连接串及 Auth URL 值，也未更改生产配置。
 - 2026-10-10 最新 Vercel 只读核对：项目 `lost-found-photo-matching-fyp` 可见，提交 `2213f0d` 的 Production deployment 显示 Ready。环境变量名称列表有 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、Neon 的 `DATABASE_URL` 和 `DATABASE_NEON_AUTH_BASE_URL`、Blob 的 `BLOB_READ_WRITE_TOKEN`、以及 `CRON_SECRET`；未查看值。环境变量存在不证明密钥有效或线上业务成功。没有发布记录、调用 DeepSeek 或修改配置。
+- 随后推送的文档提交 `25ccce2` 也显示 Vercel Production deployment Ready。线上首页、登录/我的记录页面及健康、配置、公开记录接口和认证脚本的只读 GET 均返回 HTTP 200；Auth 配置启用，记录列表为空。浏览器一次加载 `/login` 短暂返回 Internal Server Error，刷新后页面正常。之前点击发布时的 HTTP 404 未通过只读检查重现或定位；由于没有提交表单，发布和真实 JWT 取用仍需端到端确认。没有创建记录或调用 DeepSeek。
 
 ### 研究材料与工具
 
