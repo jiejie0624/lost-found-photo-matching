@@ -4,6 +4,8 @@
 
 2026-10-11 安全诊断已上线：Vercel Production 的提交 `87d2fd5` 显示 Ready。线上只读 `GET /api/health` 返回 `status=ok`、`deepseek_key_configured=true`、`deepseek_model_id=deepseek-flash`、`deepseek_vision_model_supported=true`。这证明 Vercel 环境变量非空且模型 ID 在代码允许列表中；接口不返回密钥。它**不能**证明密钥有效、供应商接受请求、图片分析/比较成功或费用正确。要确认 AI 实际功能，仍需在使用非敏感图片且接受 API 费用后做单次端到端验收，并对照 Vercel 安全错误日志；不要把密钥放入公开截图或日志。
 
+随后查看 Vercel 最近一小时可见运行日志，时间范围内只有健康/配置/公开列表等 HTTP 请求记录，没有新的 DeepSeek 请求或供应商错误详情。因此目前仍不能从线上日志确认之前 `unavailable` 的具体原因；这不是“AI 正常”或“没有错误”的证明。
+
 2026-10-10 的补充只读检查：`/`、`/login`、`/login.html`、`/my-records`、`/my-records.html`、`/api/health`、`/api/config` 和 `/api/records` 均返回 HTTP 200；当时 `/api/records` 返回空数组。未带登录凭证请求 `/api/me/records` 返回 HTTP 401，符合该接口要求认证的行为。这只能确认公开路由和未认证拦截可达，不能证明真实登录、发布、AI 匹配、图片存储、关闭/删除或过期清理流程已通过。
 
 推送逐条 AI 授权功能后，再次只读访问 `/`、`/static/app.js` 和 `/api/health`，均返回 HTTP 200；首页包含 AI 授权文案，脚本包含 `not_consented` 状态。这证明该前端版本已部署、健康路由可达；没有实际提交记录或调用 DeepSeek，完整授权逻辑仍需在获准且使用非敏感样本后验收。

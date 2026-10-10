@@ -5,7 +5,7 @@
 ## 当前状态快照（2026-10-11）
 
 - **应用（最新核验）：** 生产站为 `https://lost-found-photo-matching-fyp.vercel.app/`。生产注册/登录曾用临时验收账号成功；两条合成测试线索成功写入 Neon/Blob，照片可读，基础表单排序返回候选。用户明确选择暂不删除，仍留在生产站。2026-10-11 Vercel Production commit `87d2fd5` 显示 Ready；主页、登录/个人页、健康/配置/公开列表返回 HTTP 200，未登录的个人记录接口返回 401。线上健康接口确认数据库可连通，且 DeepSeek key 环境变量非空、模型 ID 为受支持的 `deepseek-flash`。这不验证密钥有效或 AI 调用成功；以上只读检查和既有一次性合成冒烟均不等于完整验收。
-- **DeepSeek（未完成）：** 模型 ID 为 `deepseek-flash`。获准 AI 处理的合成照片请求曾显示分析暂不可用；`34f2b91` 加入安全失败日志，`c28f010` 扩展为仅记录过滤后的 HTTP 状态、供应商错误类型/代码/参数，不记录原始消息、密钥、图片或请求内容。当前生产 Ready 版本 `87d2fd5` 包含这些代码和 `/api/health` 非敏感诊断；部署后具体供应商失败类别仍未核实，尚无成功属性提取或照片比较证据。线上 `deepseek_key_configured=true` 仅表示变量非空，当前本地环境没有 `DEEPSEEK_API_KEY`，本轮未发起收费 API 请求。
+- **DeepSeek（未完成）：** 模型 ID 为 `deepseek-flash`。获准 AI 处理的合成照片请求曾显示分析暂不可用；`34f2b91` 加入安全失败日志，`c28f010` 扩展为仅记录过滤后的 HTTP 状态、供应商错误类型/代码/参数，不记录原始消息、密钥、图片或请求内容。当前生产 Ready 版本 `87d2fd5` 包含这些代码和 `/api/health` 非敏感诊断；线上 `deepseek_key_configured=true` 仅表示变量非空。Vercel 最近一小时可见日志没有新的 DeepSeek 请求或供应商错误详情，故具体失败类别仍未核实；尚无成功属性提取或照片比较证据。当前本地环境没有 `DEEPSEEK_API_KEY`，本轮未发起收费 API 请求。
 - **Neon/Auth/Blob：** 生产项目与 Vercel 配置目标已核对；登录会话能读个人记录，发布时照片进入 Blob、记录进入数据库。90 天清理端点的未授权访问返回 401，但尚未等待并验证真实自动过期删除。
 - **Neon 目标：** Neon 控制台显示生产项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支启用 Better Auth；其 trusted domains 列表现已确认包含 `https://lost-found-photo-matching-fyp.vercel.app`。生产 `/api/config` 返回的 Auth URL 与该控制台显示值一致。此前真实注册页面出现过 `Invalid origin`；之后使用一次性验收账号成功注册并进入个人记录页，因此该错误在这次验收中未再出现，但这不证明所有浏览器/旧会话都不会遇到。
 - **研究：** 暂定比较表单排序、视觉属性提取和候选照片比较的同物品分组 Top-K 效果；相关方法已有直接先例，新颖性没有系统检索或导师确认。研究数据、伦理审批、DeepSeek 第三方处理授权、实验和论文均未完成。
