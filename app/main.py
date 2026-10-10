@@ -45,6 +45,12 @@ NEON_AUTH_JWKS_URL = (
 if NEON_AUTH_BASE_URL and not NEON_AUTH_JWKS_URL:
     NEON_AUTH_JWKS_URL = f"{NEON_AUTH_BASE_URL.rstrip('/')}/.well-known/jwks.json"
 CRON_SECRET = os.getenv("CRON_SECRET", "").strip()
+DEFAULT_DEEPSEEK_MODEL = "deepseek-flash"
+DEEPSEEK_VISION_MODEL_IDS = frozenset({
+    "deepseek-flash",
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-vision-exp",
+})
 _AUTH_JWKS_CLIENT: Any | None = None
 ON_VERCEL = os.getenv("VERCEL", "").lower() == "1"
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
@@ -52,6 +58,10 @@ ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 CATEGORIES = {"电子产品", "证件与卡片", "钥匙", "包袋", "衣物", "水瓶与餐具", "书籍文具", "饰品", "其他"}
 KINDS = {"lost", "found"}
 logger = logging.getLogger("lost_found")
+
+
+def deepseek_model_id() -> str:
+    return os.getenv("DEEPSEEK_MODEL", "").strip() or DEFAULT_DEEPSEEK_MODEL
 
 if not ON_VERCEL:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -250,7 +260,7 @@ def analyze_image(image_bytes: bytes, title: str, category: str, description: st
 
     data_url = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode("ascii")
     body = {
-        "model": os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
+        "model": deepseek_model_id(),
         "temperature": 0.1,
         "max_tokens": 350,
         "response_format": {"type": "json_object"},
@@ -416,7 +426,7 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
             })
 
         body = {
-            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
+            "model": deepseek_model_id(),
             "temperature": 0.1,
             "max_tokens": 700,
             "response_format": {"type": "json_object"},
@@ -479,10 +489,16 @@ def my_records_page() -> FileResponse:
 
 
 @app.get("/api/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, Any]:
     with connect() as db:
         execute(db, "SELECT 1").fetchone()
-    return {"status": "ok"}
+    model_id = deepseek_model_id()
+    return {
+        "status": "ok",
+        "deepseek_key_configured": bool(os.getenv("DEEPSEEK_API_KEY", "").strip()),
+        "deepseek_model_id": model_id if model_id in DEEPSEEK_VISION_MODEL_IDS else "other",
+        "deepseek_vision_model_supported": model_id in DEEPSEEK_VISION_MODEL_IDS,
+    }
 
 
 @app.get("/api/config")
