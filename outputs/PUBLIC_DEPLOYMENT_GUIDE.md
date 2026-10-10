@@ -10,7 +10,9 @@
 
 后续代码复核发现前端取 API JWT 的实现调用了 SDK 未记录的 `auth.token()`，这与用户遇到的“获取登录凭证失败 HTTP 404”相符。已改为优先调用固定 SDK 文档中的 `auth.getJWTToken()`，并在 SDK session 带 `access_token` 时作为后备。2026-10-10 修复已部署后的只读检查确认：`/`、`/login.html`、`/my-records.html`、`/api/health`、`/api/config`、`/api/records` 和 `/static/auth.js` 返回 HTTP 200；线上脚本包含 `getJWTToken` 且不再调用 `auth.token()`；未带凭证访问 `/api/me/records` 返回 HTTP 401。以上只证明部署文件和未认证保护可达，尚未用真实登录会话确认获取 JWT、读取个人记录、发布、AI 匹配、图片存储和删除流程。
 
-2026-10-10 再次只读检查：`/api/health`、`/api/config`、`/api/records` 返回 HTTP 200，公开记录接口当前为空数组；未登录访问 `/api/me/records` 和未提供密钥访问 `/api/cron/expire` 均返回预期的 HTTP 401。没有提交记录，也没有调用 DeepSeek。当前浏览器登录的 Vercel 账号看不到目标项目；切换账号后停在 GitHub 登录凭据页，未输入或提交凭据。因此目前无法核对线上环境变量、Neon 数据库目标或 Vercel 最新部署设置。此项需要项目所有者本人登录正确账号后再继续；不应据此改动生产数据库或 Auth 配置。
+2026-10-10 较早一次检查时，浏览器账号尚未授权查看项目；该限制后来已解除，以下最新记录覆盖此前“无法核对”状态。
+
+2026-10-10 最新 Vercel 控制台只读核对：项目 `lost-found-photo-matching-fyp` 可见；最新 GitHub 提交 `2213f0d` 的 Production deployment 显示 Ready。环境变量列表中可见 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、Neon 集成提供的 `DATABASE_URL` 与 `DATABASE_NEON_AUTH_BASE_URL`、Blob 集成提供的 `BLOB_READ_WRITE_TOKEN`，以及 `CRON_SECRET`。只核对了变量名称和环境范围，没有显示或读取任何值；因此只能确认这些变量条目存在，不能确认 DeepSeek key 有效、模型值正确或实际 API 调用成功。Neon/Blob 变量行显示关联的集成资源。没有修改生产配置，也没有发起 DeepSeek 调用。
 
 ## 数据放在哪里
 

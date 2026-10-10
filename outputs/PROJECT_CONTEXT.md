@@ -66,6 +66,7 @@
 可执行的离线评估草案见 [`RESEARCH_AND_EVALUATION_PLAN.md`](RESEARCH_AND_EVALUATION_PLAN.md)。其中数据规模、伦理审批和参与者安排尚待导师确认。
 数据字段及配对标注规则草案见 [`DATASET_AND_ANNOTATION_GUIDE.md`](DATASET_AND_ANNOTATION_GUIDE.md)，空白 CSV 模板也在 `outputs/`。
 当前应用组件、接口、数据流和限制见 [`SYSTEM_ARCHITECTURE.md`](SYSTEM_ARCHITECTURE.md)。
+登录、SQL 参数化、账号重复和未核实边界的静态复核见 [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md)；该复核不是渗透测试或完整线上验收。
 当前启发式分数、文本相似度和排序规则见 [`MATCHING_ALGORITHM.md`](MATCHING_ALGORITHM.md)。
 
 - 建立人工标注的失物与拾获配对数据集；尽量征得照片拍摄者同意，不使用未经授权的真实个人资料。
@@ -122,8 +123,8 @@
 - 2026-10-10 对线上首页、`/login`、`/login.html`、`/my-records`、`/my-records.html`、Auth 配置、健康接口和公开记录接口进行只读检查，均返回 HTTP 200；当时公开记录接口返回空数组。未带登录凭证访问 `/api/me/records` 返回预期的 HTTP 401。先前已登录“我的记录”页曾正常显示，但真实注册/登录提交、发布、AI 调用、匹配、关闭/删除或过期清理仍未完成端到端验收；此次检查没有发送 DeepSeek 请求。
 - 同日对 Neon Auth 的 GET session 与 POST 预检做只读检查：session 返回 `200 null`，CORS 反射当前网站来源，预检允许当前来源。此结果只证明 Auth 路由/CORS 可达，没有验证注册或登录提交，因此此前截图中的 `Invalid origin` 是否已在真实表单流程解决仍未确认。
 - 后续检查（2026-10-10）：当前浏览器的“我的记录”页面显示已登录用户 `jie`，并显示 0 条记录；这说明该会话能读取受保护的个人记录页面/API，但不证明新注册、退出后重新登录或发布流程成功。线上首页、`/login`、`/my-records`、`/api/health`、`/api/config`、`/api/records` 和前端静态 JS/CSS 均返回 HTTP 200，Auth 配置标记为已启用；未发起 DeepSeek 调用。此前注册截图中的 `Invalid origin` 仍需退出后重新注册/登录才能最终确认。
-- 同日检查 Neon 控制台时，当前组织项目列表仅显示 `dawn-voice-63453865`（AWS US East 2 / Ohio）；其唯一 `production` 分支的 Better Auth 页面显示“Enable Neon Auth”，尚未启用。与此同时，线上 `/api/config` 返回的 Auth URL 是 `ep-flat-recipe-b7nuq4d3.neonauth.c-13.us-east-1.aws.neon.tech`（US East 1）。因此当前 Vercel 部署所用 Auth 地址与控制台可见项目/分支不一致；尚不能确认 Vercel 的 `DATABASE_URL` 指向哪一套数据库，也不能断言旧项目被删除。先不要把生产环境变量改指向 `dawn-voice`，应先确认预期项目并核对 Vercel 的 Neon 集成，避免生产数据库/Auth 错配。
-- 2026-10-10 追加线上只读检查：`/api/health`、`/api/config`、`/api/records` 均为 HTTP 200，公开记录为空；无凭证访问 `/api/me/records` 和 `/api/cron/expire` 均为预期 HTTP 401。未发布记录、未调用 DeepSeek。当前浏览器 Vercel 账号看不到目标项目；切换账号后需要 GitHub 登录凭据，未提交凭据。暂时不能检查或更改目标项目的环境变量和部署设置；需要项目所有者本人登录正确账号后继续，期间不动线上数据库/Auth 配置。
+- 2026-10-10 较早检查时曾看到 Neon 项目 `dawn-voice-63453865`，其 Auth 未启用；当时线上 Auth URL 指向另一个区域，因此记录了数据库/Auth 目标疑点。之后用户提供的 Neon 控制台画面显示实际集成项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），其 `main` 分支已启用 Better Auth；Vercel 控制台目前也显示目标项目已连接 Neon 集成，并有 `DATABASE_URL`、`DATABASE_NEON_AUTH_BASE_URL` 等变量条目。此前疑点应视为由查看了不同 Neon 项目造成，不能再把 `dawn-voice` 当成生产项目。未显示或读取数据库连接串及 Auth URL 值，也未更改生产配置。
+- 2026-10-10 最新 Vercel 只读核对：项目 `lost-found-photo-matching-fyp` 可见，提交 `2213f0d` 的 Production deployment 显示 Ready。环境变量名称列表有 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、Neon 的 `DATABASE_URL` 和 `DATABASE_NEON_AUTH_BASE_URL`、Blob 的 `BLOB_READ_WRITE_TOKEN`、以及 `CRON_SECRET`；未查看值。环境变量存在不证明密钥有效或线上业务成功。没有发布记录、调用 DeepSeek 或修改配置。
 
 ### 研究材料与工具
 
