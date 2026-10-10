@@ -132,6 +132,8 @@ python scripts/analyze_ranking_errors.py --details work/evaluation/development_d
 - 项目上下文、计划及约束：[`outputs/PROJECT_CONTEXT.md`](outputs/PROJECT_CONTEXT.md)
 - FYP Proposal 草案：[`outputs/FYP_PROPOSAL_DRAFT.md`](outputs/FYP_PROPOSAL_DRAFT.md)
 - 论文写作路线图与证据清单：[`outputs/THESIS_WRITING_MAP.md`](outputs/THESIS_WRITING_MAP.md)
+- 第一章草稿：[`outputs/THESIS_CHAPTER_1_DRAFT.md`](outputs/THESIS_CHAPTER_1_DRAFT.md)
+- 第二章相关研究草稿：[`outputs/THESIS_CHAPTER_2_DRAFT.md`](outputs/THESIS_CHAPTER_2_DRAFT.md)
 - 决策记录：[`outputs/DECISIONS.md`](outputs/DECISIONS.md)
 - DeepSeek 官方参考：[`outputs/API_REFERENCES.md`](outputs/API_REFERENCES.md)
 - 系统架构：[`outputs/SYSTEM_ARCHITECTURE.md`](outputs/SYSTEM_ARCHITECTURE.md)

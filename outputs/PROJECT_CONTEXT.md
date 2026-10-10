@@ -159,6 +159,7 @@
 - 新增 `scripts/analyze_ranking_errors.py`，可将逐候选排名详情整理为逐查询人工复核表，列出漏掉的确认正例、前 K 名的确认负例和未判定候选；错配原因仍需研究者人工填写。尚未用真实数据生成或核对复核表。
 - 新增 `outputs/THESIS_WRITING_MAP.md`，把六章论文内容映射到现有文件，并标出各章所需证据和当前状态；明确主要统计对比仍待导师确认，结果表保持空白，不能填入推测值。
 - 新增 `outputs/THESIS_CHAPTER_1_DRAFT.md` 作为第一章中文规划稿；引用现有文献并把新颖性、样本、伦理和学院格式限制写明。尚需导师确认研究范围，并按正式论文语言与模板修订。
+- 2026-10-11 新增 `outputs/THESIS_CHAPTER_2_DRAFT.md`：按失物视觉检索、多模态系统、同实例视觉评估和研究设计综合已核实文献；明确区分全文级与摘要级证据，注明 CUTE 图数差异及研究空缺尚未证实。仍需系统检索、全文核对和学校引用格式校对。
 - 2026-10-11 研究方案一致性修订：建议将完整视觉流程 C 对表单基线 A 的 Hit Rate@5 差值设为唯一确认性主要比较；A 对 B 与 B 对 C 用于解释组件增量，归为次要/探索性分析；Recall@5、MRR@5 为次要指标。已同步 Proposal、研究评估计划、第一章草稿、写作路线图、导师邮件/清单和采集协议。仍待导师确认；test 数据不得用于事后选择。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
