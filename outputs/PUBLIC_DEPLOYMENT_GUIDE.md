@@ -46,7 +46,7 @@ Neon 和 Blob 已由用户在控制台创建并连接。旧 SQLite 数据和本�
 2. 在 Vercel 项目环境变量中确认 Neon 提供了 Auth URL（例如 `DATABASE_NEON_AUTH_BASE_URL` 或 `DATABASE_VITE_NEON_AUTH_URL`）。应用会根据 Auth URL 推导 JWKS 地址；如果 Neon 另外提供了 JWKS 变量，也可以保留并由应用读取。
 3. 在 Vercel 添加 Secret 类型的 `CRON_SECRET`，至少使用 16 个随机字符；该值不需要写进 GitHub。
 4. 保留已经连接好的 `DATABASE_URL`、`BLOB_READ_WRITE_TOKEN` 和 `DEEPSEEK_API_KEY`，并确认 `DEEPSEEK_MODEL=deepseek-flash`。
-5. 推送代码触发部署。用非敏感测试图片检查首页、登录/注册、发布记录、我的记录、关闭/删除和 `/api/health`。图片分析和比较会产生真实 DeepSeek API 用量。
+5. 推送代码触发部署。用非敏感测试图片检查首页、登录/注册、发布记录、我的记录、关闭/删除和 `/api/health`。图片分析和比较会产生真实 DeepSeek API 用量；发布记录时须单独勾选 AI 处理同意，不勾选仍可用表单信息匹配。
 
 Neon、Blob、Auth、DeepSeek 密钥和 `CRON_SECRET` 已由用户在控制台配置；`/api/cron/expire` 未带密钥请求返回 401，说明清理接口的密钥校验已生效。真实密钥不要写入 GitHub、聊天或网页代码。部署后的完整业务流程仍需用本人账号和不敏感测试图片验收，这会产生实际 DeepSeek API 用量。
 
@@ -54,7 +54,7 @@ Neon、Blob、Auth、DeepSeek 密钥和 `CRON_SECRET` 已由用户在控制台�
 
 - 公开访客可以读取公开记录和照片；已登录用户才能新增、关闭或删除记录。旧记录因没有所有者，不能由普通用户关闭或删除。
 - 用户决定暂不增加应用自定义的登录尝试限流。应用级 API 费用上限和异常用量告警仍未确认；应查看 DeepSeek 与 Vercel 控制台的用量和账单设置。
-- 页面已提示访客记录和照片会公开显示，启用 AI 时照片会发送给 DeepSeek；仍需和导师确认真实参与者数据的伦理、同意和保留期限。
+- 页面已区分照片公开展示与第三方 AI 处理同意，后者需逐条勾选；匹配比较候选照片时也要求候选记录发布者先行同意。应用勾选不等于学校伦理批准；真实参与者数据仍须先由导师/学校确认处理流程、同意文本和保留期限。
 - 如扩大到真实用户规模，仍需评估管理员处理举报、备份/恢复演练、费用告警、隐私删除流程和数据库连接池。
 
 ## 官方文档

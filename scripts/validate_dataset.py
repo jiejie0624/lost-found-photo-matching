@@ -18,7 +18,8 @@ from app.matching import parse_time  # noqa: E402
 RECORD_FIELDS = {
     "record_id", "item_group_id", "direction", "title", "category", "color",
     "location_zone", "time_start", "time_end", "description", "vision_category",
-    "vision_colors", "vision_brand", "vision_features", "image_id", "image_consent", "split",
+    "vision_colors", "vision_brand", "vision_features", "image_id", "image_consent",
+    "external_ai_consent", "split",
 }
 PAIR_FIELDS = {
     "query_record_id", "candidate_record_id", "label", "label_confidence", "annotator_id", "reason",
@@ -124,6 +125,12 @@ def validate(
             errors.append(f"记录 {record_id} 标为没有图片授权；不得纳入照片评估。")
         elif row["image_consent"] == "not_applicable":
             warnings.append(f"记录 {record_id} 的图片授权标为 not_applicable；请在受限的来源记录中说明理由。")
+        if row["external_ai_consent"] not in {"yes", "no", "pending", "not_applicable"}:
+            errors.append(f"{prefix} ({record_id}): external_ai_consent 必须是 yes、no、pending 或 not_applicable。")
+        elif row["external_ai_consent"] != "yes" and any(
+            row[field] for field in ("vision_category", "vision_colors", "vision_brand", "vision_features")
+        ):
+            errors.append(f"记录 {record_id} 含视觉分析数据，但 external_ai_consent 不是 yes。")
 
     for group_id, splits in group_splits.items():
         if len(splits) > 1:

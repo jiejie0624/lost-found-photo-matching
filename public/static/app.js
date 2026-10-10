@@ -174,6 +174,8 @@ form.addEventListener("submit", async (event) => {
       ? "照片特征分析完成"
       : payload.analysis_status === "unavailable"
         ? "照片分析暂不可用，已用表单信息继续匹配"
+        : payload.analysis_status === "not_consented"
+          ? "未同意向 DeepSeek 发送照片，已用表单信息完成基础匹配"
         : "未配置视觉 API，已用表单信息完成基础匹配";
     statusLine.textContent = `记录已发布。${analysisText}。`;
     resultRegion.innerHTML = `<div class="result-heading"><h3>${results.length ? "找到的可能线索" : "记录已保存"}</h3><p>${results.length ? "这些只是参考，请结合物品细节自行确认。" : "之后有相反类型的新记录时，可以再次查看。"}</p></div>${results.length ? `<div class="result-grid">${results.map((record) => card(record, true)).join("")}</div>` : ""}`;

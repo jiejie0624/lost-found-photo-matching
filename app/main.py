@@ -111,7 +111,8 @@ def init_db() -> None:
                 created_at TEXT NOT NULL,
                 owner_id TEXT,
                 status TEXT NOT NULL DEFAULT 'active',
-                expires_at TEXT
+                expires_at TEXT,
+                ai_processing_allowed INTEGER NOT NULL DEFAULT 0
             )""",
         )
         if DATABASE_URL:
@@ -132,6 +133,8 @@ def init_db() -> None:
             execute(db, "ALTER TABLE records ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
         if "expires_at" not in columns:
             execute(db, "ALTER TABLE records ADD COLUMN expires_at TEXT")
+        if "ai_processing_allowed" not in columns:
+            execute(db, "ALTER TABLE records ADD COLUMN ai_processing_allowed INTEGER NOT NULL DEFAULT 0")
         legacy_rows = execute(db, "SELECT id, created_at FROM records WHERE expires_at IS NULL").fetchall()
         for legacy_row in legacy_rows:
             try:
@@ -290,12 +293,16 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
     scored = []
     for row in rows:
         candidate = row_to_record(row)
+        candidate["_ai_processing_allowed"] = bool(row["ai_processing_allowed"])
         score, evidence = match_score(record, {**candidate, "analysis": candidate["analysis"]})
         candidate["match_score"] = score
         candidate["match_evidence"] = evidence
         scored.append(candidate)
     shortlist = sorted(scored, key=lambda item: (-item["match_score"], item["id"]))[:5]
-    return compare_candidate_images(record, shortlist)
+    matches = compare_candidate_images(record, shortlist)
+    for candidate in matches:
+        candidate.pop("_ai_processing_allowed", None)
+    return matches
 
 
 def read_candidate_image(image_url: str) -> bytes:
@@ -334,12 +341,14 @@ def comparison_image_data_url(raw: bytes) -> str:
 
 def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
-    if not api_key or not candidates:
+    if not api_key or not candidates or not record.get("_ai_processing_allowed"):
         return candidates
     try:
         comparable_candidates: list[dict[str, Any]] = []
         candidate_images: list[bytes] = []
         for candidate in candidates:
+            if not candidate.get("_ai_processing_allowed"):
+                continue
             try:
                 candidate_images.append(read_candidate_image(candidate["image_url"]))
                 comparable_candidates.append(candidate)
@@ -561,6 +570,7 @@ async def create_record(
     location: str = Form(...),
     occurred_at: str = Form(...),
     description: str = Form(""),
+    ai_processing_consent: str = Form(""),
     image: UploadFile = File(...),
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
@@ -604,7 +614,11 @@ async def create_record(
         (UPLOAD_DIR / image_name).write_bytes(normalized)
         image_url = f"/uploads/{image_name}"
         stored_name = image_name
-    attributes, analysis_status = analyze_image(normalized, title, category, description)
+    ai_processing_allowed = ai_processing_consent == "yes"
+    if ai_processing_allowed:
+        attributes, analysis_status = analyze_image(normalized, title, category, description)
+    else:
+        attributes, analysis_status = {}, "not_consented"
     record_id = uuid.uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat()
     expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
@@ -613,14 +627,18 @@ async def create_record(
             db,
             """INSERT INTO records
             (id, kind, title, category, color, location, occurred_at, description,
-             image_name, image_url, image_analysis, analysis_status, created_at, owner_id, status, expires_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)""",
+             image_name, image_url, image_analysis, analysis_status, created_at, owner_id, status, expires_at,
+             ai_processing_allowed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
             (record_id, kind, title, category, color, location, occurred_at, description,
-             stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id, expires_at),
+             stored_name, image_url, json.dumps(attributes, ensure_ascii=False), analysis_status, created_at, owner_id,
+             expires_at, ai_processing_allowed),
         )
         row = execute(db, "SELECT * FROM records WHERE id = ?", (record_id,)).fetchone()
     record = row_to_record(row)
+    record["_ai_processing_allowed"] = ai_processing_allowed
     record["image_bytes"] = normalized
     record["matches"] = find_matches(record)
     record.pop("image_bytes", None)
+    record.pop("_ai_processing_allowed", None)
     return record

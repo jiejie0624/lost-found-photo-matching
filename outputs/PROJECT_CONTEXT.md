@@ -56,8 +56,8 @@
 - SQLite：本地记录数据库；云端配置 `DATABASE_URL` 后使用 PostgreSQL。
 - 静态 HTML、CSS 和 JavaScript：简洁响应式中文网页。
 - 本地运行时图片存储在本机；配置 Vercel Blob 后保存到 Blob。上传后用 Pillow 校正方向并重新编码，以移除 EXIF 元数据。
-- 配置 `DEEPSEEK_API_KEY` 后，在发布记录时调用 DeepSeek 视觉 API 提取属性；未配置或调用失败时仍可按表单信息匹配。
-- 当前匹配先按表单及 DeepSeek 提取属性排序，再让 DeepSeek 直接比较前 5 个候选照片并重排；API 不可用时退回属性排序。界面参考分不是配对概率。
+- 发布者逐条明确同意 AI 处理后，配置 `DEEPSEEK_API_KEY` 才会调用 DeepSeek 视觉 API 提取属性；未同意、未配置或调用失败时仍可按表单信息匹配。数据库新增 `ai_processing_allowed`，旧记录迁移后默认为未同意。
+- 匹配先按表单及视觉属性排序；直接比较照片时要求查询记录和候选记录双方均同意 AI 处理，最多比较 5 个候选。应用授权不代表学校伦理审批或研究参与者同意；数据集指南另设 `external_ai_consent`，视觉属性未获第三方 AI 授权时预检会报错。界面参考分不是配对概率。
 
 此技术栈是为本地原型的低门槛和快速启动作出的实现选择。
 
