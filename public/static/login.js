@@ -17,7 +17,7 @@ function friendlyAuthError(error) {
     if (currentOrigin !== PRODUCTION_ORIGIN && currentOrigin.endsWith(".vercel.app")) {
       return `当前是 Vercel 预览网址，登录服务不接受这个来源。请打开正式网站：${PRODUCTION_ORIGIN}/login.html`;
     }
-    return "登录服务拒绝了当前网站来源。请检查 Vercel 使用的 Neon Auth 分支，并确认该分支的可信来源包含本网站域名。";
+    return `Neon Auth 拒绝了这个网站来源：${currentOrigin}。请使用正式网址 ${PRODUCTION_ORIGIN}/login.html；如果你已经在正式网址，请检查 Vercel 当前部署连接的 Neon Auth 分支是否信任这个来源。`;
   }
   return message;
 }
