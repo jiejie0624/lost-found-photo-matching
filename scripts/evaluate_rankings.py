@@ -151,6 +151,13 @@ def load_pairs(
             raise ValueError(f"配对方向必须是 lost 查询对 found 候选：{query_id}, {candidate_id}")
         if label not in {"0", "1", "uncertain"}:
             raise ValueError(f"配对标签必须是 0、1 或 uncertain：{query_id}, {candidate_id}")
+        if label in {"0", "1"}:
+            same_item = query["item_group_id"] == candidate["item_group_id"]
+            if (label == "1") != same_item:
+                raise ValueError(
+                    f"配对标签与 item_group_id 是否相同矛盾：{query_id}, {candidate_id}；"
+                    "同一实物应标 1，不同实物应标 0"
+                )
         confidence = row["label_confidence"].lower()
         if confidence not in CONFIDENCE_RANK:
             raise ValueError(f"配对置信度必须是 high、medium 或 low：{query_id}, {candidate_id}")

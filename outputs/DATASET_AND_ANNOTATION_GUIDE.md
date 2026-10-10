@@ -85,7 +85,7 @@ Cohen's kappa 受标签比例影响，应与样本数、原始一致率和混淆
 
 正式评估前检查：编号唯一、必填字段齐全、时间范围有效、配对方向正确（`lost` 对 `found`）、同一物品没有跨集合、未知标签未被当成负例、测试标签已冻结、图片同意状态可追溯。
 
-录入 CSV 后可运行 [`../scripts/validate_dataset.py`](../scripts/validate_dataset.py) 做结构预检。它会检查上述大部分机械条件，以及正例是否与同一 `item_group_id` 一致、负例是否来自不同实物，并核对每个查询是否覆盖文件中同一 split 的全部拾获候选。运行视觉属性评估或载入照片比较分数时，[`../scripts/evaluate_rankings.py`](../scripts/evaluate_rankings.py) 还会拒绝任何没有 `external_ai_consent=yes` 的查询或候选记录。工具不会判断人工标签是否正确，也无法发现 `records.csv` 本身漏掉的研究候选；来源覆盖范围仍须由研究者核实。
+录入 CSV 后可运行 [`../scripts/validate_dataset.py`](../scripts/validate_dataset.py) 做结构预检。它会检查上述大部分机械条件，以及正例是否与同一 `item_group_id` 一致、负例是否来自不同实物，并核对每个查询是否覆盖文件中同一 split 的全部拾获候选。评估脚本自身也会拒绝与 `item_group_id` 矛盾的 0/1 标签；运行视觉属性评估或载入照片比较分数时，[`../scripts/evaluate_rankings.py`](../scripts/evaluate_rankings.py) 还会拒绝任何没有 `external_ai_consent=yes` 的查询或候选记录。工具不会判断人工标签是否正确，也无法发现 `records.csv` 本身漏掉的研究候选；来源覆盖范围仍须由研究者核实。
 
 ## 待导师确认
 
