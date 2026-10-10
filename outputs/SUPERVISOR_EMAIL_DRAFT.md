@@ -12,11 +12,11 @@ I am developing my FYP on a lost-and-found photo-matching web prototype. I would
 
 The current study idea is to compare three ranking approaches on the same lost-item queries and found-item candidates: (A) user-provided form details, (B) form details plus structured attributes extracted from photos, and (C) direct comparison of the query photo with a shortlist of candidate photos. The draft metrics are Hit Rate@5, Recall@5, and MRR@5. These are proposals for discussion, not a finalized or approved protocol.
 
-I have also found a 2026 IEEE conference abstract describing an adaptive lost-and-found retrieval system that combines category-restricted FAISS retrieval with CLIP re-ranking ([DOI](https://doi.org/10.1109/ICHORA69329.2026.11537024)). I therefore do not claim that a multimodal lost-and-found system is novel. My tentative research contribution is the controlled A/B/C comparison on one item-disjoint, manually judged candidate pool; I have not yet reviewed the full paper or confirmed that this gap is novel.
+I have found recent IEEE abstracts describing both an AI lost-and-found service framework (MEDCOM 2025, [DOI](https://doi.org/10.1109/MEDCOM67532.2025.11405255)) and an adaptive retrieval system using category-restricted FAISS followed by CLIP re-ranking (ICHORA 2026, [DOI](https://doi.org/10.1109/ICHORA69329.2026.11537024)). I therefore do not claim that an AI or multimodal lost-and-found system is novel. My tentative research contribution is the controlled A/B/C comparison on one item-disjoint, manually judged candidate pool; I have not reviewed both full papers or confirmed that this gap is novel.
 
 Could we discuss:
 
-1. Whether this narrower controlled comparison is suitable for the FYP given the related 2026 system, and which comparison should be primary.
+1. Whether this narrower controlled comparison is suitable for the FYP given these related systems, and which comparison should be primary.
 2. Whether controlled photos of the same ordinary item, photographed under different views/backgrounds, are an acceptable data source; how to establish positive and difficult-negative pairs; and what sample size is feasible.
 3. Whether ethics review is required, which office/process applies, and what work is allowed before approval.
 4. Whether photos and descriptions may be sent to the DeepSeek V4.1 Flash API, and what separate participant consent, storage region, access controls, retention, and deletion process are required.
