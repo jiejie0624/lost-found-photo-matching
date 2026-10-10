@@ -38,6 +38,10 @@ def load_records(
 
     with handle:
         reader = csv.DictReader(handle)
+        if not reader.fieldnames:
+            raise ValueError(f"{path} 没有 CSV 表头")
+        if any(not name for name in reader.fieldnames) or len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ValueError(f"{path} 的 CSV 表头有空列名或重复字段；请检查表头。")
         required = {
             "record_id", "item_group_id", "contributor_group_id", "direction", "split", "image_id"
         }
@@ -51,6 +55,10 @@ def load_records(
         item_splits: dict[str, set[str]] = defaultdict(set)
         contributor_splits: dict[str, set[str]] = defaultdict(set)
         for line_number, raw in enumerate(reader, start=2):
+            if None in raw:
+                raise ValueError(f"{path} 第 {line_number} 行包含超出表头的字段")
+            if None in raw.values():
+                raise ValueError(f"{path} 第 {line_number} 行字段数少于表头")
             row = {key: (value or "").strip() for key, value in raw.items() if key is not None}
             record_id = row["record_id"]
             direction = row["direction"]

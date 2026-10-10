@@ -26,11 +26,19 @@ def read_details(path: Path) -> list[dict[str, str]]:
             reader = csv.DictReader(handle)
             if not reader.fieldnames:
                 raise ValueError(f"{path} 没有 CSV 表头")
+            if any(not name for name in reader.fieldnames) or len(reader.fieldnames) != len(set(reader.fieldnames)):
+                raise ValueError(f"{path} 的 CSV 表头有空列名或重复字段；请检查表头。")
             missing = REQUIRED_FIELDS - set(reader.fieldnames)
             if missing:
                 raise ValueError(f"{path} 缺少字段：{', '.join(sorted(missing))}")
-            return [{key: (value or "").strip() for key, value in row.items() if key}
-                    for row in reader]
+            rows = []
+            for line_number, row in enumerate(reader, start=2):
+                if None in row:
+                    raise ValueError(f"{path} 第 {line_number} 行包含超出表头的字段。")
+                if None in row.values():
+                    raise ValueError(f"{path} 第 {line_number} 行字段数少于表头。")
+                rows.append({key: (value or "").strip() for key, value in row.items() if key})
+            return rows
     except OSError as exc:
         raise ValueError(f"无法读取 {path}: {exc}") from exc
     except csv.Error as exc:

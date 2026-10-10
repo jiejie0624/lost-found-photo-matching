@@ -18,27 +18,13 @@ export async function getAuthClient() {
 }
 
 export async function getAccessToken() {
-  await getAuthClient();
-  if (!authBaseUrl) throw new Error("登录服务尚未配置。");
-
-  // Neon Auth's browser session cookie is opaque; exchange it for the short-lived
-  // JWT used by this app's API. `credentials: include` sends the Auth cookie.
-  const response = await fetch(`${authBaseUrl}/token`, {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
-  });
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    // Keep the error below limited to the HTTP status; never expose token payloads.
+  const auth = await getAuthClient();
+  if (typeof auth.getJWTToken !== "function") {
+    throw new Error("当前 Neon Auth SDK 不支持获取登录凭证，请刷新页面或联系管理员。");
   }
-  const token = payload?.data?.token || payload?.token || payload?.data?.access_token;
-  if (response.ok && typeof token === "string" && token.split(".").length === 3) {
-    return token;
-  }
-  throw new Error(`获取登录凭证失败：Neon Auth HTTP ${response.status}。请重新登录后再试。`);
+  const token = await auth.getJWTToken();
+  if (typeof token === "string" && token.split(".").length === 3) return token;
+  throw new Error("没有取得有效登录凭证，请重新登录后再试。");
 }
 
 export async function authorizedFetch(url, options = {}) {

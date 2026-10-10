@@ -31,10 +31,21 @@ CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
 def read_csv(path: Path, required_fields: set[str]) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
+        if not reader.fieldnames:
+            raise ValueError(f"{path} 没有 CSV 表头")
+        if any(not name for name in reader.fieldnames) or len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ValueError(f"{path} 的 CSV 表头有空列名或重复字段；请检查表头。")
         missing = required_fields - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"{path} 缺少字段：{', '.join(sorted(missing))}")
-        return [{key: (value or "").strip() for key, value in row.items()} for row in reader]
+        rows = []
+        for line_number, row in enumerate(reader, start=2):
+            if None in row:
+                raise ValueError(f"{path} 第 {line_number} 行包含超出表头的字段。")
+            if None in row.values():
+                raise ValueError(f"{path} 第 {line_number} 行字段数少于表头。")
+            rows.append({key: (value or "").strip() for key, value in row.items()})
+        return rows
 
 
 def middle_time(row: dict[str, str]) -> str:
