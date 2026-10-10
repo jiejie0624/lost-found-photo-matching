@@ -25,7 +25,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 在电脑上运行 `ipconfig`，找到当前 Wi-Fi 的 IPv4 地址，再在手机浏览器打开 `http://电脑的IPv4地址:8000`。
 
-没有 DeepSeek API 密钥时，仍可使用表单类别、颜色、地点和时间进行基础匹配。启用照片分析前，在当前 PowerShell 会话设置密钥：
+没有 DeepSeek API 密钥时，仍可使用表单标题、类别、颜色、地点、时间和说明进行基础匹配。启用照片分析前，在当前 PowerShell 会话设置密钥：
 
 ```powershell
 $env:DEEPSEEK_API_KEY = "你的 DeepSeek API 密钥"

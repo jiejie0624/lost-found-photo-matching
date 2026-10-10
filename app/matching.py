@@ -85,8 +85,20 @@ def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int,
         points += 8 * brand_score
         evidence.append("照片中可见品牌相同或相近")
 
-    source_features = (attribute_text(source_attrs, "features") + " " + source.get("description", "")).strip()
-    candidate_features = (attribute_text(candidate_attrs, "features") + " " + candidate.get("description", "")).strip()
+    source_features = " ".join(
+        part for part in (
+            source.get("title", ""),
+            attribute_text(source_attrs, "features"),
+            source.get("description", ""),
+        ) if part
+    )
+    candidate_features = " ".join(
+        part for part in (
+            candidate.get("title", ""),
+            attribute_text(candidate_attrs, "features"),
+            candidate.get("description", ""),
+        ) if part
+    )
     feature_score = similarity(source_features, candidate_features)
     points += 13 * feature_score
     if feature_score >= 0.3:
