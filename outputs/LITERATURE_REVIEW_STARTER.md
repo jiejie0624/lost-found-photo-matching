@@ -128,8 +128,8 @@ Matthé, M., Sannolo, M., Winiarski, K., Spitzen-van der Sluijs, A., Goedbloed, 
 Kotar, K., Tian, S., Yu, H.-X., Yamins, D. L. K., & Wu, J. (2023). “Are These the Same Apple? Comparing Images Based on Object Intrinsics.” *NeurIPS 2023 Datasets and Benchmarks*. [论文](https://proceedings.neurips.cc/paper_files/paper/2023/file/803c6ab3d62346e004ef70211d2d15b8-Paper-Datasets_and_Benchmarks.pdf) · [维护者数据说明](https://github.com/s-tian/CUTE/blob/main/datasheet.md)
 
 - **研究重点：** CUTE 用常见实物在不同姿态、光照和拍摄环境中的照片，研究视觉方法能否根据物品本身的特征而非背景判断身份；提出 Foreground Feature Averaging，并比较预训练图像特征与前景筛选方法。
-- **与本 FYP 的关系：** 它直接支持把“同类物品”与“同一件实物”分开定义，也提示背景和成像条件可能干扰照片比较。论文摘要称 18,000 张图片、180 件实物，但维护者数据说明写 10,000 张，公开来源数字不一致；仓储档案约 31.4 GB，当前内容和配对映射未检查。数据说明称目录隐式表示身份关系，并建议把整套数据作为测试集。
-- **限制与使用边界：** CUTE 没有失物/拾获方向、地点、时间和用户描述，不能替代本项目的主要数据集。若导师认可且数据核验可行，只能作为冻结方法的补充同实例视觉测试，不用于调参，也不应把其效果外推为真实失物系统效果。
+- **与本 FYP 的关系：** 它直接支持把“同类物品”与“同一件实物”分开定义，也提示背景和成像条件可能干扰照片比较。论文摘要称 18,000 张图片、180 件实物，但维护者数据说明写 10,000 张，公开来源数字不一致。仅用 HTTP Range 读取约 31.4 GB ZIP 的 ZIP64 目录（19,002 项，17,804 个 JPEG、67 个 `.DS_Store`）和一张样例 JPEG，成功解压；归档图数与两项官方数字仍不一致，原因未查明。目录样例包含 `instance_1/.../in_the_wild/`，支持身份/环境分组的初步核验，但未下载完整档案。
+- **限制与使用边界：** CUTE 没有失物/拾获方向、地点、时间和用户描述，不能替代本项目的主要数据集。若导师认可且数据核验可行，只能作为冻结方法的补充同实例视觉测试，不用于调参，也不应把其效果外推为真实失物系统效果。引用需按 CC BY 4.0 署名；使用 DeepSeek 前还需学校批准第三方图像处理。数据数量差异尚未解决。
 
 ## 当前研究问题的文献定位（暂定）
 
