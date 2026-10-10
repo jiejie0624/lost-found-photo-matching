@@ -82,6 +82,15 @@ Dhanawardhana, B. M. P., Chalana, K. A. D., Abeywardena, I. D. S. P., Lankasena,
 - **评估与限制：** 论文以配对分类准确率/F1 报告效果，不是同一固定候选池上的 Hit Rate@K、Recall@K 或 MRR@K。摘要、讨论与结果段落对融合模型的 accuracy/F1 以及混淆矩阵数量报告不一致；不能将某一个数字选作可信基准。需在引用结果前由研究者回看表格/图与切分，记录这一报告不一致。
 - **对本 FYP 的启发：** 可检验的问题更窄：在同一、按物品身份隔离并经人工确认的候选池上，比较用户表单、DeepSeek 提取视觉属性、以及 DeepSeek 对候选照片直接比较的 Top-K 排序增量，并报告实际调用成本/时延。该方向与这篇工作的方法不同，但是否足够新颖仍须系统检索并由导师确认。
 
+### 7.2 直接相关：ResNet 图像特征加文字相似度（2024）
+
+Prawira, J., & Saputri, T. R. D. (2024). “Lost item identification model development using similarity prediction method with CNN ResNet algorithm.” *Journal of Autonomous Intelligence, 7*(2). [全文 PDF 副本](https://pdfs.semanticscholar.org/5f6b/8c20f604763404a1f51be376d8a528e749bc.pdf) · [DOI](https://doi.org/10.32629/jai.v7i2.1381)
+
+- **研究方法：** 以 ResNet-50 提取图片特征、欧氏距离衡量图像相似；用 NLP 预处理用户描述并以余弦相似度算文本相似，再把图像和文字用于失物/拾获报告匹配。这表明 CNN 图像比较加文字相似度的总体路线已有直接先例。
+- **数据与切分：** 论文称数据集共 3,400 张图片，涵盖手机、相机、眼镜和帽子等；部分图像通过旋转、翻转和亮度变换扩充。训练/验证比例写为 80/20，但未充分说明同一实物的照片是否隔离到单一 split，也未清晰交代匹配配对测试集的构成。
+- **不能混用的结果：** 论文报告 ResNet 验证分类准确率 96.4%，另报告图像阈值匹配“正确率” 29.96%、文字阈值匹配正确率 97.92%。这三个数不是同一个任务：分类准确率不是同一实物检索排名指标；后两者的配对分母、正负定义和候选池排名未充分说明。原型问卷/场景测试仅有 2 位潜在用户，不能支持广泛易用性或检索效果结论。
+- **对本 FYP 的启发：** 不应以“首次组合视觉相似与文字”主张创新。可比较的问题仍是 DeepSeek 提取的结构化属性和候选照片直接比较能否在同一人工标注、按实物身份隔离的候选池中提升 Top-K 排名；这个差别尚须系统检索并让导师确认，不是已证实的研究空缺。
+
 ### 8. 直接相关：图像分类与加权排名（2018）
 
 Jeong, H. et al. (2018). “Lost and Found Registration and Inquiry Management System for User-dependent Interface using Automatic Image Classification and Ranking System based on Deep Learning.” *Journal of the Korea Convergence Security Association, 18*(4), 19–25. [DBpia 出版方页面](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
