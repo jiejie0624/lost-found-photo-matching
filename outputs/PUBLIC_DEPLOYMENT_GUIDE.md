@@ -8,7 +8,7 @@
 
 同日只读检查 Neon Auth：对当前网站来源查询 `/neondb/auth/get-session` 得到 HTTP 200、响应 `null`，并返回匹配网站来源的 `Access-Control-Allow-Origin`；对应 POST 预检返回 HTTP 204 并允许该来源。这说明 Auth 路由和浏览器来源的 CORS 设置当前可达，但没有提交注册/登录请求，因此不能据此确认 `Invalid origin` 注册错误已完全解决。
 
-后续代码复核发现前端取 API JWT 的实现调用了 SDK 未记录的 `auth.token()`，这与用户遇到的“获取登录凭证失败 HTTP 404”相符。已改为优先调用固定 SDK 文档中的 `auth.getJWTToken()`，并在 SDK session 带 `access_token` 时作为后备；本次只完成代码修复，尚未重新部署并用登录账号端到端核验。
+后续代码复核发现前端取 API JWT 的实现调用了 SDK 未记录的 `auth.token()`，这与用户遇到的“获取登录凭证失败 HTTP 404”相符。已改为优先调用固定 SDK 文档中的 `auth.getJWTToken()`，并在 SDK session 带 `access_token` 时作为后备。2026-10-10 修复已部署后的只读检查确认：`/`、`/login.html`、`/my-records.html`、`/api/health`、`/api/config`、`/api/records` 和 `/static/auth.js` 返回 HTTP 200；线上脚本包含 `getJWTToken` 且不再调用 `auth.token()`；未带凭证访问 `/api/me/records` 返回 HTTP 401。以上只证明部署文件和未认证保护可达，尚未用真实登录会话确认获取 JWT、读取个人记录、发布、AI 匹配、图片存储和删除流程。
 
 ## 数据放在哪里
 
