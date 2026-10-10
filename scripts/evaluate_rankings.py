@@ -21,7 +21,7 @@ from app.matching import match_score, parse_time  # noqa: E402
 RECORD_FIELDS = {
     "record_id", "item_group_id", "direction", "title", "category", "color",
     "location_zone", "time_start", "time_end", "description", "vision_category",
-    "vision_colors", "vision_brand", "vision_features", "split",
+    "vision_colors", "vision_brand", "vision_features", "external_ai_consent", "split",
 }
 PAIR_FIELDS = {"query_record_id", "candidate_record_id", "label", "label_confidence"}
 CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
@@ -100,6 +100,7 @@ def load_records(path: Path) -> dict[str, dict[str, Any]]:
             "occurred_at": middle_time(row),
             "description": row["description"],
             "analysis": analysis,
+            "external_ai_consent": row["external_ai_consent"],
         }
 
     leaked_groups = [group_id for group_id, splits in group_splits.items() if len(splits) > 1]
@@ -217,6 +218,8 @@ def load_photo_scores(
             raise ValueError(f"照片比较分数跨越或不属于当前 split：{query_id}, {candidate_id}")
         if records[query_id]["kind"] != "lost" or records[candidate_id]["kind"] != "found":
             raise ValueError(f"照片比较方向必须是 lost 查询对 found 候选：{query_id}, {candidate_id}")
+        if records[query_id].get("external_ai_consent") != "yes" or records[candidate_id].get("external_ai_consent") != "yes":
+            raise ValueError(f"照片比较分数涉及未明确同意第三方 AI 处理的记录：{query_id}, {candidate_id}")
         try:
             visual_score = int(row["visual_score"])
         except ValueError as exc:
@@ -251,10 +254,14 @@ def evaluate(
 
     for query_id, pairs in pairs_by_query.items():
         query = records[query_id]
+        if use_vision and query.get("external_ai_consent") != "yes":
+            raise ValueError(f"视觉属性评估包含未明确同意第三方 AI 处理的记录：{query_id}")
         source = query if use_vision else {**query, "analysis": {}}
         ranked: list[tuple[str, int, int | None, dict[str, Any], list[str]]] = []
         for candidate_id, judgment in pairs.items():
             candidate = records[candidate_id]
+            if use_vision and candidate.get("external_ai_consent") != "yes":
+                raise ValueError(f"视觉属性评估包含未明确同意第三方 AI 处理的记录：{candidate_id}")
             candidate_for_scoring = candidate if use_vision else {**candidate, "analysis": {}}
             score, evidence = match_score(source, candidate_for_scoring)
             ranked.append((candidate_id, score, judgment["metric_label"], judgment, evidence))

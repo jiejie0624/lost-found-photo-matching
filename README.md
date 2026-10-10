@@ -70,7 +70,7 @@ python scripts/analyze_annotation_agreement.py --annotations work/evaluation/ann
 
 该工具报告双方共同标注的配对数、未重叠数量、原始一致率、三类混淆表和 Cohen's kappa。它不裁决标签。讨论并裁决后，人工整理为 `pair_labels.csv`，确保每个配对只有一行供评估脚本使用。`work/` 已加入 `.gitignore`，原始标注和研究数据不会被 Git 跟踪。
 
-录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和达到置信度门槛的正负例结构。它不能代替伦理审批，也不能确认标签是否真实：
+录入记录和配对标签后，先运行只读数据预检；它会检查编号、时间、分组、授权状态、配对方向和达到置信度门槛的正负例结构。视觉属性评估与照片分数加载时还会强制要求相关记录 `external_ai_consent=yes`。这些工具不能代替伦理审批，也不能确认标签是否真实：
 
 ```powershell
 python scripts/validate_dataset.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv
