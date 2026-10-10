@@ -10,7 +10,6 @@ export async function getAuthClient() {
         throw new Error("登录服务尚未启用。请先在 Neon 控制台启用 Auth，再部署网站。");
       }
       authBaseUrl = config.auth_url.replace(/\/+$/, "");
-      const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
       const originalFetch = globalThis.fetch;
       const authOrigin = new URL(authBaseUrl).origin;
       const tracedFetch = async (input, init) => {
@@ -30,6 +29,7 @@ export async function getAuthClient() {
       };
       globalThis.fetch = tracedFetch;
       try {
+        const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
         return createAuthClient(authBaseUrl);
       } finally {
         globalThis.fetch = originalFetch;
