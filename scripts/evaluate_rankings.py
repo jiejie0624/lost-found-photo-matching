@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import random
 import sys
 from collections import defaultdict
@@ -348,6 +349,52 @@ def percentile(sorted_values: list[float], probability: float) -> float:
     return sorted_values[lower] * (1 - fraction) + sorted_values[upper] * fraction
 
 
+def uniform_random_expected_metrics(
+    pairs_by_query: dict[str, dict[str, dict[str, Any]]],
+    k: int,
+) -> dict[str, dict[str, float]]:
+    """Compute exact expected macro metrics for uniformly random candidate order."""
+    per_query: dict[str, dict[str, float]] = {}
+    for query_id, pairs in pairs_by_query.items():
+        candidate_count = len(pairs)
+        relevant_count = sum(item["metric_label"] == 1 for item in pairs.values())
+        if candidate_count == 0 or relevant_count == 0:
+            raise ValueError(f"查询 {query_id} 缺少候选或确认正例，无法计算随机参考线")
+        top_count = min(k, candidate_count)
+        hit_denominator = math.comb(candidate_count, top_count)
+        misses = candidate_count - relevant_count
+        miss_combinations = math.comb(misses, top_count) if misses >= top_count else 0
+        hit_rate = 1 - miss_combinations / hit_denominator
+
+        positive_position_denominator = math.comb(candidate_count, relevant_count)
+        mrr = sum(
+            math.comb(candidate_count - rank, relevant_count - 1)
+            / positive_position_denominator
+            / rank
+            for rank in range(1, top_count + 1)
+            if candidate_count - rank >= relevant_count - 1
+        )
+        per_query[query_id] = {
+            f"hit_rate@{k}": hit_rate,
+            f"recall@{k}": top_count / candidate_count,
+            f"mrr@{k}": mrr,
+        }
+    return per_query
+
+
+def summarize_query_metrics(per_query: dict[str, dict[str, float]]) -> dict[str, float | int]:
+    query_count = len(per_query)
+    if query_count == 0:
+        raise ValueError("没有查询，无法汇总随机参考线")
+    metric_names = next(iter(per_query.values()))
+    summary: dict[str, float | int] = {
+        metric: round(sum(values[metric] for values in per_query.values()) / query_count, 4)
+        for metric in metric_names
+    }
+    summary["queries"] = query_count
+    return summary
+
+
 def paired_bootstrap_differences(
     methods: dict[str, dict[str, dict[str, float]]],
     query_clusters: dict[str, str],
@@ -471,10 +518,12 @@ def main() -> int:
         vision_metrics, vision_details, vision_query_metrics = evaluate(
             records, pairs_by_query, args.k, use_vision=True
         )
+        random_query_metrics = uniform_random_expected_metrics(pairs_by_query, args.k)
         detail_rows = form_details + vision_details
         query_metrics_by_method = {
             "form_only_baseline": form_query_metrics,
             "with_vision_attributes": vision_query_metrics,
+            "uniform_random_expected": random_query_metrics,
         }
         report: dict[str, Any] = {
             "split": args.split,
@@ -490,6 +539,11 @@ def main() -> int:
             ),
             "form_only_baseline": form_metrics,
             "with_vision_attributes": vision_metrics,
+            "uniform_random_ranking_expected": summarize_query_metrics(random_query_metrics),
+            "random_baseline_note": (
+                "exact expectation for uniform random order over each full candidate pool; "
+                "unjudged candidates remain in the pool and confirmed positives define relevance"
+            ),
         }
         if photo_scores is not None:
             photo_metrics, photo_details, photo_query_metrics = evaluate(
