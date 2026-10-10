@@ -11,7 +11,29 @@ export async function getAuthClient() {
       }
       authBaseUrl = config.auth_url.replace(/\/+$/, "");
       const { createAuthClient } = await import("https://esm.sh/@neondatabase/auth@0.5.0-beta?bundle");
-      return createAuthClient(authBaseUrl);
+      const originalFetch = globalThis.fetch;
+      const authOrigin = new URL(authBaseUrl).origin;
+      const tracedFetch = async (input, init) => {
+        const requestUrl = new URL(input instanceof Request ? input.url : String(input), authBaseUrl);
+        try {
+          const result = await originalFetch.call(globalThis, input, init);
+          if (requestUrl.origin === authOrigin && !result.ok) {
+            console.warn(`[Neon Auth] ${requestUrl.pathname} returned HTTP ${result.status}`);
+          }
+          return result;
+        } catch (error) {
+          if (requestUrl.origin === authOrigin) {
+            console.warn(`[Neon Auth] ${requestUrl.pathname} request failed (${error?.name || "Error"})`);
+          }
+          throw error;
+        }
+      };
+      globalThis.fetch = tracedFetch;
+      try {
+        return createAuthClient(authBaseUrl);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     })();
   }
   return clientPromise;
