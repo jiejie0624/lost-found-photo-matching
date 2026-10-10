@@ -1,0 +1,51 @@
+# 文献检索记录（起步版）
+
+> 状态：定向网络检索记录，不是系统综述，也不证明研究空缺。检索日期：2026-10-10。检索者：FYP 学生。使用一般网络搜索发现论文，再打开出版社、会议、期刊或 arXiv 原始页面核对可见书目信息/摘要；没有系统检索 Scopus、Web of Science、ACM DL、IEEE Xplore 全库或学校订阅数据库，没有执行正式去重。
+
+## 已执行的定向检索
+
+| 检索式 | 用途/结果 | 后续处理 |
+| --- | --- | --- |
+| `site:ieeexplore.ieee.org lost found object image retrieval lost item matching lost found photo retrieval` | 找到 IEEE IRCE 2025 的 YOLO/LLM/CLIP 级联论文；目前只核实 IEEE 页面摘要。 | 取得全文，抽取数据、基线、Top-K 指标、消融和划分。 |
+| `site:dl.acm.org lost and found image matching retrieval items` | 本轮没有确认 ACM 出版的直接相关论文。 | 之后在 ACM DL 以同义词和引用追踪重查；本结果不能说明 ACM 无相关工作。 |
+| `"lost and found" "image retrieval" item matching system` | 找到 LostNet、Ghazal 等失物图片检索工作，以及图像分类/排名与视觉 API 线索。 | 查看引用链，区分实例匹配、类别分类和系统论文。 |
+| `2024 2025 lost and found object image matching paper multimodal retrieval` | 找到 IEEE 2025 YOLO/LLM/CLIP 论文；另发现通用实例检索 IDMR (2025)。 | 前者查全文；后者仅用于界定“同一实例”任务，不作为失物领域证据。 |
+| `"Deep Learning-Based Image Retrieval System for School Lost and Found"` | 结果主要是非学术汇报材料，没有确认可引用的正式论文。 | 暂不纳入核心证据；若导师提供题名/来源再核查。 |
+| `"lost property" image matching dataset retrieval academic paper lost and found benchmark dataset` | 发现 IEICE 2022 只以图片登记/检索论文。 | 目前只核实官方英文摘要；须查全文及其可用性研究设计。 |
+| `site:arxiv.org "lost and found" item retrieval image matching` | 发现 IDMR 等同实例多模态检索工作；也命中与日常失物系统无关的多目标跟踪论文。 | 仅保留任务相关来源；记录排除理由，不把标题中 “Lost and Found” 当作相关性依据。 |
+| `"Proposal and Evaluation of a Lost Property Registration and Retrieval System" PDF` / `"MVE2021-52" PDF Hirose` | 搜索到 IEICE 官方技术报告页面，未取得可核实的全文 PDF。 | 通过学校图书馆或作者正式渠道找全文；不要推测其指标。 |
+| `"Lost and Found Registration and Inquiry Management System" "19" "25" 2018 pdf` / `"Automatic Image Classification and Ranking System" "Lost and Found" Jeong` | 找到 DBpia 期刊页面，确认 2018 年、作者/期刊页码和摘要，全文访问受限。 | 通过学校图书馆取得全文；补充层级分类数据、排名定义、可用性样本与结果。 |
+
+## 当前筛选出的核心来源
+
+| 来源 | 可核实证据 | 当前限制/待查 |
+| --- | --- | --- |
+| Ghazal et al. (2016), 多特征失物检索 | 机构仓储/论文摘要列文字、GIS、SURF、L*a*b*；摘要报告小型数据和 accuracy/precision/recall。 | 核对全文指标分母、标签、候选池、划分；与同团队 2015 FiCloud 版本比较是否重复。 |
+| Zhou et al. (2024), LostNet | PLOS ONE 全文可读；包含类别分类与感知哈希候选排序。 | 需将分类指标与实例检索排名指标分开；核查测试集物品身份隔离和数据增强描述。 |
+| Jeong et al. (2018), 层级分类与加权排名 | DBpia 出版方页面及摘要。 | 无可核实的配对检索数值和数据细节；全文未取得。 |
+| Hirose et al. (2022), 只用图片登记的失物检索 | IEICE 出版方页面/英文摘要；使用 Google Cloud Vision API，摘要称进行了 usability study。 | 全文为日语且尚未取得；未知配对标注、检索指标、样本和易用性方法。 |
+| Das et al. (2026), MobileNet 嵌入检索 | Springer 出版方摘要。 | 未取得全文；数值、样本和拆分方式未知。 |
+| IEEE IRCE (2025), YOLO/LLM/CLIP | IEEE 出版方摘要描述多阶段多模态检索。 | 未取得全文；数据、指标、消融、比较基线未知。 |
+| Liu et al. (2025), IDMR | arXiv 预印本摘要明确定义跨场景的同实例检索，并提出 IDMR-bench。 | 通用视觉检索而非失物系统；仅支持任务定义，不支持 DeepSeek 或本 FYP 的效果结论。 |
+
+## 暂定结论与检索空缺
+
+已查到多种失物系统采用了图像分类、加权排名、感知哈希、局部特征或视觉 API；因此不能声称“首个失物照片配对系统”或“首次把视觉与元数据结合”。可继续核实的具体比较问题是：在同一组有可靠同实物标签、含困难负例且按物品身份隔离的候选集合上，是否有研究公平比较表单基线、结构化视觉属性和直接照片重排，并报告 Hit Rate@K、Recall@K、MRR@K 及运行成本。
+
+这一点目前只是**待查的问题**，并非已证明的空白。系统检索至少还需要：
+
+1. 在 Scopus/Web of Science 或学校认可数据库、IEEE Xplore、ACM DL、Google Scholar 分别检索，并记录每次完整查询式、日期、结果数和筛选理由。
+2. 搜索同义词：`lost property`, `lost item`, `lost-and-found`, `found item`, `object instance retrieval`, `same-instance matching`, `visual re-identification`, `image-based retrieval`, `multimodal ranking`。
+3. 回溯 Ghazal 2015/2016、LostNet、IEICE 2022、韩国 2018、Springer 2026、IEEE 2025 的参考文献和引用论文，合并重复版本并保留排除理由。
+4. 取得付费/日语/韩语论文全文后，抽取数据来源、正例是否同一实物、候选池、基线、测试划分、指标、用户研究人数与限制；若全文无法取得，继续标为摘要级证据。
+5. 完成导师确认后，再把证据支持的范围写进 proposal；在此之前不使用“首次”“没有研究过”或“已证明有效”等说法。
+
+## 可复核链接
+
+- [Ghazal et al. (2016) 机构仓储](https://repository.adu.ac.ae/items/50e44846-18b5-4d8b-a629-e9e85abec7c7)
+- [LostNet, PLOS ONE](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310998)
+- [Jeong et al. (2018), DBpia](https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE10088974)
+- [Hirose et al. (2022), IEICE](https://ken.ieice.org/ken/paper/20220309ICJm/eng/)
+- [Das et al. (2026), Springer](https://link.springer.com/chapter/10.1007/978-981-96-6046-9_32)
+- [IEEE IRCE (2025)](https://ieeexplore.ieee.org/document/11203217/)
+- [IDMR, arXiv:2504.00954](https://arxiv.org/abs/2504.00954)

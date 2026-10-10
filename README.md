@@ -131,5 +131,6 @@ python scripts/analyze_ranking_errors.py --details work/evaluation/development_d
 - 排名错配人工复核表：[`scripts/analyze_ranking_errors.py`](scripts/analyze_ranking_errors.py)
 - API 实验调用日志指南：[`outputs/EXPERIMENT_LOG_GUIDE.md`](outputs/EXPERIMENT_LOG_GUIDE.md)
 - 文献综述起步笔记：[`outputs/LITERATURE_REVIEW_STARTER.md`](outputs/LITERATURE_REVIEW_STARTER.md)
+- 文献检索式、筛选决定与待查全文：[`outputs/LITERATURE_SEARCH_LOG.md`](outputs/LITERATURE_SEARCH_LOG.md)
 - 相关工作对照表：[`outputs/RELATED_WORK_MATRIX.md`](outputs/RELATED_WORK_MATRIX.md)
 - 公开演示部署指南：[`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)

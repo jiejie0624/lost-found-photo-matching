@@ -2,7 +2,7 @@
 
 > 本文件是文献阅读起点，不是完整或系统性的文献综述。整理日期：2026-10-10。正式论文引用前，请再次核对版本、页码和学校引用格式。
 
-2026-10-10 做过一次定向网页检索，查找 lost-and-found image matching、lost object image retrieval 和多模态检索论文。此次检索找到了更多相关工作，但没有按系统综述流程记录数据库覆盖、完整检索式、去重和纳入/排除理由；不能据此声称检索穷尽或研究空缺已确认。
+2026-10-10 做过定向网页检索，查找 lost-and-found image matching、lost object image retrieval 和多模态检索论文；实际检索式和筛选状态见 [`LITERATURE_SEARCH_LOG.md`](LITERATURE_SEARCH_LOG.md)。此次没有按系统综述流程覆盖多个学术数据库、执行去重或完整记录纳入/排除，不能据此声称检索穷尽或研究空缺已确认。
 
 ## 暂定主题
 
