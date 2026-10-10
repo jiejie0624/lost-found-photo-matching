@@ -1,4 +1,4 @@
-import { getAccessToken, getAuthClient, currentSession, showProductionNotice } from "./auth.js";
+import { authorizedFetch, getAccessToken, getAuthClient, currentSession, showProductionNotice } from "./auth.js";
 
 showProductionNotice();
 
