@@ -18,6 +18,8 @@
 
 2026-10-10 登录凭证 404 修复：此前 `getJWTToken()` 实际返回会话标识，不能当作 API JWT；现改为在浏览器携带 Neon Auth 会话 cookie 请求 Auth `/token`，并只接受 JWT 格式的返回值。提交 `aacb208` 已推送到 `main` 并自动部署。生产静态脚本确认包含新 token 请求；刷新已有登录会话的“我的记录”页后，成功显示个人记录列表（0 条）。这验证了登录态、取 JWT 和只读个人记录接口。没有创建、修改或删除记录，也没有调用 DeepSeek。若浏览器仍显示旧错误，刷新页面即可加载新脚本。
 
+2026-10-10 后续生产路由复核：`/api/health`、`/api/config`、`/api/records`、`/login`、`/my-records` 和 `/static/app.js` 均返回 HTTP 200；Auth 配置为已启用，公开记录列表为空。对 `/api/records` 发送不完整请求得到 HTTP 422；发送字段完整但无登录凭证的合成 multipart 请求得到 HTTP 401（“请先登录后再操作”），未创建记录、未上传有效照片，也未调用 DeepSeek。这证明当前发布路由存在且要求登录，**不能**解释或证明此前真实登录发布时截图中的 HTTP 404 已解决。注册、真实 JWT 下发布、Blob 保存、DeepSeek 两阶段视觉流程和删除仍需端到端验收。
+
 注册域名问题仍待确认：用户此前的生产注册页面显示 `Invalid origin`。只读打开先前截图中的 Neon 项目 ID `flat-sky-86877676` 时控制台显示 “project not found”；当前登录的 Neon 组织项目列表只显示 `dawn-voice-63453865`，无法证明这是 Vercel 生产环境 `DATABASE_NEON_AUTH_BASE_URL` 对应的 Auth 项目。未修改 Auth 域名/来源设置。需要在与生产 Auth URL 对应的 Neon 项目中核对 Trusted origins，确保包含 `https://lost-found-photo-matching-fyp.vercel.app`，再由真实用户复查注册。Neon 与 Vercel 集成可自动配置生产域名，但当前项目关联情况未确认；参见 [Neon 对 Vercel Auth 域名的说明](https://neon.com/blog/auth-that-just-works-in-vercel-previews)。
 
 ## 数据放在哪里

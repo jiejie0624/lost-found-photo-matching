@@ -149,6 +149,13 @@
 - 根据新增相关工作，把研究问题草案细分为 A 对 B（视觉属性增量）和 B 对 C（照片比较增量）；主次与统计方法仍待导师确认，test 数据不得用于事后选择。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
+### 最新线上复核（2026-10-10）
+
+- 生产 `/api/health`、`/api/config`、`/api/records`、`/login`、`/my-records` 与 `/static/app.js` 可达；Auth 已启用，公开记录列表为空。未经认证访问 `/api/me/records` 返回 401。
+- 对发布接口发送字段完整但无登录凭证的合成请求返回 401，确认当前生产发布路由存在且会拒绝未登录请求；没有创建记录、上传照片或产生 DeepSeek 用量。
+- 这没有复现用户真实登录后看到的 HTTP 404，也没有验证登录后发布、Blob 图片持久化、DeepSeek 属性分析/多图比较或删除。不得据此声称线上端到端流程已完成。
+- 根据 DeepSeek 官方 Vision 文档，`deepseek-flash` 支持 Chat Completions 图片输入和多图；当前代码使用的 API model ID 与图片内容格式相符。官方能力文档不是密钥有效、配置值正确或真实调用成功的证据。
+
 ### 尚待完成（不能代替学校/导师确认）
 
 1. 确认正式研究问题、范围、样本量、评分/统计方案和论文格式。
