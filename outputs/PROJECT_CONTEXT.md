@@ -176,6 +176,7 @@
 - Vercel 中 commit `87d2fd5` 的 Production deployment 显示 Ready。生产 `/api/health` 返回 HTTP 200 和 `{"status":"ok","deepseek_key_configured":true,"deepseek_model_id":"deepseek-flash","deepseek_vision_model_supported":true}`；主页、登录/个人页、配置和公开记录接口仍返回 HTTP 200，无凭证访问 `/api/me/records` 返回 HTTP 401。该健康响应证明环境变量存在与模型 ID 在允许列表内，不验证密钥有效性、成功推理或照片比较。
 - 两条合成测试记录仍在线，用户明确选择暂不删除。此次只检查路由状态；没有读取或输出个人记录，没有新增/删除记录，也没有调用 DeepSeek。
 - 这未验证有效登录后发布、Blob 图片持久化、DeepSeek 属性分析/多图比较、跨账号隔离、删除/关闭或 90 天清理，也没有复现截图中的交互错误。不得据此声称线上端到端流程已完成。
+- 2026-10-11 后续查看 Vercel 当前 Overview：Production 显示 Ready，部署源码为 `main` 上的 `a93ac0b`；最近 30 分钟日志可见页面配置/记录读取均为 200，以及一次未登录访问 `/api/me/records` 的 401。该时间窗口没有 POST 发布请求，也没有可见 Warning/Error/Fatal，因此既没有复现历史发布 404，也不能证明发布已修复。Overview 的近 6 小时错误率显示 3.8%，但当前日志窗口没有对应错误详情；原因待查。没有提交表单或改动线上数据。
 - 2026-10-10 最新浏览器复核：现有会话打开首页后，账号入口切换为“我的记录”；个人记录页面显示 `jie` 已登录且有 0 条记录。与之前 JWT `/token` 修复后的只读接口结果相符，确认当前登录态取 JWT 和个人记录读取可用。旧发布 404 可能同样由旧 JWT 获取实现造成，但未经登录后真实提交验证，仍不能声称发布链路已修复；注册 `Invalid origin`、Blob 上传、DeepSeek 调用/匹配、删除/过期清理仍未全部验收。未创建公开测试记录或调用 DeepSeek。
 - 根据 DeepSeek 官方 Vision 文档，`deepseek-flash` 支持 Chat Completions 图片输入和多图；当前代码使用的 API model ID 与图片内容格式相符。官方能力文档不是密钥有效、配置值正确或真实调用成功的证据。
 
