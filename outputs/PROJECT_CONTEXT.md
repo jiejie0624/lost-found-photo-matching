@@ -161,6 +161,7 @@
 - 新增 `outputs/THESIS_CHAPTER_1_DRAFT.md` 作为第一章中文规划稿；引用现有文献并把新颖性、样本、伦理和学院格式限制写明。尚需导师确认研究范围，并按正式论文语言与模板修订。
 - 2026-10-11 新增 `outputs/THESIS_CHAPTER_2_DRAFT.md`：按失物视觉检索、多模态系统、同实例视觉评估和研究设计综合已核实文献；明确区分全文级与摘要级证据，注明 CUTE 图数差异及研究空缺尚未证实。仍需系统检索、全文核对和学校引用格式校对。
 - 2026-10-11 新增 `outputs/PARTICIPANT_INFORMATION_AND_CONSENT_DRAFT.md` 伦理工作模板，分开处理参与研究、研究图片收集、DeepSeek 处理及公开展示同意，并留出撤回/删除与学校联系方式字段。模板尚未学校审查，不能用于招募。查阅 DeepSeek 官方政策发现 API/SDK 数据处理涉及中国境内处理/存储及依数据类型而异的保留，Open Platform 条款要求应用开发者说明下游数据处理；跨境处理、API 条款、保留和学校授权仍待核实。
+- 2026-10-11 新增 `outputs/THESIS_CHAPTER_3_DRAFT.md`，将现有 A/B/C 方法、离线评估单位/标签/切分/统计、API 成本日志和伦理门槛整理成方法章草稿。样本量、数据来源、审批、保留期限均留待导师/学校决定；没有填入未执行的研究程序或结果。
 - 2026-10-11 研究方案一致性修订：建议将完整视觉流程 C 对表单基线 A 的 Hit Rate@5 差值设为唯一确认性主要比较；A 对 B 与 B 对 C 用于解释组件增量，归为次要/探索性分析；Recall@5、MRR@5 为次要指标。已同步 Proposal、研究评估计划、第一章草稿、写作路线图、导师邮件/清单和采集协议。仍待导师确认；test 数据不得用于事后选择。
 - `outputs/records_template.csv`、`pair_labels_template.csv`、`photo_scores_template.csv`、`experiment_log_template.csv` 均为空白模板；**目前没有真实标注数据或实验结果**。
 
