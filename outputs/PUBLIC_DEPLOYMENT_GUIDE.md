@@ -1,6 +1,6 @@
 # 公开网站部署计划（Vercel）
 
-> 用户已将项目部署到 Vercel，并连接 Neon PostgreSQL 和 Vercel Blob。登录代码已经加入；要让登录生效，还需在 Neon 启用 Auth，并确认 Vercel 注入 Auth 环境变量。修改代码推送到 GitHub 后会触发新的部署。
+> 当前状态（2026-10-10）：网站已部署到 Vercel，Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。线上首页、登录页、“我的记录”页、配置接口和健康接口均返回正常；未用真实账号完整重跑发布、AI 匹配和删除流程。维护或新部署时可参考下面的配置清单。
 
 ## 数据放在哪里
 
@@ -36,7 +36,7 @@ Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘�
 
 Neon 和 Blob 已由用户在控制台创建并连接。旧 SQLite 数据和本地照片不会自动迁移到云端。
 
-## Vercel 控制台部署步骤
+## Vercel 配置清单（新部署或排查时）
 
 1. 在 Neon 项目里打开主分支的 **Auth** 并启用 Managed Better Auth。
 2. 在 Vercel 项目环境变量中确认 Neon 提供了 Auth URL（例如 `DATABASE_NEON_AUTH_BASE_URL` 或 `DATABASE_VITE_NEON_AUTH_URL`）。应用会根据 Auth URL 推导 JWKS 地址；如果 Neon 另外提供了 JWKS 变量，也可以保留并由应用读取。
@@ -44,14 +44,14 @@ Neon 和 Blob 已由用户在控制台创建并连接。旧 SQLite 数据和本�
 4. 保留已经连接好的 `DATABASE_URL`、`BLOB_READ_WRITE_TOKEN` 和 `DEEPSEEK_API_KEY`，并确认 `DEEPSEEK_MODEL=deepseek-flash`。
 5. 推送代码触发部署。用非敏感测试图片检查首页、登录/注册、发布记录、我的记录、关闭/删除和 `/api/health`。图片分析和比较会产生真实 DeepSeek API 用量。
 
-以上步骤需要在用户自己的 Vercel 控制台完成账号授权、存储资源建立和密钥输入。密钥不应写入 GitHub 或网页代码。
+Neon、Blob、Auth、DeepSeek 密钥和 `CRON_SECRET` 已由用户在控制台配置；`/api/cron/expire` 未带密钥请求返回 401，说明清理接口的密钥校验已生效。真实密钥不要写入 GitHub、聊天或网页代码。部署后的完整业务流程仍需用本人账号和不敏感测试图片验收，这会产生实际 DeepSeek API 用量。
 
 ## 公开前的产品限制
 
 - 公开访客可以读取公开记录和照片；已登录用户才能新增、关闭或删除记录。旧记录因没有所有者，不能由普通用户关闭或删除。
-- 当前没有速率限制或费用上限保护；公开表单可能被滥用并触发 DeepSeek 用量。
+- 用户决定暂不增加应用自定义的登录尝试限流。应用级 API 费用上限和异常用量告警仍未确认；应查看 DeepSeek 与 Vercel 控制台的用量和账单设置。
 - 页面已提示访客记录和照片会公开显示，启用 AI 时照片会发送给 DeepSeek；仍需和导师确认真实参与者数据的伦理、同意和保留期限。
-- 用户量增大时需加认证、滥用防护、管理删除、备份、费用告警和数据库连接池。
+- 如扩大到真实用户规模，仍需评估管理员处理举报、备份/恢复演练、费用告警、隐私删除流程和数据库连接池。
 
 ## 官方文档
 

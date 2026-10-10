@@ -1,6 +1,6 @@
 # 拾见：失物照片配对 FYP
 
-中文本地 MVP：发布失物或拾获记录，上传照片，并按类别、照片描述、地点和时间排列可能的配对记录。
+“拾见”是面向手机和电脑浏览器的失物照片配对 FYP 原型。网站已部署到 Vercel；本地也可使用 SQLite 与本地图片目录运行。
 
 ## 启动
 
@@ -17,13 +17,13 @@ python -m uvicorn app.main:app --reload
 
 ## 手机浏览器
 
-页面会在窄屏下切换为单列布局，表单控件也适合触屏。手机可以用浏览器打开；若要在同一 Wi-Fi 下用手机访问电脑上的开发服务器，可运行：
+页面会在窄屏下切换为单列布局，表单控件也适合触屏。手机可直接打开公开网站；若要在同一 Wi-Fi 下用手机访问电脑上的开发服务器，可运行：
 
 ```powershell
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-在电脑上运行 `ipconfig`，找到当前 Wi-Fi 的 IPv4 地址，再在手机浏览器打开 `http://电脑的IPv4地址:8000`。此原型没有登录保护，只在可信的本地网络中临时演示，不要将其直接暴露到公网。
+在电脑上运行 `ipconfig`，找到当前 Wi-Fi 的 IPv4 地址，再在手机浏览器打开 `http://电脑的IPv4地址:8000`。
 
 没有 DeepSeek API 密钥时，仍可使用表单类别、颜色、地点和时间进行基础匹配。启用照片分析前，在当前 PowerShell 会话设置密钥：
 
@@ -34,13 +34,13 @@ python -m uvicorn app.main:app --reload
 
 默认模型为 `deepseek-flash`，也可通过 `DEEPSEEK_MODEL` 环境变量修改。密钥只在后端读取。
 
-登录使用 Neon Auth。需要在 Neon 启用 Auth，并提供 Auth URL。应用支持 `NEON_AUTH_BASE_URL`、Vercel Neon 集成的 `DATABASE_NEON_AUTH_BASE_URL` 或 `DATABASE_VITE_NEON_AUTH_URL`；JWKS 地址会从 Auth URL 推导，也可通过 `NEON_AUTH_JWKS_URL` 或 `DATABASE_NEON_AUTH_JWKS_URL` 覆盖。没有 Auth URL 时仍可浏览公开记录，但不能登录或发布。Vercel 过期清理还需要 `CRON_SECRET`。
+登录使用 Neon Auth。当前公开部署已启用 Auth。若为本地环境或新分支配置，需提供 Auth URL；应用支持 `NEON_AUTH_BASE_URL`、Vercel Neon 集成的 `DATABASE_NEON_AUTH_BASE_URL` 或 `DATABASE_VITE_NEON_AUTH_URL`；JWKS 地址会从 Auth URL 推导，也可通过 `NEON_AUTH_JWKS_URL` 或 `DATABASE_NEON_AUTH_JWKS_URL` 覆盖。没有 Auth URL 时仍可浏览公开记录，但不能登录或发布。Vercel 过期清理还需要 `CRON_SECRET`。
 
-## 当前范围
+## 当前应用功能
 
-- SQLite 数据库位于 `work/app_data/lost_found.sqlite3`。
-- 图片在后端去除 EXIF 后保存到 `work/app_data/uploads/`。
-- Neon Auth 启用后，用户需要登录才能发布；公开浏览无需登录。每条新记录会绑定账号，用户可以关闭或删除自己的记录。
+- 本地开发的 SQLite 数据库位于 `work/app_data/lost_found.sqlite3`；线上使用 Neon PostgreSQL。
+- 本地图片在后端去除 EXIF 后保存到 `work/app_data/uploads/`；线上图片使用 Vercel Blob。
+- Neon Auth 启用后，用户需要登录才能发布；公开浏览无需登录。每条新记录会绑定账号，用户可以在“我的记录”查看、关闭或删除自己的记录。
 - 记录会在发布 90 天后自动清理；Vercel 每日运行一次过期清理任务，同时删除对应的 Vercel Blob 图片。
 - 配置 DeepSeek 后，发布记录时提取照片属性；再从文字排序选出的最多 5 条候选中读取照片，让模型比较外观并重排。未配置或调用失败时退回属性排序。
 - 匹配分数是启发式与视觉比较组成的参考分，不是经过研究验证的概率或准确率。
@@ -57,15 +57,31 @@ Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](out
 New-Item -ItemType Directory -Force work/evaluation
 Copy-Item outputs/records_template.csv work/evaluation/records.csv
 Copy-Item outputs/pair_labels_template.csv work/evaluation/pair_labels.csv
+Copy-Item outputs/photo_scores_template.csv work/evaluation/photo_scores.csv
 ```
 
-在项目根目录运行：
+不提供照片分数时，脚本比较表单基线和加入视觉属性的方法：
 
 ```powershell
-python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --split test --details-out work/evaluation/ranking_details.csv
+python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --split development --details-out work/evaluation/development_details.csv
 ```
 
-脚本在相同的已标注候选集合上比较表单基线和加入视觉属性的方法，输出 Hit Rate@5、Recall@5 和 MRR@5。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存每个候选的名次、参考分、标签和排序依据，供错误分析。调权重时使用 `development` 集；不要根据 `test` 结果继续调整。
+在 `photo_scores.csv` 填入由固定模型、提示词和照片生成的候选直接比较分数后，可评估第三种方法。分数仅需覆盖视觉属性排序前五的候选：
+
+```powershell
+python scripts/evaluate_rankings.py --records work/evaluation/records.csv --pairs work/evaluation/pair_labels.csv --photo-scores work/evaluation/photo_scores.csv --split development --details-out work/evaluation/development_details.csv
+```
+
+第三种方法按线上当前规则把视觉属性分数的 45% 与照片比较分数的 55% 合并。评估脚本不会调用 DeepSeek；分数需先按学校批准的数据处理流程生成，并记录模型、提示词版本、日期和 API 用量。默认只纳入高置信度标签，`uncertain` 配对不会计入指标；可用 `--min-confidence medium` 做敏感性分析。`--details-out` 会保存各方法的候选名次、参考分、标签和依据，供错误分析。只在 `development` 集调参；锁定方法后在 `test` 集做一次最终评估。
+
+冻结方法后，在 test 数据和已固定的 test 照片分数上执行同样命令，将 `--split development` 改为 `--split test`，输出到单独的结果文件。不要根据 test 结果继续调整方法。
+
+## FYP 尚未完成的部分
+
+- 研究问题、数据来源、样本规模和评估范围需由导师确认；真实图片收集前需确认学校伦理与同意流程。
+- 目前只有空白 CSV 模板，没有人工标注数据，也没有实验结果。
+- 应用运行时会比较候选照片；离线评估脚本已支持导入预先计算的照片分数，但该方法尚未用真实研究数据评估。
+- 用户测试、结果分析、正式论文和答辩材料仍待完成。
 
 ## 参考
 

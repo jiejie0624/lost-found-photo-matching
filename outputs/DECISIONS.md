@@ -11,14 +11,15 @@
 | 2026-10-09 | 当前不开始产品开发；先确认计划。 | 用户此前明确要求 |
 | 2026-10-09 | 可以创建供后续参考的规划文件。 | 用户明确要求 |
 | 2026-10-09 | 用户回复“start”，确认开始实现规划中的 MVP。 | 用户明确要求 |
-| 2026-10-09 | 当前 MVP 前端使用原生 HTML/CSS/JavaScript，后端使用 Python FastAPI，数据库使用 SQLite；DeepSeek 视觉分析通过环境变量启用。 | 已用于实现的 MVP 技术选择；正式部署架构仍可调整 |
+| 2026-10-09 | 当前 MVP 前端使用原生 HTML/CSS/JavaScript，后端使用 Python FastAPI；本地数据库使用 SQLite，云端部署使用 Neon PostgreSQL + Vercel Blob。 | 已实现 |
 | 2026-10-09 | 用户希望视觉分析使用 DeepSeek-V4.1-Flash。 | DeepSeek API 正确模型 ID 为 `deepseek-flash`；代码默认值已是此 ID。只有配置 `DEEPSEEK_API_KEY` 后才会实际发起 API 请求。 |
-| 2026-10-09 | 用户指定公开网站使用 Vercel。 | 部署目标已从 Render 改为 Vercel；建议数据层为 Neon PostgreSQL + Vercel Blob。尚未创建云端资源，也未部署。 |
+| 2026-10-09 | 用户指定公开网站使用 Vercel。 | 网站已部署；Neon PostgreSQL、Vercel Blob 和 Neon Auth 已连接。 |
+| 2026-10-10 | 用户明确表示不需要额外处理应用自定义的登录尝试频率限制。 | 当前 FYP 范围暂不加入该功能。 |
+| 2026-10-10 | 用户要求继续推进整个 FYP，而不只检查登录安全。 | 继续更新项目资料和评估工具；不伪造伦理审批、数据或研究结果。 |
 
 ## 尚未决定
 
 - 是否采用研究问题和评估指标草案。
 - MVP 最终功能范围。
-- 正式部署时是否升级 PostgreSQL、增加前端框架或更换托管方案。
+- 是否增加原生手机应用、认领验证、管理员审核等扩展功能。
 - 数据集来源、样本数和学校伦理流程。
-- 部署平台及 API/存储预算上限。

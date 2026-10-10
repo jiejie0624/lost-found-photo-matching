@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare form-only matching with matching that also uses vision attributes."""
+"""Compare form, vision-attribute, and optional direct-photo ranking methods."""
 
 from __future__ import annotations
 
@@ -159,17 +159,63 @@ def load_pairs(
     return pairs_by_query, uncertain_count, confidence_excluded
 
 
+def load_photo_scores(
+    path: Path,
+    records: dict[str, dict[str, Any]],
+    pairs_by_query: dict[str, list[tuple[str, int]]],
+    selected_split: str,
+) -> dict[tuple[str, str], int]:
+    """Load precomputed model scores for labeled query/candidate photo pairs."""
+    rows = read_csv(path, {"query_record_id", "candidate_record_id", "visual_score"})
+    evaluated_pairs = {
+        (query_id, candidate_id)
+        for query_id, pairs in pairs_by_query.items()
+        for candidate_id, _ in pairs
+    }
+    scores: dict[tuple[str, str], int] = {}
+    for row in rows:
+        query_id, candidate_id = row["query_record_id"], row["candidate_record_id"]
+        key = (query_id, candidate_id)
+        if key in scores:
+            raise ValueError(f"照片比较分数重复：{query_id}, {candidate_id}")
+        if query_id not in records or candidate_id not in records:
+            raise ValueError(f"照片比较分数引用了不存在的记录：{query_id}, {candidate_id}")
+        if key not in evaluated_pairs:
+            raise ValueError(f"照片比较分数不属于当前 split 的已评估配对：{query_id}, {candidate_id}")
+        if records[query_id]["split"] != selected_split or records[candidate_id]["split"] != selected_split:
+            raise ValueError(f"照片比较分数跨越或不属于当前 split：{query_id}, {candidate_id}")
+        if records[query_id]["kind"] != "lost" or records[candidate_id]["kind"] != "found":
+            raise ValueError(f"照片比较方向必须是 lost 查询对 found 候选：{query_id}, {candidate_id}")
+        try:
+            visual_score = int(row["visual_score"])
+        except ValueError as exc:
+            raise ValueError(f"照片比较分数必须是 0 到 100 的整数：{query_id}, {candidate_id}") from exc
+        if not 0 <= visual_score <= 100:
+            raise ValueError(f"照片比较分数必须是 0 到 100：{query_id}, {candidate_id}")
+        scores[key] = visual_score
+    if not scores:
+        raise ValueError("照片比较分数 CSV 没有可用数据行")
+    return scores
+
+
 def evaluate(
     records: dict[str, dict[str, Any]],
     pairs_by_query: dict[str, list[tuple[str, int]]],
     k: int,
     use_vision: bool,
+    photo_scores: dict[tuple[str, str], int] | None = None,
+    photo_shortlist_k: int = 5,
 ) -> tuple[dict[str, float | int], list[dict[str, Any]]]:
     hits = 0
     recall_sum = 0.0
     reciprocal_rank_sum = 0.0
     detail_rows: list[dict[str, Any]] = []
-    method = "with_vision_attributes" if use_vision else "form_only_baseline"
+    if photo_scores is not None and not use_vision:
+        raise ValueError("候选照片比较方法必须建立在视觉属性排序上")
+    if photo_scores is not None:
+        method = "with_photo_comparison"
+    else:
+        method = "with_vision_attributes" if use_vision else "form_only_baseline"
 
     for query_id, pairs in pairs_by_query.items():
         query = records[query_id]
@@ -181,6 +227,25 @@ def evaluate(
             score, evidence = match_score(source, candidate_for_scoring)
             ranked.append((candidate_id, score, label, evidence))
         ranked.sort(key=lambda item: (-item[1], item[0]))
+        if photo_scores is not None:
+            shortlist_ids = {candidate_id for candidate_id, _, _, _ in ranked[:photo_shortlist_k]}
+            missing_scores = [
+                candidate_id for candidate_id in shortlist_ids
+                if (query_id, candidate_id) not in photo_scores
+            ]
+            if missing_scores:
+                raise ValueError(
+                    f"查询 {query_id} 的属性排序前 {len(shortlist_ids)} 个候选缺少照片比较分数："
+                    f"{', '.join(missing_scores[:5])}"
+                )
+            blended_ranked = []
+            for candidate_id, score, label, evidence in ranked:
+                if candidate_id in shortlist_ids:
+                    visual_score = photo_scores[(query_id, candidate_id)]
+                    score = round(score * 0.45 + visual_score * 0.55)
+                    evidence = [*evidence, f"照片直接比较参考分：{visual_score}/100"]
+                blended_ranked.append((candidate_id, score, label, evidence))
+            ranked = sorted(blended_ranked, key=lambda item: (-item[1], item[0]))
 
         relevant = sum(label for _, _, label, _ in ranked)
         top = ranked[:k]
@@ -228,7 +293,7 @@ def write_details(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="比较表单基线与加入视觉属性后的候选排序")
+    parser = argparse.ArgumentParser(description="比较表单、视觉属性和候选照片比较排序")
     parser.add_argument("--records", required=True, type=Path, help="填写后的 records CSV")
     parser.add_argument("--pairs", required=True, type=Path, help="填写后的配对标签 CSV")
     parser.add_argument("--split", choices=("development", "test"), default="test")
@@ -237,10 +302,20 @@ def main() -> int:
         "--min-confidence", choices=("high", "medium", "low"), default="high",
         help="只纳入达到此置信度的配对，默认 high",
     )
+    parser.add_argument(
+        "--photo-scores", type=Path,
+        help="可选：候选照片比较模型分数 CSV；只调整视觉属性排序前 K 名",
+    )
+    parser.add_argument(
+        "--photo-shortlist-k", type=int, default=5,
+        help="先按视觉属性方法选出前 K 个候选进行照片比较，默认 5",
+    )
     parser.add_argument("--details-out", type=Path, help="可选：保存逐候选排序结果 CSV")
     args = parser.parse_args()
     if args.k < 1:
         parser.error("--k 必须大于 0")
+    if args.photo_shortlist_k < 1:
+        parser.error("--photo-shortlist-k 必须大于 0")
 
     try:
         records = load_records(args.records)
@@ -248,25 +323,41 @@ def main() -> int:
             args.pairs, records, args.split, args.min_confidence
         )
         labeled_pair_count = sum(len(pairs) for pairs in pairs_by_query.values())
+        photo_scores = (
+            load_photo_scores(args.photo_scores, records, pairs_by_query, args.split)
+            if args.photo_scores else None
+        )
+        form_metrics, form_details = evaluate(records, pairs_by_query, args.k, use_vision=False)
+        vision_metrics, vision_details = evaluate(records, pairs_by_query, args.k, use_vision=True)
+        detail_rows = form_details + vision_details
+        report: dict[str, Any] = {
+            "split": args.split,
+            "k": args.k,
+            "minimum_confidence": args.min_confidence,
+            "labeled_pairs": labeled_pair_count,
+            "uncertain_pairs_excluded": uncertain_count,
+            "lower_confidence_pairs_excluded": confidence_excluded,
+            "form_only_baseline": form_metrics,
+            "with_vision_attributes": vision_metrics,
+        }
+        if photo_scores is not None:
+            photo_metrics, photo_details = evaluate(
+                records,
+                pairs_by_query,
+                args.k,
+                use_vision=True,
+                photo_scores=photo_scores,
+                photo_shortlist_k=args.photo_shortlist_k,
+            )
+            report["photo_comparison_shortlist_k"] = args.photo_shortlist_k
+            report["with_photo_comparison"] = photo_metrics
+            detail_rows.extend(photo_details)
     except (OSError, csv.Error, ValueError) as exc:
         print(f"数据错误：{exc}", file=sys.stderr)
         return 2
-
-    form_metrics, form_details = evaluate(records, pairs_by_query, args.k, use_vision=False)
-    vision_metrics, vision_details = evaluate(records, pairs_by_query, args.k, use_vision=True)
-    report = {
-        "split": args.split,
-        "k": args.k,
-        "minimum_confidence": args.min_confidence,
-        "labeled_pairs": labeled_pair_count,
-        "uncertain_pairs_excluded": uncertain_count,
-        "lower_confidence_pairs_excluded": confidence_excluded,
-        "form_only_baseline": form_metrics,
-        "with_vision_attributes": vision_metrics,
-    }
     if args.details_out:
         try:
-            write_details(args.details_out, form_details + vision_details)
+            write_details(args.details_out, detail_rows)
         except OSError as exc:
             print(f"无法写入详细结果：{exc}", file=sys.stderr)
             return 2
