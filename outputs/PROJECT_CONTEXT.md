@@ -4,10 +4,14 @@
 
 ## 当前状态快照（2026-10-10）
 
-- **应用：** 已部署至 Vercel；Neon PostgreSQL、Neon Auth、Vercel Blob、DeepSeek 环境变量条目均已配置。已有登录会话读取个人记录成功；注册、发布、图片持久化、DeepSeek 真实调用/匹配、关闭/删除及 90 天清理仍没有完整端到端验收。不得称为已完成。
-- **Neon 目标：** Neon 控制台显示生产项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支启用 Better Auth；其 trusted domains 列表现已确认包含 `https://lost-found-photo-matching-fyp.vercel.app`。生产 `/api/config` 返回的 Auth URL 与该控制台显示值一致，Auth 用户页显示已有 1 个账号。此前注册页面曾报 `Invalid origin`；域名配置现看起来正确，但没有重新提交注册表单，因此不能声称该报错已由真实注册验证解决。
+- **应用（最新核验）：** 生产站为 `https://lost-found-photo-matching-fyp.vercel.app/`。生产注册/登录曾用临时验收账号成功；两条已授权的合成测试线索也成功写入 Neon/Blob，并由不调用 AI 的基础排序互相匹配。它们目前仍留在生产站，用户选择暂不删除。此流程证明基本发布和匹配可用，不等于完整验收。
+- **DeepSeek（未完成）：** 模型 ID 为 `deepseek-flash`。已同意 AI 处理的合成照片请求显示分析暂不可用；之前代码吞掉 provider 错误码。提交 `34f2b91` 已增加仅记录 HTTP 状态码/错误类型的安全日志，不记录密钥、图片或请求内容；Vercel 已显示该提交 Production Ready。由于部署后尚无新的 AI 请求，具体失败原因和照片比较路径仍未确认。
+- **Neon/Auth/Blob：** 生产项目与 Vercel 配置目标已核对；登录会话能读个人记录，发布时照片进入 Blob、记录进入数据库。90 天清理端点的未授权访问返回 401，但尚未等待并验证真实自动过期删除。
+- **Neon 目标：** Neon 控制台显示生产项目 `neon-cordovan-ribbon`（项目 ID `flat-sky-86877676`），`main` 分支启用 Better Auth；其 trusted domains 列表现已确认包含 `https://lost-found-photo-matching-fyp.vercel.app`。生产 `/api/config` 返回的 Auth URL 与该控制台显示值一致。此前真实注册页面出现过 `Invalid origin`；之后使用一次性验收账号成功注册并进入个人记录页，因此该错误在这次验收中未再出现，但这不证明所有浏览器/旧会话都不会遇到。
 - **研究：** 暂定比较表单排序、视觉属性提取和候选照片比较的同物品分组 Top-K 效果；相关方法已有直接先例，新颖性没有系统检索或导师确认。研究数据、伦理审批、DeepSeek 第三方处理授权、实验和论文均未完成。
 - **操作边界：** 不伪造注册/发布/AI 验收，不用未经批准的参与者图片或调用 DeepSeek 进行研究数据实验；需先取得相应授权。研究方案草稿、评估脚本和论文材料不等于审批或实验结果。
+
+> 下方“当前状态”及“最新线上复核”中的早期记录是历史快照；如与本节冲突，以本节最新核验为准。
 
 ## 项目概念
 
@@ -122,7 +126,7 @@
 ### 已实现/部署
 
 - 手机与电脑浏览器网页；发布失物/拾获记录、公开浏览、显示前 5 个候选及匹配依据。
-- DeepSeek 图像属性提取和候选照片直接比较代码；默认模型 ID 为 `deepseek-flash`。用户已在 Vercel 添加 `DEEPSEEK_API_KEY`，但最新一次真实线上图像分析尚未独立验收。
+- DeepSeek 图像属性提取和候选照片直接比较代码；默认模型 ID 为 `deepseek-flash`。已同意 AI 处理的合成照片线上请求返回“暂不可用”；`34f2b91` 增加安全失败日志，但部署后尚未用新请求取得具体错误类别。
 - Neon Auth 注册/登录，Neon PostgreSQL 保存记录，Vercel Blob 保存图片；登录用户可管理自己发布的记录。
 - 记录 90 天期限和每日 Vercel Cron 清理。未带密钥访问清理端点得到 401，确认其密钥校验已开启。
 - GitHub `main` 已与本地 `main` 同步。当前线上网站为 `https://lost-found-photo-matching-fyp.vercel.app/`。
