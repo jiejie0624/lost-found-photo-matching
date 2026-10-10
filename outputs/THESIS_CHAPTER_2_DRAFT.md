@@ -24,6 +24,8 @@ Prawira 与 Saputri 将 ResNet-50 图片特征与自然语言文本相似度用�
 
 IEEE IRCE 2025 的摘要描述 YOLO、LLM 与 CLIP 级联；IEEE MEDCOM 2025 摘要描述面向城市失物服务的系统；IEEE ICHORA 2026 摘要描述类别受限 FAISS 检索后以 CLIP 重排及安全监测。这些摘要表明，当前研究也在采用级联和多模态检索。[IRCE 摘要](https://ieeexplore.ieee.org/document/11203217/) · [MEDCOM 摘要](https://ieeexplore.ieee.org/document/11405255/) · [ICHORA DOI 记录](https://doi.org/10.1109/ICHORA69329.2026.11537024)。由于当前仅核实公开摘要或书目信息，样本、拆分、消融和检索指标仍属未知，不能据摘要推断其方法效果或本研究的创新性。
 
+本轮检索另确认 IEEE ESCI 2026 收录 *Automated Lost & Found Retrieval System Using Deep learning and Geospatial Analysis*。IEEE DOI、会议日程和 JST J-GLOBAL 书目记录可确认题名、会议和论文记录；但 IEEE Xplore 页面本轮触发机器人验证，尚未读取全文。因此目前不推断其模型、数据集或检索效果；正式定位研究范围前，需通过学校图书馆或 IEEE 正式全文核对其配对标签、候选池和排序评价。[IEEE DOI](https://doi.org/10.1109/ESCI68015.2026.11493387) · [JST J-GLOBAL 记录](https://jglobal.jst.go.jp/en/detail?JGLOBAL_ID=202602258697791670)。
+
 Alruzuq 等人（2026）进一步在 Riyadh Metro 的智能数字孪生原型中加入乘客与员工使用的 AI 失物招领流程。[出版方页面](https://www.mdpi.com/2071-1050/18/15/7688)说明系统使用 AI 匹配乘客的失物报告与员工登记的拾获物，并用 OTP 做确认后的交接；失物模块报告了六个代表性情景，称示例预期和实际判定一致。该页面没有展示有身份真值的配对数据集、固定候选池或 Top-K 检索指标，因此这些情景应视作功能示例，不能当作受控检索性能验证。它也意味着“此前没有完整 AI 失物服务”的主张不成立。当前核实来自出版方页面及可检索正文片段，正式引用前仍需逐节核查全文。
 
 ## 2.3 同一实物的视觉相似性
@@ -52,7 +54,7 @@ API 系统还应报告运行耗时、失败率、模型 API 名称、提示词�
 
 可继续调查的较窄问题是：在可靠的同一实物标签、困难负例和按身份隔离的固定候选池上，完整的 DeepSeek 视觉流程相较表单基线是否改善 Hit Rate@5；属性抽取和直接候选照片比较分别贡献多少；这种变化伴随多少 API 延迟、失败和费用。现有阅读尚未证明没有研究做过这一公平比较，因此该问题只能作为候选研究方向，必须通过学院认可的数据库系统检索和导师讨论后再作为正式研究空缺。
 
-本章草稿的主要限制是：部分文献仍只有摘要级信息；Ghazal 与 FiCloud 两篇可能存在系统版本重叠，尚未通过全文比较；IEEE ICHORA、MEDCOM 和 IRCE 全文未全部取得；CUTE 档案统计与公开文档存在未解释差异；目前没有经批准的研究图片、配对标签或实验结果。论文最终版本应补充检索日期、数据库、完整检索式、去重和排除过程，并清楚区分实测结果、论文摘要主张与本项目尚待验证的假设。
+本章草稿的主要限制是：部分文献仍只有摘要级信息；Ghazal 与 FiCloud 两篇可能存在系统版本重叠，尚未通过全文比较；IEEE ESCI、ICHORA、MEDCOM 和 IRCE 的相关全文未全部取得；CUTE 档案统计与公开文档存在未解释差异；目前没有经批准的研究图片、配对标签或实验结果。论文最终版本应补充检索日期、数据库、完整检索式、去重和排除过程，并清楚区分实测结果、论文摘要主张与本项目尚待验证的假设。
 
 ## 参考文献与来源（格式待学校模板统一）
 
@@ -65,3 +67,4 @@ API 系统还应报告运行耗时、失败率、模型 API 名称、提示词�
 7. Radenović, F., Iscen, A., Tolias, G., Avrithis, Y., & Chum, O. (2018). “Revisiting Oxford and Paris: Large-Scale Image Retrieval Benchmarking.” *CVPR 2018*, 5706–5715. [CVF](https://openaccess.thecvf.com/content_cvpr_2018/html/Radenovic_Revisiting_Oxford_and_CVPR_2018_paper.html)
 8. Matthé, M., et al. (2017). “Comparison of photo-matching algorithms commonly used for photographic capture–recapture studies.” *Ecology and Evolution*. [全文](https://pmc.ncbi.nlm.nih.gov/articles/PMC5552938/)
 9. Alruzuq, J., Alsuwayyid, M., Alajmi, H., Alfayez, H., & Alabduljabbar, R. (2026). “An AI-Powered Digital Twin Prototype for Predictive Crowd Management and Sustainable Operations in the Riyadh Metro.” *Sustainability, 18*(15), 7688. [出版方全文页面](https://www.mdpi.com/2071-1050/18/15/7688) · [DOI](https://doi.org/10.3390/su18157688)
+10. Chinchmalatpure, S., Deshmukh, V., Dharade, V., Deshmukh, S., Desai, S., & Gajare, A. (2026). “Automated Lost & Found Retrieval System Using Deep learning and Geospatial Analysis.” 2026 IEEE International Conference on Emerging Smart Computing and Informatics (ESCI), 1–6. [IEEE DOI](https://doi.org/10.1109/ESCI68015.2026.11493387). 本草稿仅核实书目信息和会议日程；IEEE 全文及方法/结果仍待取得与核查。
