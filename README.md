@@ -45,6 +45,8 @@ python -m uvicorn app.main:app --reload
 - 用户逐条明确同意后，配置 DeepSeek 才会提取该条照片属性；匹配时只会把双方均同意 AI 处理的候选照片发给模型比较，最多 5 条。未同意、未配置或调用失败时使用表单/属性排序。公开展示记录照片与发送到第三方 AI 是两种不同处理。
 - 匹配分数是启发式与视觉比较组成的参考分，不是经过研究验证的概率或准确率。
 
+开始招募参与者、收集真实研究照片或向第三方 AI 发送研究资料前，请先由导师/学校确认[伦理与数据处理草案](outputs/ETHICS_AND_DATA_HANDLING_DRAFT.md)及[导师讨论清单](outputs/SUPERVISOR_REVIEW_CHECKLIST.md)。这些材料不代表已获得批准。
+
 ## 云端公开演示
 
 Vercel 部署和数据存储设计见 [`outputs/PUBLIC_DEPLOYMENT_GUIDE.md`](outputs/PUBLIC_DEPLOYMENT_GUIDE.md)。Neon PostgreSQL 保存记录、Vercel Blob 保存照片，Neon Auth 负责登录。启用登录时，需要在 Neon 开启 Auth，并确认部署环境包含 Neon Auth URL（支持 Neon 集成生成的 `DATABASE_` 前缀）；每日清理还需要 `CRON_SECRET`。

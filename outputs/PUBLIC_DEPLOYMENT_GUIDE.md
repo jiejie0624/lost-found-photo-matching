@@ -20,9 +20,9 @@ Vercel Functions 不提供可持久保存 SQLite 与上传文件的本地磁盘�
 1. 浏览器提交表单和照片。
 2. FastAPI 校正图片方向、压缩并移除 EXIF。
 3. 后端把图片上传到 Vercel Blob，并取得公开 URL。
-4. 如果配置 DeepSeek key，后端调用 `deepseek-flash` 提取照片可见属性。
+4. 只有发布者为这条记录勾选 AI 处理同意且配置了 DeepSeek key，后端才调用 `deepseek-flash` 提取照片可见属性；否则只使用表单信息。
 5. 后端把文字字段、照片 URL 和分析 JSON 存入 Neon PostgreSQL。
-6. 搜索时从 PostgreSQL 读取相反类型的记录，先由 FastAPI 排序出前 5 名，再可让 DeepSeek 同时比较新照片和候选照片，返回综合排序。
+6. 搜索时从 PostgreSQL 读取相反类型的记录并排序。只有新记录和候选记录双方都同意 AI 处理时，DeepSeek 才会比较这两条照片；否则该候选只按表单和已有属性排序。
 7. 登录后，前端从 Neon Auth 获取短期 JWT；FastAPI 使用 Neon 提供的 JWKS 验证身份，再把记录绑定到登录用户。
 8. 每日 Vercel Cron 删除 90 天前的记录和对应的 Blob 图片。
 
