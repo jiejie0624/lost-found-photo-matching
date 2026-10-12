@@ -142,6 +142,33 @@ def init_db() -> None:
             db,
             "CREATE INDEX IF NOT EXISTS contact_requests_record_id_idx ON contact_requests (record_id, created_at)",
         )
+        execute(
+            db,
+            """CREATE TABLE IF NOT EXISTS record_matches (
+                id TEXT PRIMARY KEY,
+                lost_record_id TEXT NOT NULL,
+                found_record_id TEXT NOT NULL,
+                proposed_by TEXT NOT NULL,
+                confirmed_by TEXT,
+                status TEXT NOT NULL,
+                completion_requested_by TEXT,
+                completed_by TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )""",
+        )
+        execute(
+            db,
+            "CREATE INDEX IF NOT EXISTS record_matches_lost_record_id_idx ON record_matches (lost_record_id, status)",
+        )
+        execute(
+            db,
+            "CREATE INDEX IF NOT EXISTS record_matches_found_record_id_idx ON record_matches (found_record_id, status)",
+        )
+        execute(
+            db,
+            "CREATE UNIQUE INDEX IF NOT EXISTS record_matches_pair_idx ON record_matches (lost_record_id, found_record_id)",
+        )
         if DATABASE_URL:
             columns = {
                 row["column_name"]
@@ -613,6 +640,173 @@ def list_my_contact_requests(authorization: str | None = Header(default=None)) -
     return [dict(row) for row in rows]
 
 
+@app.get("/api/me/matches")
+def list_my_matches(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        rows = execute(
+            db,
+            """SELECT m.id, m.status, m.proposed_by, m.confirmed_by, m.completion_requested_by,
+                      m.completed_by, m.created_at, m.updated_at,
+                      l.id AS lost_record_id, l.owner_id AS lost_owner_id, l.title AS lost_title,
+                      l.image_url AS lost_image_url, l.location AS lost_location,
+                      f.id AS found_record_id, f.owner_id AS found_owner_id, f.title AS found_title,
+                      f.image_url AS found_image_url, f.location AS found_location
+               FROM record_matches m
+               JOIN records l ON l.id = m.lost_record_id
+               JOIN records f ON f.id = m.found_record_id
+               WHERE l.owner_id = ? OR f.owner_id = ?
+               ORDER BY m.updated_at DESC LIMIT 100""",
+            (user_id, user_id),
+        ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        own_is_lost = item["lost_owner_id"] == user_id
+        item["own_record_id"] = item["lost_record_id"] if own_is_lost else item["found_record_id"]
+        item["own_title"] = item["lost_title"] if own_is_lost else item["found_title"]
+        item["other_record_id"] = item["found_record_id"] if own_is_lost else item["lost_record_id"]
+        item["other_title"] = item["found_title"] if own_is_lost else item["lost_title"]
+        item["other_image_url"] = item["found_image_url"] if own_is_lost else item["lost_image_url"]
+        item["other_location"] = item["found_location"] if own_is_lost else item["lost_location"]
+        item["viewer_action"] = (
+            "waiting" if item["status"] == "pending" and item["proposed_by"] == user_id
+            else "review" if item["status"] == "pending"
+            else "confirm_completion" if item["status"] == "completion_pending" and item["completion_requested_by"] != user_id
+            else "waiting" if item["status"] == "completion_pending"
+            else "request_completion" if item["status"] == "matched"
+            else "none"
+        )
+        for key in ("lost_owner_id", "found_owner_id", "lost_title", "found_title", "lost_image_url", "found_image_url", "lost_location", "found_location"):
+            item.pop(key, None)
+        result.append(item)
+    return result
+
+
+@app.post("/api/records/{record_id}/matches")
+def find_record_matches(record_id: str, authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        row = execute(
+            db,
+            "SELECT * FROM records WHERE id = ? AND owner_id = ? AND status = 'active' AND expires_at > ?",
+            (record_id, user_id, datetime.now(timezone.utc).isoformat()),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="找不到可配对的公开记录。")
+    return find_matches(row_to_record(row))
+
+
+@app.post("/api/records/{record_id}/matches/{candidate_id}")
+def propose_record_match(
+    record_id: str,
+    candidate_id: str,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    user_id = authenticated_user_id(authorization)
+    now = datetime.now(timezone.utc).isoformat()
+    with connect() as db:
+        own = execute(
+            db,
+            "SELECT id, kind FROM records WHERE id = ? AND owner_id = ? AND status = 'active' AND expires_at > ?",
+            (record_id, user_id, now),
+        ).fetchone()
+        candidate = execute(
+            db,
+            "SELECT id, kind, owner_id FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
+            (candidate_id, now),
+        ).fetchone()
+        if own is None or candidate is None or candidate["owner_id"] == user_id:
+            raise HTTPException(status_code=404, detail="找不到可确认的另一条公开记录。")
+        if own["kind"] == candidate["kind"]:
+            raise HTTPException(status_code=400, detail="只能将一条失物线索与一条拾获线索配对。")
+        lost_id, found_id = (record_id, candidate_id) if own["kind"] == "lost" else (candidate_id, record_id)
+        existing = execute(
+            db,
+            "SELECT * FROM record_matches WHERE lost_record_id = ? AND found_record_id = ?",
+            (lost_id, found_id),
+        ).fetchone()
+        if existing is None:
+            match_id = uuid.uuid4().hex
+            execute(
+                db,
+                "INSERT INTO record_matches (id, lost_record_id, found_record_id, proposed_by, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'pending', ?, ?) ON CONFLICT (lost_record_id, found_record_id) DO NOTHING",
+                (match_id, lost_id, found_id, user_id, now, now),
+            )
+            existing = execute(
+                db,
+                "SELECT * FROM record_matches WHERE lost_record_id = ? AND found_record_id = ?",
+                (lost_id, found_id),
+            ).fetchone()
+        if existing["status"] == "declined":
+            execute(
+                db,
+                "UPDATE record_matches SET proposed_by = ?, confirmed_by = NULL, status = 'pending', completion_requested_by = NULL, completed_by = NULL, created_at = ?, updated_at = ? WHERE id = ?",
+                (user_id, now, now, existing["id"]),
+            )
+            return {"id": existing["id"], "status": "pending"}
+        if existing["status"] == "pending" and existing["proposed_by"] != user_id:
+            execute(
+                db,
+                "UPDATE record_matches SET confirmed_by = ?, status = 'matched', updated_at = ? WHERE id = ?",
+                (user_id, now, existing["id"]),
+            )
+            return {"id": existing["id"], "status": "matched"}
+        return {"id": existing["id"], "status": existing["status"]}
+
+
+@app.post("/api/me/matches/{match_id}/actions")
+def act_on_match(
+    match_id: str,
+    action: str = Form(...),
+    authorization: str | None = Header(default=None),
+) -> dict[str, str]:
+    user_id = authenticated_user_id(authorization)
+    if action not in {"accept", "decline", "request_completion", "confirm_completion", "decline_completion", "cancel"}:
+        raise HTTPException(status_code=400, detail="无效的配对操作。")
+    now = datetime.now(timezone.utc).isoformat()
+    with connect() as db:
+        match = execute(
+            db,
+            """SELECT m.*, l.owner_id AS lost_owner_id, f.owner_id AS found_owner_id
+               FROM record_matches m JOIN records l ON l.id = m.lost_record_id
+               JOIN records f ON f.id = m.found_record_id WHERE m.id = ?""",
+            (match_id,),
+        ).fetchone()
+        if match is None or user_id not in {match["lost_owner_id"], match["found_owner_id"]}:
+            raise HTTPException(status_code=404, detail="找不到这条配对请求。")
+        if action == "accept":
+            if match["status"] != "pending" or match["proposed_by"] == user_id:
+                raise HTTPException(status_code=409, detail="这条配对请求目前不能由你确认。")
+            execute(db, "UPDATE record_matches SET status = 'matched', confirmed_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
+            return {"status": "matched"}
+        if action == "decline":
+            if match["status"] != "pending" or match["proposed_by"] == user_id:
+                raise HTTPException(status_code=409, detail="这条配对请求目前不能由你拒绝。")
+            execute(db, "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE id = ?", (now, match_id))
+            return {"status": "declined"}
+        if action == "cancel":
+            if match["status"] not in {"pending", "matched", "completion_pending"}:
+                raise HTTPException(status_code=409, detail="这条配对请求目前不能取消。")
+            execute(db, "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE id = ?", (now, match_id))
+            return {"status": "declined"}
+        if action == "request_completion":
+            if match["status"] != "matched":
+                raise HTTPException(status_code=409, detail="双方确认配对后，才能标记物品已找回。")
+            execute(db, "UPDATE record_matches SET status = 'completion_pending', completion_requested_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
+            return {"status": "completion_pending"}
+        if action == "decline_completion":
+            if match["status"] != "completion_pending" or match["completion_requested_by"] == user_id:
+                raise HTTPException(status_code=409, detail="目前没有需要你回复的完成请求。")
+            execute(db, "UPDATE record_matches SET status = 'matched', completion_requested_by = NULL, updated_at = ? WHERE id = ?", (now, match_id))
+            return {"status": "matched"}
+        if match["status"] != "completion_pending" or match["completion_requested_by"] == user_id:
+            raise HTTPException(status_code=409, detail="目前没有需要你确认的完成请求。")
+        execute(db, "UPDATE record_matches SET status = 'completed', completed_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
+        execute(db, "UPDATE records SET status = 'resolved' WHERE id IN (?, ?) AND status = 'active'", (match["lost_record_id"], match["found_record_id"]))
+    return {"status": "completed"}
+
+
 @app.post("/api/records/{record_id}/contact", status_code=201)
 def create_contact_request(
     record_id: str,
@@ -657,6 +851,11 @@ def close_record(record_id: str, authorization: str | None = Header(default=None
         )
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="找不到可关闭的记录。")
+        execute(
+            db,
+            "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE status IN ('pending', 'matched', 'completion_pending') AND (lost_record_id = ? OR found_record_id = ?)",
+            (datetime.now(timezone.utc).isoformat(), record_id, record_id),
+        )
     return {"status": "closed"}
 
 
@@ -685,6 +884,7 @@ async def delete_record(record_id: str, authorization: str | None = Header(defau
         except Exception as exc:
             raise HTTPException(status_code=503, detail="照片暂时无法删除，请稍后再试。") from exc
         execute(db, "DELETE FROM contact_requests WHERE record_id = ?", (record_id,))
+        execute(db, "DELETE FROM record_matches WHERE lost_record_id = ? OR found_record_id = ?", (record_id, record_id))
         execute(db, "DELETE FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id))
     return {"status": "deleted"}
 
@@ -707,6 +907,7 @@ async def expire_records(request: Request) -> dict[str, int]:
             except Exception:
                 continue
             execute(db, "DELETE FROM contact_requests WHERE record_id = ?", (row["id"],))
+            execute(db, "DELETE FROM record_matches WHERE lost_record_id = ? OR found_record_id = ?", (row["id"], row["id"]))
             execute(db, "DELETE FROM records WHERE id = ?", (row["id"],))
             deleted += 1
     return {"expired_records_deleted": deleted}

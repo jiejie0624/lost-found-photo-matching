@@ -171,12 +171,14 @@ function SectionTitle({ kicker, title, text, children }) {
   return <div className="section-title"><div><p className="eyebrow">{kicker}</p><h2>{title}</h2></div>{children || (text && <p className="section-description">{text}</p>)}</div>;
 }
 
-function RecordCard({ record, matched = false }) {
+function RecordCard({ record, matched = false, ownRecordId = "" }) {
   const { t, locale, categoryLabel, evidenceLabel, apiError } = useLanguage();
   const [contactOpen, setContactOpen] = useState(false);
   const [contactStatus, setContactStatus] = useState("");
   const [contactNeedsLogin, setContactNeedsLogin] = useState(false);
   const [contactBusy, setContactBusy] = useState(false);
+  const [matchStatus, setMatchStatus] = useState("");
+  const [matchBusy, setMatchBusy] = useState(false);
   const found = record.kind === "found";
   const date = new Date(record.occurred_at);
   const formatted = Number.isNaN(date.getTime()) ? t("time_unknown") : new Intl.DateTimeFormat(locale, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
@@ -200,9 +202,20 @@ function RecordCard({ record, matched = false }) {
       setContactStatus(translated);
     } finally { setContactBusy(false); }
   }
+  async function proposeMatch() {
+    setMatchBusy(true); setMatchStatus("");
+    try {
+      const response = await authorizedFetch(`/api/records/${encodeURIComponent(ownRecordId)}/matches/${encodeURIComponent(record.id)}`, { method: "POST" });
+      let result = null; try { result = await response.json(); } catch { /* Keep the HTTP status. */ }
+      if (!response.ok) throw new Error(result?.detail || `HTTP ${response.status}`);
+      setMatchStatus(t(result.status === "matched" ? "match_status_matched" : "match_proposal_success"));
+    } catch (error) { setMatchStatus(error.message.startsWith("HTTP ") ? t("match_proposal_failed") : apiError(error.message)); }
+    finally { setMatchBusy(false); }
+  }
   return <article className="record-card">
     <div className="record-image-wrap"><img className="record-image" src={record.image_url} alt={record.title} loading="lazy" /><span className={`record-type ${found ? "is-found" : ""}`}>{t(found ? "type_found" : "type_lost")}</span>{matched && <span className="score-pill">{t("score", { score: record.match_score })}</span>}</div>
     <div className="record-info"><div className="record-kicker"><span>{categoryLabel(record.category)}</span><span><Clock3 size={13} />{formatted}</span></div><h3>{record.title}</h3><p className="record-place"><MapPin size={14} />{record.location}</p>{record.color && <p className="record-color"><span />{record.color}</p>}{matched && record.match_evidence?.length > 0 && <div className="match-evidence">{record.match_evidence.map((item) => <span key={item}><Check size={12} />{evidenceLabel(item)}</span>)}</div>}{record.description && !matched && <p className="record-description">{record.description}</p>}
+      {matched && ownRecordId && <div className="matched-actions"><button type="button" className="record-contact-toggle" onClick={proposeMatch} disabled={matchBusy}><Check size={15} />{matchBusy ? t("submitting") : t("match_propose")}</button>{matchStatus && <span role="status">{matchStatus}</span>}</div>}
       <button type="button" className="record-contact-toggle" aria-expanded={contactOpen} onClick={() => { setContactOpen((value) => !value); setContactStatus(""); setContactNeedsLogin(false); }}><MessageCircle size={15} />{contactOpen ? t("contact_hide") : t("contact_button")}</button>
       {contactOpen && <form className="contact-form" onSubmit={sendContactRequest}><p>{t("contact_private_notice")}</p><label>{t("contact_email")}<input name="sender_email" type="email" maxLength={254} required placeholder={t("auth_email_placeholder")} /></label><label>{t("contact_message")}<textarea name="message" minLength={10} maxLength={1000} rows={3} required placeholder={t("contact_message_placeholder")} /></label><button className="button button-primary" type="submit" disabled={contactBusy}>{contactBusy ? <><span className="spinner" />{t("contact_sending")}</> : <>{t("contact_send")} <Send size={14} /></>}</button>{contactStatus && <div className={`contact-status ${contactNeedsLogin ? "is-error" : ""}`} role="status" aria-live="polite">{contactStatus}{contactNeedsLogin && <> <a href="/login.html" target="_blank" rel="noreferrer">{t("login_action")}</a></>}</div>}</form>}
     </div>
@@ -218,6 +231,7 @@ function PublishSection({ onPublished }) {
   const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [matches, setMatches] = useState(null);
+  const [publishedRecordId, setPublishedRecordId] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
   const [consent, setConsent] = useState(false);
   const [dateTime, setDateTime] = useState(() => { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); return now.toISOString().slice(0, 16); });
@@ -238,6 +252,7 @@ function PublishSection({ onPublished }) {
       if (!response.ok) throw new Error(result?.detail ? apiError(result.detail) : t("err_http", { code: response.status }));
       if (!result || typeof result.id !== "string") throw new Error("err_bad_response");
       setMatches(Array.isArray(result.matches) ? result.matches : []);
+      setPublishedRecordId(result.id);
       const aiMessage = result.analysis_status === "analyzed" ? t("ai_done") : consent ? t("ai_unavailable") : t("ai_not_sent");
       setStatus(`${t("status_published")}${aiMessage}`); onPublished();
       setFile(null); setFileError(""); setValues({ title: "", category: "", color: "", location: "", description: "" }); setConsent(false);
@@ -269,7 +284,7 @@ function PublishSection({ onPublished }) {
         <label className="consent-row"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span className="consent-check"><Check size={12} /></span><span>{t("consent")}</span></label>
         <div className="submit-row"><p><ShieldCheck size={15} />{t("match_disclaimer")}</p><button className="button button-primary submit-button" disabled={busy}>{busy ? <><span className="spinner" />{t("submitting")}</> : <>{t("submit_match")} <ArrowUpRight size={17} /></>}</button></div>
         {status && <div className={`form-status ${isError ? "is-error" : "is-success"}`} role="status" aria-live="polite">{!isError && <Check size={15} />}{status}{needsLogin && <> <a href="/login.html" target="_blank" rel="noreferrer">{t("login_action")}</a></>}</div>}
-        {matches && <section className="match-results" aria-live="polite"><div className="match-results-heading"><div><span className="eyebrow">{t("match_heading")}</span><h3>{matches.length ? t("match_count", { count: matches.length }) : t("no_match_title")}</h3></div><p>{matches.length ? t("match_hint") : t("no_match_hint")}</p></div>{matches.length > 0 && <div className="match-grid">{matches.map((record) => <RecordCard key={record.id} record={record} matched />)}</div>}</section>}
+        {matches && <section className="match-results" aria-live="polite"><div className="match-results-heading"><div><span className="eyebrow">{t("match_heading")}</span><h3>{matches.length ? t("match_count", { count: matches.length }) : t("no_match_title")}</h3></div><p>{matches.length ? t("match_hint") : t("no_match_hint")}</p></div>{matches.length > 0 && <div className="match-grid">{matches.map((record) => <RecordCard key={record.id} record={record} matched ownRecordId={publishedRecordId} />)}</div>}</section>}
       </form>
     </div>
   </section>;
