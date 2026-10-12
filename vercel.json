@@ -5,6 +5,7 @@
       "maxDuration": 180
     }
   },
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
     { "source": "/my-records", "destination": "/my-records.html" }

@@ -127,6 +127,21 @@ def init_db() -> None:
                 ai_processing_allowed INTEGER NOT NULL DEFAULT 0
             )""",
         )
+        execute(
+            db,
+            """CREATE TABLE IF NOT EXISTS contact_requests (
+                id TEXT PRIMARY KEY,
+                record_id TEXT NOT NULL,
+                sender_id TEXT NOT NULL,
+                sender_email TEXT NOT NULL,
+                message TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )""",
+        )
+        execute(
+            db,
+            "CREATE INDEX IF NOT EXISTS contact_requests_record_id_idx ON contact_requests (record_id, created_at)",
+        )
         if DATABASE_URL:
             columns = {
                 row["column_name"]
@@ -584,6 +599,53 @@ def list_my_records(authorization: str | None = Header(default=None)) -> list[di
     return [row_to_record(row) for row in rows]
 
 
+@app.get("/api/me/contact-requests")
+def list_my_contact_requests(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        rows = execute(
+            db,
+            """SELECT c.id, c.sender_email, c.message, c.created_at, r.id AS record_id, r.title AS record_title
+               FROM contact_requests c JOIN records r ON r.id = c.record_id
+               WHERE r.owner_id = ? ORDER BY c.created_at DESC LIMIT 100""",
+            (user_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+@app.post("/api/records/{record_id}/contact", status_code=201)
+def create_contact_request(
+    record_id: str,
+    sender_email: str = Form(...),
+    message: str = Form(...),
+    authorization: str | None = Header(default=None),
+) -> dict[str, str]:
+    user_id = authenticated_user_id(authorization)
+    sender_email = sender_email.strip().lower()
+    message = message.strip()
+    if len(sender_email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", sender_email):
+        raise HTTPException(status_code=400, detail="CONTACT_EMAIL_INVALID")
+    if not 10 <= len(message) <= 1000:
+        raise HTTPException(status_code=400, detail="CONTACT_MESSAGE_INVALID")
+    with connect() as db:
+        record = execute(
+            db,
+            "SELECT owner_id FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
+            (record_id, datetime.now(timezone.utc).isoformat()),
+        ).fetchone()
+        if record is None:
+            raise HTTPException(status_code=404, detail="CONTACT_RECORD_UNAVAILABLE")
+        if record["owner_id"] == user_id:
+            raise HTTPException(status_code=409, detail="CONTACT_OWN_RECORD")
+        request_id = uuid.uuid4().hex
+        execute(
+            db,
+            "INSERT INTO contact_requests (id, record_id, sender_id, sender_email, message, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (request_id, record_id, user_id, sender_email, message, datetime.now(timezone.utc).isoformat()),
+        )
+    return {"id": request_id, "status": "sent"}
+
+
 @app.patch("/api/records/{record_id}/close")
 def close_record(record_id: str, authorization: str | None = Header(default=None)) -> dict[str, str]:
     user_id = authenticated_user_id(authorization)
@@ -622,6 +684,7 @@ async def delete_record(record_id: str, authorization: str | None = Header(defau
             await delete_image(row["image_url"], row["image_name"])
         except Exception as exc:
             raise HTTPException(status_code=503, detail="照片暂时无法删除，请稍后再试。") from exc
+        execute(db, "DELETE FROM contact_requests WHERE record_id = ?", (record_id,))
         execute(db, "DELETE FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id))
     return {"status": "deleted"}
 
@@ -643,6 +706,7 @@ async def expire_records(request: Request) -> dict[str, int]:
                 await delete_image(row["image_url"], row["image_name"])
             except Exception:
                 continue
+            execute(db, "DELETE FROM contact_requests WHERE record_id = ?", (row["id"],))
             execute(db, "DELETE FROM records WHERE id = ?", (row["id"],))
             deleted += 1
     return {"expired_records_deleted": deleted}
