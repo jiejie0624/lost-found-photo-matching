@@ -9,6 +9,7 @@ Shijian (拾见) is a multilingual lost-and-found application for communities. P
 - Compare clues written in different languages using English-normalized text when available.
 - Use AI-assisted photo analysis and image comparison to help identify distinctive item features.
 - Contact a record owner through a private in-app request.
+- Receive in-app notifications for new contact requests, match confirmations, and return updates.
 - Manage, close, or delete your own records.
 - Confirm a suggested match and mark an item as returned after both parties confirm the handover.
 - Use the responsive interface on desktop and mobile.
@@ -69,7 +70,7 @@ Authentication is required for publishing and managing personal records. AI-assi
 ## Privacy notes
 
 - Photos and clue details appear on the public community board. Do not include home addresses, identity numbers, or other sensitive details in a post.
-- Contact requests are stored in the application for the record owner to review. They are not sent as email notifications.
+- Contact requests and match updates appear in the notification inbox and My Records. The app does not send email or browser push notifications.
 - When AI analysis is enabled, submitted photos and text are sent to DeepSeek for analysis and matching support. The original text remains the version shown in the application.
 - AI scores can be incomplete or incorrect. Users should verify item details and arrange the handover themselves.
 

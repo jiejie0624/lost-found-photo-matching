@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ArrowRight, ArrowUpRight, Check, Clock3, Compass, LogOut, Mail, MapPin, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { authorizedFetch, currentSession, getAuthClient } from "./auth.js";
@@ -15,6 +15,9 @@ function MyRecordsPage() {
   const [records, setRecords] = useState([]);
   const [contactRequests, setContactRequests] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationToast, setNotificationToast] = useState("");
+  const previousNotificationIds = useRef(null);
   const [matchCandidates, setMatchCandidates] = useState({});
   const [status, setStatus] = useState("");
   const [error, setError] = useState(false);
@@ -22,6 +25,19 @@ function MyRecordsPage() {
   const [busyId, setBusyId] = useState("");
   const [matchBusyId, setMatchBusyId] = useState("");
   const [userLabel, setUserLabel] = useState("");
+
+  const loadNotifications = useCallback(async (announce = false) => {
+    const response = await authorizedFetch("/api/me/notifications");
+    let payload = null; try { payload = await response.json(); } catch { /* Keep the API status. */ }
+    if (!response.ok || !Array.isArray(payload)) throw new Error(payload?.detail || `HTTP ${response.status}`);
+    const previous = previousNotificationIds.current;
+    if (announce && previous) {
+      const newCount = payload.filter((item) => !previous.has(item.id)).length;
+      if (newCount > 0) setNotificationToast(t("notifications_new", { count: newCount }));
+    }
+    previousNotificationIds.current = new Set(payload.map((item) => item.id));
+    setNotifications(payload);
+  }, [t]);
 
   const loadRecords = useCallback(async () => {
     setError(false); setLoading(true);
@@ -37,12 +53,40 @@ function MyRecordsPage() {
       const matchesResponse = await authorizedFetch("/api/me/matches");
       let matchesPayload = null; try { matchesPayload = await matchesResponse.json(); } catch { /* Keep the API status. */ }
       if (!matchesResponse.ok || !Array.isArray(matchesPayload)) throw new Error(matchesPayload?.detail || `HTTP ${matchesResponse.status}`);
+      await loadNotifications();
       setRecords(payload); setContactRequests(contactPayload); setMatches(matchesPayload); setUserLabel(session.user.name || session.user.email || ""); setStatus(t("mine_count", { count: payload.length }));
     } catch (problem) { setStatus(problem.message.startsWith("HTTP ") ? t("mine_error") : apiError(problem.message || t("mine_error"))); setError(true); }
     finally { setLoading(false); }
-  }, [apiError, t]);
+  }, [apiError, loadNotifications, t]);
 
   useEffect(() => { loadRecords(); }, [loadRecords]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden) loadNotifications(true).catch(() => {});
+    };
+    const timer = window.setInterval(refresh, 20000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    if (!notificationToast) return undefined;
+    const timer = window.setTimeout(() => setNotificationToast(""), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notificationToast]);
+
+  async function markNotificationRead(notification) {
+    try {
+      const response = await authorizedFetch(`/api/me/notifications/${encodeURIComponent(notification.id)}/read`, { method: "POST" });
+      let payload = null; try { payload = await response.json(); } catch { /* Keep the API status. */ }
+      if (!response.ok) throw new Error(payload?.detail || `HTTP ${response.status}`);
+      await loadNotifications();
+    } catch (problem) {
+      setStatus(problem.message.startsWith("HTTP ") ? t("notifications_error") : apiError(problem.message || t("notifications_error")));
+      setError(true);
+    }
+  }
 
   async function changeRecord(record, action) {
     if (action === "delete" && !window.confirm(t("mine_delete_confirm"))) return;
@@ -100,6 +144,8 @@ function MyRecordsPage() {
   return <div className="records-page"><header className="site-header"><a className="brand" href="/"><span className="brand-mark">拾</span><span>拾见<span className="brand-dot">.</span></span></a><nav className="main-nav records-nav"><a href="/#board">{t("nav_board")}</a><a href="/#publish" className="button button-small button-primary">{t("nav_publish")} <ArrowUpRight size={16} /></a></nav><div className="header-tools"><LanguageSelect /><button type="button" className="sign-out" aria-label={t("signout")} onClick={signOut}><LogOut size={14} /><span>{t("signout")}</span></button></div></header>
     <main className="my-records-main section-wrap"><div className="records-page-heading"><div><p className="eyebrow">{t("mine_kicker")}</p><h1>{t("mine_title")}<span className="title-period">.</span></h1><p className="records-welcome">{userLabel ? t("mine_welcome", { user: userLabel }) : t("mine_generic_welcome")}</p></div><a className="button button-primary" href="/#publish"><Plus size={17} />{t("mine_publish")}</a></div>
       <div className="records-privacy"><ShieldCheck size={18} /><p>{t("mine_privacy")}</p></div>
+      {notificationToast && <div className="notification-toast" role="status" aria-live="polite"><Mail size={16} />{notificationToast}<a href="#notifications">{t("notifications_view")}</a><button type="button" onClick={() => setNotificationToast("")} aria-label={t("dismiss")}>×</button></div>}
+      <section className="notifications-panel" id="notifications"><div className="notifications-heading"><h2>{t("notifications_title")}</h2><span>{t("notifications_unread", { count: notifications.filter((item) => !item.read_at).length })}</span></div>{notifications.length === 0 ? <p className="notifications-empty">{t("notifications_empty")}</p> : <div className="notifications-list">{notifications.map((notification) => <article className={`notification-item ${notification.read_at ? "is-read" : "is-unread"}`} key={notification.id}><span className="notification-dot" aria-hidden="true" /><div className="notification-copy"><p>{t(`notification_${notification.type}`, { title: notification.item_title })}</p><time dateTime={notification.created_at}>{date(notification.created_at, locale, t("time_unknown"))}</time></div>{!notification.read_at && <button type="button" onClick={() => markNotificationRead(notification)}>{t("notifications_mark_read")}</button>}</article>)}</div>}</section>
       <section className="match-center"><div className="match-center-heading"><div><h2>{t("match_section_title")}</h2><p>{t("match_flow_note")}</p></div></div>
         {matches.length > 0 && <div className="match-request-list">{matches.map((match) => <article className={`match-request match-${match.status}`} key={match.id}><img src={match.other_image_url} alt={match.other_title} /><div className="match-request-info"><strong>{match.own_title} ↔ {match.other_title}</strong><span>{t(`match_status_${match.status}`)}</span>{match.status === "completed" && <small>{t("match_completed_note")}</small>}</div><div className="match-request-actions">
           {match.status === "pending" && match.viewer_action === "review" && <><button type="button" onClick={() => actOnMatch(match, "accept")} disabled={matchBusyId === match.id}><Check size={14} />{t("match_accept")}</button><button type="button" className="match-muted-action" onClick={() => actOnMatch(match, "decline")} disabled={matchBusyId === match.id}>{t("match_decline")}</button></>}

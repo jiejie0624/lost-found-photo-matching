@@ -21,7 +21,7 @@ function PreviewNotice() {
 function Header() {
   const { t } = useLanguage();
   const [signedIn, setSignedIn] = useState(false);
-  const [contactRequestCount, setContactRequestCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     let active = true;
@@ -31,21 +31,22 @@ function Header() {
         if (!active) return;
         const isSignedIn = Boolean(session?.user);
         setSignedIn(isSignedIn);
-        if (!isSignedIn) { setContactRequestCount(0); return; }
+        if (!isSignedIn) { setNotificationCount(0); return; }
         try {
-          const response = await authorizedFetch("/api/me/contact-requests/count");
+          const response = await authorizedFetch("/api/me/notifications/count");
           const payload = response.ok ? await response.json() : null;
-          if (active) setContactRequestCount(Number.isInteger(payload?.count) ? payload.count : 0);
+          if (active) setNotificationCount(Number.isInteger(payload?.count) ? payload.count : 0);
         } catch {
-          if (active) setContactRequestCount(0);
+          if (active) setNotificationCount(0);
         }
       } catch {
-        if (active) { setSignedIn(false); setContactRequestCount(0); }
+        if (active) { setSignedIn(false); setNotificationCount(0); }
       }
     }
     refreshSession();
+    const timer = window.setInterval(refreshSession, 30000);
     window.addEventListener("focus", refreshSession);
-    return () => { active = false; window.removeEventListener("focus", refreshSession); };
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", refreshSession); };
   }, []);
   return <>
     <PreviewNotice />
@@ -53,7 +54,7 @@ function Header() {
       <a className="brand" href="/" aria-label="拾见首页"><span className="brand-mark">拾</span><span>拾见<span className="brand-dot">.</span></span></a>
       <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="主导航">
         <a href="#board" onClick={() => setMenuOpen(false)}>{t("nav_board")}</a><a href="#how" onClick={() => setMenuOpen(false)}>{t("nav_how")}</a>
-        <a className="nav-account" href={signedIn ? "/my-records.html" : "/login.html"} aria-label={signedIn && contactRequestCount ? t("nav_mine_with_requests", { count: contactRequestCount }) : undefined}>{signedIn ? t("nav_mine") : t("nav_login")}{signedIn && contactRequestCount > 0 && <span className="nav-request-count" aria-hidden="true">{contactRequestCount > 99 ? "99+" : contactRequestCount}</span>}</a>
+        <a className="nav-account" href={signedIn ? "/my-records.html" : "/login.html"} aria-label={signedIn && notificationCount ? t("nav_mine_with_requests", { count: notificationCount }) : undefined}>{signedIn ? t("nav_mine") : t("nav_login")}{signedIn && notificationCount > 0 && <span className="nav-request-count" aria-hidden="true">{notificationCount > 99 ? "99+" : notificationCount}</span>}</a>
         <a className="button button-small button-primary nav-publish" href="#publish" onClick={() => setMenuOpen(false)}>{t("nav_publish")} <ArrowUpRight size={16} /></a>
       </nav>
       <div className="header-tools"><LanguageSelect /><button type="button" className="mobile-menu-button" aria-label={menuOpen ? t("nav_close_menu") : t("nav_open_menu")} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>

@@ -101,6 +101,44 @@ def execute(db: Any, sql: str, params: tuple[Any, ...] = ()) -> Any:
     return db.execute(sql, params)
 
 
+def create_notification(
+    db: Any,
+    user_id: str | None,
+    notification_type: str,
+    item_title: str,
+    created_at: str,
+    related_record_id: str | None = None,
+) -> None:
+    if not user_id:
+        return
+    execute(
+        db,
+        "INSERT INTO user_notifications (id, user_id, notification_type, item_title, related_record_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (uuid.uuid4().hex, user_id, notification_type, item_title[:160], related_record_id, created_at),
+    )
+
+
+def notify_match_cancellations(db: Any, record_id: str, created_at: str) -> None:
+    rows = execute(
+        db,
+        """SELECT m.lost_record_id, m.found_record_id,
+                  l.owner_id AS lost_owner_id, l.title AS lost_title,
+                  f.owner_id AS found_owner_id, f.title AS found_title
+           FROM record_matches m
+           JOIN records l ON l.id = m.lost_record_id
+           JOIN records f ON f.id = m.found_record_id
+           WHERE m.status IN ('pending', 'matched', 'completion_pending')
+             AND (m.lost_record_id = ? OR m.found_record_id = ?)""",
+        (record_id, record_id),
+    ).fetchall()
+    for row in rows:
+        if row["lost_record_id"] == record_id:
+            recipient_id, title, related_id = row["found_owner_id"], row["found_title"], row["found_record_id"]
+        else:
+            recipient_id, title, related_id = row["lost_owner_id"], row["lost_title"], row["lost_record_id"]
+        create_notification(db, recipient_id, "match_cancelled", title, created_at, related_id)
+
+
 def init_db() -> None:
     if ON_VERCEL and not DATABASE_URL:
         return
@@ -168,6 +206,31 @@ def init_db() -> None:
         execute(
             db,
             "CREATE UNIQUE INDEX IF NOT EXISTS record_matches_pair_idx ON record_matches (lost_record_id, found_record_id)",
+        )
+        execute(
+            db,
+            """CREATE TABLE IF NOT EXISTS user_notifications (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                notification_type TEXT NOT NULL,
+                item_title TEXT NOT NULL DEFAULT '',
+                related_record_id TEXT,
+                created_at TEXT NOT NULL,
+                read_at TEXT
+            )""",
+        )
+        execute(
+            db,
+            "CREATE INDEX IF NOT EXISTS user_notifications_user_created_idx ON user_notifications (user_id, created_at)",
+        )
+        execute(
+            db,
+            "CREATE INDEX IF NOT EXISTS user_notifications_unread_idx ON user_notifications (user_id, read_at)",
+        )
+        execute(
+            db,
+            "DELETE FROM user_notifications WHERE created_at < ?",
+            ((datetime.now(timezone.utc) - timedelta(days=90)).isoformat(),),
         )
         if DATABASE_URL:
             columns = {
@@ -771,6 +834,48 @@ def count_my_contact_requests(authorization: str | None = Header(default=None)) 
     return {"count": int(row["count"])}
 
 
+@app.get("/api/me/notifications")
+def list_my_notifications(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        rows = execute(
+            db,
+            "SELECT id, notification_type AS type, item_title, created_at, read_at FROM user_notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
+            (user_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+@app.get("/api/me/notifications/count")
+def count_my_notifications(authorization: str | None = Header(default=None)) -> dict[str, int]:
+    user_id = authenticated_user_id(authorization)
+    with connect() as db:
+        row = execute(
+            db,
+            "SELECT COUNT(*) AS count FROM user_notifications WHERE user_id = ? AND read_at IS NULL",
+            (user_id,),
+        ).fetchone()
+    return {"count": int(row["count"])}
+
+
+@app.post("/api/me/notifications/{notification_id}/read")
+def mark_my_notification_read(
+    notification_id: str,
+    authorization: str | None = Header(default=None),
+) -> dict[str, str]:
+    user_id = authenticated_user_id(authorization)
+    now = datetime.now(timezone.utc).isoformat()
+    with connect() as db:
+        result = execute(
+            db,
+            "UPDATE user_notifications SET read_at = COALESCE(read_at, ?) WHERE id = ? AND user_id = ?",
+            (now, notification_id, user_id),
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="找不到这条通知。")
+    return {"status": "read"}
+
+
 @app.get("/api/me/matches")
 def list_my_matches(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
     user_id = authenticated_user_id(authorization)
@@ -841,12 +946,12 @@ def propose_record_match(
     with connect() as db:
         own = execute(
             db,
-            "SELECT id, kind FROM records WHERE id = ? AND owner_id = ? AND status = 'active' AND expires_at > ?",
+            "SELECT id, kind, title FROM records WHERE id = ? AND owner_id = ? AND status = 'active' AND expires_at > ?",
             (record_id, user_id, now),
         ).fetchone()
         candidate = execute(
             db,
-            "SELECT id, kind, owner_id FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
+            "SELECT id, kind, owner_id, title FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
             (candidate_id, now),
         ).fetchone()
         if own is None or candidate is None or candidate["owner_id"] == user_id:
@@ -871,12 +976,14 @@ def propose_record_match(
                 "SELECT * FROM record_matches WHERE lost_record_id = ? AND found_record_id = ?",
                 (lost_id, found_id),
             ).fetchone()
+            create_notification(db, candidate["owner_id"], "match_proposed", candidate["title"], now, candidate["id"])
         if existing["status"] == "declined":
             execute(
                 db,
                 "UPDATE record_matches SET proposed_by = ?, confirmed_by = NULL, status = 'pending', completion_requested_by = NULL, completed_by = NULL, created_at = ?, updated_at = ? WHERE id = ?",
                 (user_id, now, now, existing["id"]),
             )
+            create_notification(db, candidate["owner_id"], "match_proposed", candidate["title"], now, candidate["id"])
             return {"id": existing["id"], "status": "pending"}
         if existing["status"] == "pending" and existing["proposed_by"] != user_id:
             execute(
@@ -884,6 +991,7 @@ def propose_record_match(
                 "UPDATE record_matches SET confirmed_by = ?, status = 'matched', updated_at = ? WHERE id = ?",
                 (user_id, now, existing["id"]),
             )
+            create_notification(db, existing["proposed_by"], "match_confirmed", candidate["title"], now, candidate["id"])
             return {"id": existing["id"], "status": "matched"}
         return {"id": existing["id"], "status": existing["status"]}
 
@@ -901,42 +1009,55 @@ def act_on_match(
     with connect() as db:
         match = execute(
             db,
-            """SELECT m.*, l.owner_id AS lost_owner_id, f.owner_id AS found_owner_id
+            """SELECT m.*, l.owner_id AS lost_owner_id, l.title AS lost_title,
+                      f.owner_id AS found_owner_id, f.title AS found_title
                FROM record_matches m JOIN records l ON l.id = m.lost_record_id
                JOIN records f ON f.id = m.found_record_id WHERE m.id = ?""",
             (match_id,),
         ).fetchone()
         if match is None or user_id not in {match["lost_owner_id"], match["found_owner_id"]}:
             raise HTTPException(status_code=404, detail="找不到这条配对请求。")
+        other_user_id = match["found_owner_id"] if user_id == match["lost_owner_id"] else match["lost_owner_id"]
+        other_title = match["found_title"] if user_id == match["lost_owner_id"] else match["lost_title"]
+        other_record_id = match["found_record_id"] if user_id == match["lost_owner_id"] else match["lost_record_id"]
         if action == "accept":
             if match["status"] != "pending" or match["proposed_by"] == user_id:
                 raise HTTPException(status_code=409, detail="这条配对请求目前不能由你确认。")
             execute(db, "UPDATE record_matches SET status = 'matched', confirmed_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
+            create_notification(db, other_user_id, "match_confirmed", other_title, now, other_record_id)
             return {"status": "matched"}
         if action == "decline":
             if match["status"] != "pending" or match["proposed_by"] == user_id:
                 raise HTTPException(status_code=409, detail="这条配对请求目前不能由你拒绝。")
             execute(db, "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE id = ?", (now, match_id))
+            proposer_record_id = match["lost_record_id"] if match["lost_owner_id"] == match["proposed_by"] else match["found_record_id"]
+            create_notification(db, match["proposed_by"], "match_declined", match["lost_title"] if match["lost_owner_id"] == match["proposed_by"] else match["found_title"], now, proposer_record_id)
             return {"status": "declined"}
         if action == "cancel":
             if match["status"] not in {"pending", "matched", "completion_pending"}:
                 raise HTTPException(status_code=409, detail="这条配对请求目前不能取消。")
             execute(db, "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE id = ?", (now, match_id))
+            create_notification(db, other_user_id, "match_cancelled", other_title, now, other_record_id)
             return {"status": "declined"}
         if action == "request_completion":
             if match["status"] != "matched":
                 raise HTTPException(status_code=409, detail="双方确认配对后，才能标记物品已找回。")
             execute(db, "UPDATE record_matches SET status = 'completion_pending', completion_requested_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
+            create_notification(db, other_user_id, "return_requested", other_title, now, other_record_id)
             return {"status": "completion_pending"}
         if action == "decline_completion":
             if match["status"] != "completion_pending" or match["completion_requested_by"] == user_id:
                 raise HTTPException(status_code=409, detail="目前没有需要你回复的完成请求。")
             execute(db, "UPDATE record_matches SET status = 'matched', completion_requested_by = NULL, updated_at = ? WHERE id = ?", (now, match_id))
+            requestor_record_id = match["lost_record_id"] if match["lost_owner_id"] == match["completion_requested_by"] else match["found_record_id"]
+            create_notification(db, match["completion_requested_by"], "return_declined", other_title, now, requestor_record_id)
             return {"status": "matched"}
         if match["status"] != "completion_pending" or match["completion_requested_by"] == user_id:
             raise HTTPException(status_code=409, detail="目前没有需要你确认的完成请求。")
         execute(db, "UPDATE record_matches SET status = 'completed', completed_by = ?, updated_at = ? WHERE id = ?", (user_id, now, match_id))
         execute(db, "UPDATE records SET status = 'resolved' WHERE id IN (?, ?) AND status = 'active'", (match["lost_record_id"], match["found_record_id"]))
+        requestor_record_id = match["lost_record_id"] if match["lost_owner_id"] == match["completion_requested_by"] else match["found_record_id"]
+        create_notification(db, match["completion_requested_by"], "return_confirmed", other_title, now, requestor_record_id)
     return {"status": "completed"}
 
 
@@ -957,7 +1078,7 @@ def create_contact_request(
     with connect() as db:
         record = execute(
             db,
-            "SELECT owner_id FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
+            "SELECT owner_id, title FROM records WHERE id = ? AND status = 'active' AND expires_at > ?",
             (record_id, datetime.now(timezone.utc).isoformat()),
         ).fetchone()
         if record is None:
@@ -970,13 +1091,23 @@ def create_contact_request(
             "INSERT INTO contact_requests (id, record_id, sender_id, sender_email, message, created_at) VALUES (?, ?, ?, ?, ?, ?)",
             (request_id, record_id, user_id, sender_email, message, datetime.now(timezone.utc).isoformat()),
         )
+        create_notification(db, record["owner_id"], "contact_request", record["title"], datetime.now(timezone.utc).isoformat(), record_id)
     return {"id": request_id, "status": "sent"}
 
 
 @app.patch("/api/records/{record_id}/close")
 def close_record(record_id: str, authorization: str | None = Header(default=None)) -> dict[str, str]:
     user_id = authenticated_user_id(authorization)
+    now = datetime.now(timezone.utc).isoformat()
     with connect() as db:
+        owns_record = execute(
+            db,
+            "SELECT id FROM records WHERE id = ? AND owner_id = ? AND status = 'active'",
+            (record_id, user_id),
+        ).fetchone()
+        if owns_record is None:
+            raise HTTPException(status_code=404, detail="找不到可关闭的记录。")
+        notify_match_cancellations(db, record_id, now)
         result = execute(
             db,
             "UPDATE records SET status = 'closed' WHERE id = ? AND owner_id = ? AND status = 'active'",
@@ -987,7 +1118,7 @@ def close_record(record_id: str, authorization: str | None = Header(default=None
         execute(
             db,
             "UPDATE record_matches SET status = 'declined', updated_at = ? WHERE status IN ('pending', 'matched', 'completion_pending') AND (lost_record_id = ? OR found_record_id = ?)",
-            (datetime.now(timezone.utc).isoformat(), record_id, record_id),
+            (now, record_id, record_id),
         )
     return {"status": "closed"}
 
@@ -1008,16 +1139,19 @@ async def delete_image(image_url: str | None, image_name: str | None) -> None:
 @app.delete("/api/records/{record_id}")
 async def delete_record(record_id: str, authorization: str | None = Header(default=None)) -> dict[str, str]:
     user_id = authenticated_user_id(authorization)
+    now = datetime.now(timezone.utc).isoformat()
     with connect() as db:
         row = execute(db, "SELECT image_url, image_name FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="找不到这条记录。")
+        notify_match_cancellations(db, record_id, now)
         try:
             await delete_image(row["image_url"], row["image_name"])
         except Exception as exc:
             raise HTTPException(status_code=503, detail="照片暂时无法删除，请稍后再试。") from exc
         execute(db, "DELETE FROM contact_requests WHERE record_id = ?", (record_id,))
         execute(db, "DELETE FROM record_matches WHERE lost_record_id = ? OR found_record_id = ?", (record_id, record_id))
+        execute(db, "DELETE FROM user_notifications WHERE related_record_id = ?", (record_id,))
         execute(db, "DELETE FROM records WHERE id = ? AND owner_id = ?", (record_id, user_id))
     return {"status": "deleted"}
 
