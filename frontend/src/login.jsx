@@ -8,7 +8,7 @@ import "./styles.css";
 function LoginPage() {
   const { t } = useLanguage();
   const [mode, setMode] = useState("sign-in");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(null);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -20,15 +20,15 @@ function LoginPage() {
     fetch("/api/config").then((response) => response.json()).then(async (config) => {
       if (!active) return;
       setConfigured(Boolean(config.auth_configured));
-      if (!config.auth_configured) { setStatus(t("auth_not_configured")); setError(true); return; }
+      if (!config.auth_configured) { setStatus({ key: "auth_not_configured" }); setError(true); return; }
       const session = await currentSession();
       if (active && session?.user) window.location.replace("/my-records.html");
-    }).catch(() => { if (active) { setStatus(t("auth_service_error")); setError(true); } });
+    }).catch(() => { if (active) { setStatus({ key: "auth_service_error" }); setError(true); } });
     return () => { active = false; };
   }, []);
 
   async function submit(event) {
-    event.preventDefault(); setBusy(true); setError(false); setStatus(registering ? t("auth_signup_busy") : t("auth_login_busy"));
+    event.preventDefault(); setBusy(true); setError(false); setStatus({ key: registering ? "auth_signup_busy" : "auth_login_busy" });
     const form = new FormData(event.currentTarget);
     try {
       const auth = await getAuthClient();
@@ -39,8 +39,8 @@ function LoginPage() {
       if (result?.error) throw new Error(result.error.message || t("auth_failed"));
       const session = await currentSession();
       if (!session?.user) throw new Error(t("auth_incomplete"));
-      setStatus(t("auth_success")); window.location.assign("/my-records.html");
-    } catch (problem) { setStatus(friendlyAuthError(problem, t)); setError(true); }
+      setStatus({ key: "auth_success" }); window.location.assign("/my-records.html");
+    } catch (problem) { setStatus({ text: friendlyAuthError(problem, t) }); setError(true); }
     finally { setBusy(false); }
   }
 
@@ -55,8 +55,8 @@ function LoginPage() {
           <label className="auth-field"><span>{t("auth_password")}</span><div className="input-shell"><LockKeyhole size={17} /><input name="password" type={showPassword ? "text" : "password"} autoComplete={registering ? "new-password" : "current-password"} minLength={8} maxLength={128} required placeholder={t("auth_password_placeholder")} /><button className="password-toggle" type="button" aria-label={showPassword ? t("hide_password") : t("show_password")} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
           <button className="button button-primary auth-submit" type="submit" disabled={busy || configured === false}>{busy ? <><span className="spinner" />{t("auth_loading")}</> : <>{registering ? t("auth_signup") : t("auth_login")}<ArrowUpRight size={17} /></>}</button>
         </form>
-        {status && <p className={`auth-status ${error ? "is-error" : ""}`} role="status" aria-live="polite">{!error && <Check size={15} />}{status}</p>}
-        <p className="auth-switch">{registering ? t("auth_has_account") : t("auth_no_account")}<button type="button" onClick={() => { setMode(registering ? "sign-in" : "sign-up"); setStatus(""); setError(false); }}>{registering ? t("auth_switch_login") : t("auth_switch_signup")}</button></p>
+        {status && <p className={`auth-status ${error ? "is-error" : ""}`} role="status" aria-live="polite">{!error && <Check size={15} />}{status.key ? t(status.key) : status.text}</p>}
+        <p className="auth-switch">{registering ? t("auth_has_account") : t("auth_no_account")}<button type="button" onClick={() => { setMode(registering ? "sign-in" : "sign-up"); setStatus(null); setError(false); }}>{registering ? t("auth_switch_login") : t("auth_switch_signup")}</button></p>
         <div className="auth-safe"><ShieldCheck size={15} /><span>{t("auth_safe")}</span></div>
       </section>
     </main><footer className="auth-footer"><span>拾见 · {t("hero_kicker")}</span><span><CircleHelp size={14} />{t("auth_help")}</span></footer>

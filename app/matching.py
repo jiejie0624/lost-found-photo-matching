@@ -44,6 +44,27 @@ def attribute_text(attributes: dict[str, Any], key: str) -> str:
     return ""
 
 
+def matching_text(record: dict[str, Any], key: str) -> str:
+    """Return the English semantic field generated for cross-language matching."""
+    analysis = record.get("analysis")
+    if not isinstance(analysis, dict):
+        return ""
+    translated = analysis.get("matching_text")
+    if not isinstance(translated, dict):
+        return ""
+    value = translated.get(key, "")
+    return value.strip() if isinstance(value, str) else ""
+
+
+def pair_similarity(source: dict[str, Any], candidate: dict[str, Any], key: str, left: str, right: str) -> float:
+    """Use shared-language text only when both records have it; otherwise compare originals."""
+    shared_left = matching_text(source, key)
+    shared_right = matching_text(candidate, key)
+    if shared_left and shared_right:
+        return similarity(shared_left, shared_right)
+    return similarity(left, right)
+
+
 def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int, list[str]]:
     points = 0.0
     evidence: list[str] = []
@@ -52,7 +73,7 @@ def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int,
         points += 22
         evidence.append("物品类别相同")
 
-    location_score = similarity(source["location"], candidate["location"])
+    location_score = pair_similarity(source, candidate, "location", source["location"], candidate["location"])
     points += 20 * location_score
     if location_score >= 0.45:
         evidence.append("地点描述接近")
@@ -82,7 +103,7 @@ def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int,
 
     source_color = attribute_text(source_attrs, "colors") or source.get("color", "")
     candidate_color = attribute_text(candidate_attrs, "colors") or candidate.get("color", "")
-    color_score = similarity(source_color, candidate_color)
+    color_score = pair_similarity(source, candidate, "color", source_color, candidate_color)
     points += 12 * color_score
     if color_score >= 0.45:
         evidence.append("颜色相似")
@@ -92,20 +113,24 @@ def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int,
         points += 8 * brand_score
         evidence.append("照片中可见品牌相同或相近")
 
-    source_features = " ".join(
-        part for part in (
-            source.get("title", ""),
-            attribute_text(source_attrs, "features"),
-            source.get("description", ""),
-        ) if part
-    )
-    candidate_features = " ".join(
-        part for part in (
-            candidate.get("title", ""),
-            attribute_text(candidate_attrs, "features"),
-            candidate.get("description", ""),
-        ) if part
-    )
+    shared_source_title = matching_text(source, "title")
+    shared_candidate_title = matching_text(candidate, "title")
+    shared_source_description = matching_text(source, "description")
+    shared_candidate_description = matching_text(candidate, "description")
+    if shared_source_title and shared_candidate_title:
+        source_features = " ".join(
+            part for part in (shared_source_title, shared_source_description, attribute_text(source_attrs, "features")) if part
+        )
+        candidate_features = " ".join(
+            part for part in (shared_candidate_title, shared_candidate_description, attribute_text(candidate_attrs, "features")) if part
+        )
+    else:
+        source_features = " ".join(
+            part for part in (source.get("title", ""), attribute_text(source_attrs, "features"), source.get("description", "")) if part
+        )
+        candidate_features = " ".join(
+            part for part in (candidate.get("title", ""), attribute_text(candidate_attrs, "features"), candidate.get("description", "")) if part
+        )
     feature_score = similarity(source_features, candidate_features)
     points += 13 * feature_score
     if feature_score >= 0.3:

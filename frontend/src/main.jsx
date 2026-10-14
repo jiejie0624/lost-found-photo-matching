@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown, ArrowRight, ArrowUpRight, CalendarDays, Check, ChevronLeft,
-  ChevronRight, Clock3, Compass, ImagePlus, Mail, MapPin, MessageCircle,
+  ChevronDown, ChevronRight, Clock3, Compass, ImagePlus, Mail, MapPin, Menu, MessageCircle,
   Search, Send, ShieldCheck, Sparkles, Upload, X,
 } from "lucide-react";
 import { authorizedFetch, currentSession, PRODUCTION_ORIGIN } from "./auth.js";
 import { LanguageProvider, LanguageSelect, useLanguage } from "./language.jsx";
+import HeroPhoto3D from "./HeroPhoto3D.jsx";
 import "./styles.css";
 
 const CATEGORIES = ["电子产品", "证件与卡片", "钥匙", "包袋", "衣物", "水瓶与餐具", "书籍文具", "饰品", "其他"];
@@ -20,18 +21,42 @@ function PreviewNotice() {
 function Header() {
   const { t } = useLanguage();
   const [signedIn, setSignedIn] = useState(false);
+  const [contactRequestCount, setContactRequestCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => { currentSession().then((session) => setSignedIn(Boolean(session?.user))).catch(() => {}); }, []);
+  useEffect(() => {
+    let active = true;
+    async function refreshSession() {
+      try {
+        const session = await currentSession();
+        if (!active) return;
+        const isSignedIn = Boolean(session?.user);
+        setSignedIn(isSignedIn);
+        if (!isSignedIn) { setContactRequestCount(0); return; }
+        try {
+          const response = await authorizedFetch("/api/me/contact-requests/count");
+          const payload = response.ok ? await response.json() : null;
+          if (active) setContactRequestCount(Number.isInteger(payload?.count) ? payload.count : 0);
+        } catch {
+          if (active) setContactRequestCount(0);
+        }
+      } catch {
+        if (active) { setSignedIn(false); setContactRequestCount(0); }
+      }
+    }
+    refreshSession();
+    window.addEventListener("focus", refreshSession);
+    return () => { active = false; window.removeEventListener("focus", refreshSession); };
+  }, []);
   return <>
     <PreviewNotice />
     <header className="site-header">
       <a className="brand" href="/" aria-label="拾见首页"><span className="brand-mark">拾</span><span>拾见<span className="brand-dot">.</span></span></a>
       <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="主导航">
         <a href="#board" onClick={() => setMenuOpen(false)}>{t("nav_board")}</a><a href="#how" onClick={() => setMenuOpen(false)}>{t("nav_how")}</a>
-        <a className="nav-account" href={signedIn ? "/my-records.html" : "/login.html"}>{signedIn ? t("nav_mine") : t("nav_login")}</a>
+        <a className="nav-account" href={signedIn ? "/my-records.html" : "/login.html"} aria-label={signedIn && contactRequestCount ? t("nav_mine_with_requests", { count: contactRequestCount }) : undefined}>{signedIn ? t("nav_mine") : t("nav_login")}{signedIn && contactRequestCount > 0 && <span className="nav-request-count" aria-hidden="true">{contactRequestCount > 99 ? "99+" : contactRequestCount}</span>}</a>
         <a className="button button-small button-primary nav-publish" href="#publish" onClick={() => setMenuOpen(false)}>{t("nav_publish")} <ArrowUpRight size={16} /></a>
       </nav>
-      <div className="header-tools"><LanguageSelect /><button className="mobile-menu-button" aria-label={menuOpen ? "关闭导航" : "打开导航"} onClick={() => setMenuOpen((value) => !value)}>{menuOpen ? <X /> : <Compass />}</button></div>
+      <div className="header-tools"><LanguageSelect /><button type="button" className="mobile-menu-button" aria-label={menuOpen ? t("nav_close_menu") : t("nav_open_menu")} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
     </header>
   </>;
 }
@@ -42,7 +67,7 @@ function HeroArt() {
     <div className="visual-glow" />
     <div className="visual-grid" />
     <div className="art-label art-label-top"><span className="art-label-icon"><Sparkles size={16} /></span><span><b>{t("art_top")}</b><small>{t("art_details")}</small></span></div>
-    <div className="art-photo"><div className="art-photo-scene"><div className="art-sun" /><div className="art-bottle"><span className="bottle-cap" /><span className="bottle-shine" /><span className="bottle-label">DAY<br />TRIP</span></div><span className="art-shadow" /></div><div className="art-photo-caption"><span>{t("art_found")}</span><span>{t("art_today")}</span></div></div>
+    <div className="art-photo art-photo-interactive"><HeroPhoto3D hint={t("art_drag_hint")} resetLabel={t("art_reset")} caption={t("art_found")} timeLabel={t("art_today")} /></div>
     <div className="art-match"><span className="art-match-check"><Check size={15} /></span><span><b>{t("art_match")}</b><small>{t("art_evidence")}</small></span><ArrowUpRight size={17} /></div>
     <span className="art-sparkle art-sparkle-one">✳</span><span className="art-sparkle art-sparkle-two">✦</span>
   </div>;
@@ -64,7 +89,48 @@ function Hero() {
 }
 
 function Field({ label, hint, children, className = "" }) {
-  return <label className={`field ${className}`}><span className="field-label">{label}{hint && <small>{hint}</small>}</span>{children}</label>;
+  const Wrapper = React.isValidElement(children) && children.type === CategorySelect ? "div" : "label";
+  return <Wrapper className={`field ${className}`}><span className="field-label">{label}{hint && <small>{hint}</small>}</span>{children}</Wrapper>;
+}
+
+function CategorySelect({ value, onChange }) {
+  const { t, categoryLabel } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, CATEGORIES.indexOf(value)));
+  const rootRef = React.useRef(null);
+  const triggerRef = React.useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    function dismiss(event) {
+      if (event.type === "keydown" && event.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
+      if (event.type === "pointerdown" && !rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", dismiss);
+    return () => { document.removeEventListener("pointerdown", dismiss); document.removeEventListener("keydown", dismiss); };
+  }, [open]);
+  function choose(category) { onChange(category); setOpen(false); triggerRef.current?.focus(); }
+  function handleKeyDown(event) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!open) { setActiveIndex(Math.max(0, CATEGORIES.indexOf(value))); setOpen(true); }
+      else setActiveIndex((index) => (index + (event.key === "ArrowDown" ? 1 : CATEGORIES.length - 1)) % CATEGORIES.length);
+    } else if (!open && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault(); setActiveIndex(Math.max(0, CATEGORIES.indexOf(value))); setOpen(true);
+    } else if (open && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault(); choose(CATEGORIES[activeIndex]);
+    }
+  }
+  return <div className="category-select" ref={rootRef} onKeyDown={handleKeyDown}>
+    <button ref={triggerRef} type="button" className={`category-trigger ${value ? "has-value" : ""}`} aria-haspopup="listbox" aria-expanded={open} aria-label={t("field_category")} aria-activedescendant={open ? `category-option-${activeIndex}` : undefined} onClick={() => { setActiveIndex(Math.max(0, CATEGORIES.indexOf(value))); setOpen((current) => !current); }}>
+      <span>{value ? categoryLabel(value) : t("choose_category")}</span><ChevronDown className={open ? "is-open" : ""} size={16} />
+    </button>
+    {open && <div className="category-menu" role="listbox" aria-label={t("choose_category")}>
+      {CATEGORIES.map((category, index) => <button id={`category-option-${index}`} key={category} type="button" role="option" aria-selected={value === category} tabIndex={-1} className={`${activeIndex === index ? "is-active" : ""} ${value === category ? "is-selected" : ""}`} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(category)}>
+        <span>{categoryLabel(category)}</span>{value === category && <Check size={15} />}
+      </button>)}
+    </div>}
+  </div>;
 }
 
 function DateTimePicker({ value, onChange }) {
@@ -224,6 +290,7 @@ function RecordCard({ record, matched = false, ownRecordId = "" }) {
 
 function PublishSection({ onPublished }) {
   const { t, apiError, categoryLabel } = useLanguage();
+  const [signedIn, setSignedIn] = useState(null);
   const [kind, setKind] = useState("lost");
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState("");
@@ -233,19 +300,44 @@ function PublishSection({ onPublished }) {
   const [matches, setMatches] = useState(null);
   const [publishedRecordId, setPublishedRecordId] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
-  const [consent, setConsent] = useState(false);
   const [dateTime, setDateTime] = useState(() => { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); return now.toISOString().slice(0, 16); });
   const [values, setValues] = useState({ title: "", category: "", color: "", location: "", description: "" });
+  useEffect(() => {
+    let active = true;
+    async function refreshSession() {
+      try {
+        const session = await currentSession();
+        if (active) {
+          const authenticated = Boolean(session?.user);
+          setSignedIn(authenticated);
+          if (authenticated && needsLogin) { setStatus(t("login_ready")); setIsError(false); }
+        }
+      } catch {
+        if (active) setSignedIn(false);
+      }
+    }
+    function onVisibilityChange() { if (document.visibilityState === "visible") refreshSession(); }
+    refreshSession();
+    window.addEventListener("focus", refreshSession);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refreshSession);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [needsLogin, t]);
   function setValue(event) { setValues((previous) => ({ ...previous, [event.target.name]: event.target.value })); }
   async function submit(event) {
     event.preventDefault(); setIsError(false); setNeedsLogin(false); setMatches(null); setBusy(true); setStatus(t("status_saving"));
     try {
       const session = await currentSession();
-      if (!session?.user) { setNeedsLogin(true); setStatus(t("login_required")); setIsError(true); return; }
+      if (!session?.user) { setSignedIn(false); setNeedsLogin(true); setStatus(t("login_required")); setIsError(true); return; }
+      setSignedIn(true);
       if (!file) throw new Error("err_choose_photo");
+      if (!values.category) throw new Error("err_choose_category");
       const data = new FormData();
       data.set("kind", kind); Object.entries(values).forEach(([key, value]) => data.set(key, value));
-      data.set("occurred_at", dateTime); data.set("ai_processing_consent", consent ? "yes" : "no"); data.set("image", await prepareImage(file));
+      data.set("occurred_at", dateTime); data.set("image", await prepareImage(file));
       const response = await authorizedFetch("/api/records", { method: "POST", body: data });
       let result = null; try { result = await response.json(); } catch { /* Keep HTTP status for platform errors. */ }
       if (response.status === 401) { setNeedsLogin(true); throw new Error("err_login_publish"); }
@@ -253,9 +345,9 @@ function PublishSection({ onPublished }) {
       if (!result || typeof result.id !== "string") throw new Error("err_bad_response");
       setMatches(Array.isArray(result.matches) ? result.matches : []);
       setPublishedRecordId(result.id);
-      const aiMessage = result.analysis_status === "analyzed" ? t("ai_done") : consent ? t("ai_unavailable") : t("ai_not_sent");
+      const aiMessage = result.analysis_status === "analyzed" && result.matching_text_available ? t("ai_done") : t("ai_unavailable");
       setStatus(`${t("status_published")}${aiMessage}`); onPublished();
-      setFile(null); setFileError(""); setValues({ title: "", category: "", color: "", location: "", description: "" }); setConsent(false);
+      setFile(null); setFileError(""); setValues({ title: "", category: "", color: "", location: "", description: "" });
     } catch (error) {
       const authError = error.message === "auth_service_error" || error.message === "auth_not_configured" || error.message === "auth_failed";
       setStatus(authError ? t("local_auth_unavailable") : t(error.message) === error.message ? error.message : t(error.message)); setIsError(true);
@@ -267,6 +359,7 @@ function PublishSection({ onPublished }) {
     <div className="publish-layout">
       <aside className="publish-aside"><h3>{t("aside_title_a")}<br /><em>{t("aside_title_b")}</em></h3><p>{t("aside_warning")}</p><div className="aside-policy"><ShieldCheck size={17} /><span>{t("public_note")}<br /><small>{t("manage_note")}</small></span></div></aside>
       <form className="publish-form" onSubmit={submit}>
+        {signedIn === false && <div className="publish-auth-notice" role="note"><ShieldCheck size={18} /><p>{t("publish_auth_notice")}</p><a href="/login.html" target="_blank" rel="noreferrer">{t("nav_login")} <ArrowUpRight size={14} /></a></div>}
         <div className="kind-selector" role="group" aria-label="选择线索类型">
           <button type="button" className={`kind-choice ${kind === "lost" ? "selected" : ""}`} onClick={() => setKind("lost")} aria-pressed={kind === "lost"}><span className="kind-symbol lost-symbol"><Search size={18} /></span><span><b>{t("lost_title")}</b><small>{t("lost_sub")}</small></span><span className="radio-mark" /></button>
           <button type="button" className={`kind-choice ${kind === "found" ? "selected" : ""}`} onClick={() => setKind("found")} aria-pressed={kind === "found"}><span className="kind-symbol found-symbol"><Sparkles size={17} /></span><span><b>{t("found_title")}</b><small>{t("found_sub")}</small></span><span className="radio-mark" /></button>
@@ -275,15 +368,15 @@ function PublishSection({ onPublished }) {
         {fileError && <p className="field-error">{t(fileError)}</p>}
         <div className="field-grid">
           <Field label={t("field_title")}><input name="title" value={values.title} onChange={setValue} maxLength={80} required placeholder={t("placeholder_title")} /></Field>
-          <Field label={t("field_category")}><select name="category" value={values.category} onChange={setValue} required><option value="" disabled>{t("choose_category")}</option>{CATEGORIES.map((category) => <option key={category} value={category}>{categoryLabel(category)}</option>)}</select></Field>
+          <Field label={t("field_category")}><CategorySelect value={values.category} onChange={(category) => setValues((previous) => ({ ...previous, category }))} /></Field>
           <Field label={t("field_color")} hint={t("optional")}><input name="color" value={values.color} onChange={setValue} maxLength={40} placeholder={t("placeholder_color")} /></Field>
           <Field label={t("field_location")}><input name="location" value={values.location} onChange={setValue} maxLength={120} required placeholder={t("placeholder_location")} /></Field>
           <Field label={t("field_time")}><DateTimePicker value={dateTime} onChange={setDateTime} /></Field>
           <Field label={t("field_description")} hint={t("optional")} className="field-wide"><textarea name="description" value={values.description} onChange={setValue} maxLength={400} rows={3} placeholder={t("placeholder_description")} /></Field>
         </div>
-        <label className="consent-row"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span className="consent-check"><Check size={12} /></span><span>{t("consent")}</span></label>
+        <div className="consent-row ai-processing-notice"><span className="ai-notice-icon"><ShieldCheck size={16} /></span><span>{t("ai_notice")}</span></div>
         <div className="submit-row"><p><ShieldCheck size={15} />{t("match_disclaimer")}</p><button className="button button-primary submit-button" disabled={busy}>{busy ? <><span className="spinner" />{t("submitting")}</> : <>{t("submit_match")} <ArrowUpRight size={17} /></>}</button></div>
-        {status && <div className={`form-status ${isError ? "is-error" : "is-success"}`} role="status" aria-live="polite">{!isError && <Check size={15} />}{status}{needsLogin && <> <a href="/login.html" target="_blank" rel="noreferrer">{t("login_action")}</a></>}</div>}
+        {status && <div className={`form-status ${isError ? "is-error" : "is-success"}`} role="status" aria-live="polite">{!isError && <Check size={15} />}{status}{needsLogin && (signedIn ? <> <button type="submit" className="inline-form-action">{t("login_resume")}</button></> : <> <a href="/login.html" target="_blank" rel="noreferrer">{t("nav_login")}</a></>)}</div>}
         {matches && <section className="match-results" aria-live="polite"><div className="match-results-heading"><div><span className="eyebrow">{t("match_heading")}</span><h3>{matches.length ? t("match_count", { count: matches.length }) : t("no_match_title")}</h3></div><p>{matches.length ? t("match_hint") : t("no_match_hint")}</p></div>{matches.length > 0 && <div className="match-grid">{matches.map((record) => <RecordCard key={record.id} record={record} matched ownRecordId={publishedRecordId} />)}</div>}</section>}
       </form>
     </div>
