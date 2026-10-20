@@ -239,3 +239,4 @@ html:lang(ta-IN) .publish-aside h3 em{font-family:inherit;font-style:normal}
 .notification-toast>button:hover{background:#e5eddf}
 @media(max-width:680px){.notifications-panel{padding:14px}.notification-item{grid-template-columns:8px minmax(0,1fr);gap:9px}.notification-item>button{grid-column:2;justify-self:start}.notification-toast{align-items:flex-start;flex-wrap:wrap}.notification-toast>a{margin-left:28px}}
 @media(prefers-reduced-motion:reduce){.notification-item>button,.notification-toast>button{transition:none}}
+.auth-forgot-link{justify-self:end;margin-top:-7px;padding:0;border:0;background:transparent;color:#48744e;font-size:11px;font-weight:700;cursor:pointer}.auth-forgot-link:hover{text-decoration:underline;text-underline-offset:3px}

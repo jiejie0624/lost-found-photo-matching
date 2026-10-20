@@ -30,6 +30,36 @@ export async function currentSession() {
   return result?.data || result;
 }
 
+async function authPost(path, payload) {
+  await getAuthClient();
+  let response;
+  try {
+    response = await fetch(`${authBaseUrl}/${path}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error("auth_service_error");
+  }
+  let result;
+  try { result = await response.json(); } catch { result = null; }
+  if (!response.ok || result?.error) {
+    const message = result?.message || result?.error?.message || "auth_reset_failed";
+    throw new Error(message);
+  }
+  return result;
+}
+
+export function requestPasswordReset(email, redirectTo) {
+  return authPost("request-password-reset", { email, redirectTo });
+}
+
+export function resetPassword(token, newPassword) {
+  return authPost("reset-password", { token, newPassword });
+}
+
 export async function getAccessToken() {
   await getAuthClient();
   const response = await fetch(`${authBaseUrl}/token`, {
