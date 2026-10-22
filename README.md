@@ -100,8 +100,6 @@ The selected interface language is saved in the current browser.
 | Hosted file storage | Vercel Blob |
 | AI-assisted analysis | DeepSeek API |
 
-The README describes AI-assisted photo analysis and comparison, but does not identify YOLO or CLIP as the image-matching models. The specific implementation should be confirmed from the source code before naming any additional model.
-
 ## System Architecture
 
 ```mermaid
