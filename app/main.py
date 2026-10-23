@@ -327,7 +327,11 @@ def normalize_image(raw: bytes) -> tuple[bytes, str]:
 
 
 def get_text_content(response: dict[str, Any]) -> str:
-    return response["choices"][0]["message"]["content"]
+    choice = response["choices"][0]
+    finish_reason = choice.get("finish_reason")
+    if finish_reason in {"length", "content_filter", "insufficient_system_resource", "aborted"}:
+        logger.warning("DeepSeek completion ended early: finish_reason=%s", finish_reason)
+    return choice["message"]["content"]
 
 
 def normalize_image_analysis(value: Any) -> dict[str, Any]:
@@ -416,6 +420,7 @@ def normalize_clue_text(title: str, color: str, location: str, description: str)
         return {}
     body = {
         "model": deepseek_model_id(),
+        "thinking": {"type": "disabled"},
         "temperature": 0,
         "max_tokens": 500,
         "response_format": {"type": "json_object"},
@@ -471,8 +476,9 @@ def analyze_image(
     data_url = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode("ascii")
     body = {
         "model": deepseek_model_id(),
+        "thinking": {"type": "disabled"},
         "temperature": 0.1,
-        "max_tokens": 650,
+        "max_tokens": 1200,
         "response_format": {"type": "json_object"},
         "messages": [
             {
@@ -892,8 +898,10 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
 
         body = {
             "model": deepseek_model_id(),
+            "thinking": {"type": "enabled"},
+            "reasoning_effort": "low",
             "temperature": 0.1,
-            "max_tokens": 700,
+            "max_tokens": 2400,
             "response_format": {"type": "json_object"},
             "messages": [{"role": "user", "content": content}],
         }
