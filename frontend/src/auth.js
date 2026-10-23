@@ -1,6 +1,6 @@
 let clientPromise;
 let authBaseUrl;
-export const PRODUCTION_ORIGIN = "https://lost-found-photo-matching-fyp.vercel.app";
+export const PRODUCTION_ORIGIN = "https://lost-found-photo-matching.vercel.app";
 
 export async function getAuthClient() {
   if (!clientPromise) {
