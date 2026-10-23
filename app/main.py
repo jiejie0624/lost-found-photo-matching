@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import Any, Iterator
 from urllib.parse import urlsplit
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request as URLRequest, urlopen
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request as FastAPIRequest, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -442,7 +442,7 @@ def normalize_clue_text(title: str, color: str, location: str, description: str)
             },
         ],
     }
-    request = Request(
+    request = URLRequest(
         "https://api.deepseek.com/chat/completions",
         data=json.dumps(body).encode("utf-8"),
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -500,7 +500,7 @@ def analyze_image(
             },
         ],
     }
-    request = Request(
+    request = URLRequest(
         "https://api.deepseek.com/chat/completions",
         data=json.dumps(body).encode("utf-8"),
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -578,7 +578,7 @@ def normalize_legacy_matching_text(records: list[dict[str, Any]]) -> None:
                 },
             ],
         }
-        request = Request(
+        request = URLRequest(
             "https://api.deepseek.com/chat/completions",
             data=json.dumps(body).encode("utf-8"),
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -769,7 +769,7 @@ def reason_about_candidates(record: dict[str, Any], candidates: list[dict[str, A
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
             ],
         }
-        request = Request(
+        request = URLRequest(
             "https://api.deepseek.com/chat/completions",
             data=json.dumps(body).encode("utf-8"),
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -819,7 +819,7 @@ def read_candidate_image(image_url: str) -> bytes:
             raise ValueError("Invalid local image path")
         return (UPLOAD_DIR / filename).read_bytes()
     if image_url.startswith("https://"):
-        request = Request(image_url, headers={"User-Agent": "LostFoundFYP/1.0"})
+        request = URLRequest(image_url, headers={"User-Agent": "LostFoundFYP/1.0"})
         with urlopen(request, timeout=10) as response:
             image_bytes = response.read(MAX_IMAGE_BYTES + 1)
         if not image_bytes or len(image_bytes) > MAX_IMAGE_BYTES:
@@ -896,7 +896,7 @@ def compare_candidate_images(record: dict[str, Any], candidates: list[dict[str, 
             "response_format": {"type": "json_object"},
             "messages": [{"role": "user", "content": content}],
         }
-        request = Request(
+        request = URLRequest(
             "https://api.deepseek.com/chat/completions",
             data=json.dumps(body).encode("utf-8"),
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -1374,7 +1374,7 @@ async def delete_record(record_id: str, authorization: str | None = Header(defau
 
 
 @app.get("/api/cron/expire")
-async def expire_records(request: Request) -> dict[str, int]:
+async def expire_records(request: FastAPIRequest) -> dict[str, int]:
     if not CRON_SECRET:
         raise HTTPException(status_code=503, detail="尚未配置过期清理密钥。")
     supplied_secret = request.headers.get("authorization", "")
