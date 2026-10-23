@@ -55,6 +55,7 @@ DEEPSEEK_VISION_MODEL_IDS = frozenset({
 _AUTH_JWKS_CLIENT: Any | None = None
 ON_VERCEL = os.getenv("VERCEL", "").lower() == "1"
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_MATCH_RESULTS = 3
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 CATEGORIES = {"电子产品", "证件与卡片", "钥匙", "包袋", "衣物", "水瓶与餐具", "书籍文具", "饰品", "其他"}
 KINDS = {"lost", "found"}
@@ -687,9 +688,9 @@ def find_matches(record: dict[str, Any]) -> list[dict[str, Any]]:
     shortlist = sorted(
         broad_candidates,
         key=lambda item: (-item["match_score"], stable_tiebreak_key(record["id"], item["id"])),
-    )[:5]
+    )[:MAX_MATCH_RESULTS]
     matches = compare_candidate_images(record, shortlist)
-    matches = matches[:5]
+    matches = matches[:MAX_MATCH_RESULTS]
     for candidate in matches:
         candidate.pop("_ai_processing_allowed", None)
         candidate.pop("logic_match_score", None)
