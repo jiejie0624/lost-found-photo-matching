@@ -1002,11 +1002,39 @@ def uploaded_image(filename: str) -> FileResponse:
 
 
 @app.get("/api/records")
-def list_records(kind: str | None = None) -> list[dict[str, Any]]:
+def list_records(kind: str | None = None, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]] | dict[str, Any]:
     if kind and kind not in KINDS:
         raise HTTPException(status_code=400, detail="无效的记录类型。")
     with connect() as db:
         now = datetime.now(timezone.utc).isoformat()
+        if limit is not None:
+            if limit < 1 or limit > 20 or offset < 0:
+                raise HTTPException(status_code=400, detail="无效的分页参数。")
+            where = "status = 'active' AND expires_at > ?"
+            params: tuple[Any, ...] = (now,)
+            if kind:
+                where += " AND kind = ?"
+                params += (kind,)
+            total_row = execute(db, f"SELECT COUNT(*) AS total FROM records WHERE {where}", params).fetchone()
+            rows = execute(
+                db,
+                f"SELECT * FROM records WHERE {where} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                params + (limit, offset),
+            ).fetchall()
+            counts = execute(
+                db,
+                "SELECT kind, COUNT(*) AS total FROM records WHERE status = 'active' AND expires_at > ? GROUP BY kind",
+                (now,),
+            ).fetchall()
+            totals = {row["kind"]: int(row["total"]) for row in counts}
+            total = int(total_row["total"])
+            records = [row_to_record(row) for row in rows]
+            return {
+                "records": records,
+                "total": total,
+                "has_more": offset + len(records) < total,
+                "totals": {"all": sum(totals.values()), "lost": totals.get("lost", 0), "found": totals.get("found", 0)},
+            }
         if kind:
             rows = execute(
                 db,

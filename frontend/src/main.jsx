@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowDown, ArrowRight, ArrowUpRight, CalendarDays, Check, ChevronLeft,
@@ -412,24 +412,52 @@ function Board({ refreshKey }) {
   const { t } = useLanguage();
   const [kind, setKind] = useState("all");
   const [records, setRecords] = useState([]);
+  const [totals, setTotals] = useState({ all: 0, lost: 0, found: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState("");
+  const [moreError, setMoreError] = useState(false);
+  const requestSequence = useRef(0);
   useEffect(() => {
-    let alive = true; setLoading(true); setError("");
-    fetch("/api/records").then(async (response) => {
+    requestSequence.current += 1;
+    let alive = true; setLoading(true); setLoadingMore(false); setError(""); setMoreError(false); setRecords([]);
+    const query = new URLSearchParams({ limit: "6", offset: "0" });
+    if (kind !== "all") query.set("kind", kind);
+    fetch(`/api/records?${query}`).then(async (response) => {
       let result = null; try { result = await response.json(); } catch { /* Report HTTP status below. */ }
-      if (!response.ok || !Array.isArray(result)) throw new Error(result?.detail || `HTTP ${response.status}`);
-      if (alive) setRecords(result);
-  }).catch(() => { if (alive) setError(t("load_failed")); }).finally(() => { if (alive) setLoading(false); });
+      if (!response.ok || !Array.isArray(result?.records)) throw new Error(result?.detail || `HTTP ${response.status}`);
+      if (alive) { setRecords(result.records); setTotals(result.totals || { all: result.total, lost: 0, found: 0 }); setHasMore(Boolean(result.has_more)); }
+    }).catch(() => { if (alive) setError(t("load_failed")); }).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [refreshKey]);
-  const visible = kind === "all" ? records : records.filter((record) => record.kind === kind);
+  }, [kind, refreshKey, t]);
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    const requestId = requestSequence.current;
+    setLoadingMore(true); setMoreError(false);
+    try {
+      const query = new URLSearchParams({ limit: "6", offset: String(records.length) });
+      if (kind !== "all") query.set("kind", kind);
+      const response = await fetch(`/api/records?${query}`);
+      const result = await response.json();
+      if (!response.ok || !Array.isArray(result?.records)) throw new Error(result?.detail || `HTTP ${response.status}`);
+      if (requestId !== requestSequence.current) return;
+      setRecords((current) => [...current, ...result.records]);
+      setTotals(result.totals || totals);
+      setHasMore(Boolean(result.has_more));
+    } catch {
+      if (requestId === requestSequence.current) setMoreError(true);
+    } finally {
+      if (requestId === requestSequence.current) setLoadingMore(false);
+    }
+  }
   return <section className="board-section section-wrap reveal" id="board">
     <SectionTitle kicker={t("board_kicker")} title={t("board_title")} text={t("board_sub")}>
-      <div className="filter-tabs" role="group" aria-label={t("filter_all")}>{[["all", t("filter_all"), records.length], ["lost", t("filter_lost")], ["found", t("filter_found")]].map(([value, label, count]) => <button type="button" key={value} className={kind === value ? "active" : ""} aria-pressed={kind === value} onClick={() => setKind(value)}>{label}{value === "all" && <span>{count}</span>}</button>)}</div>
+      <div className="filter-tabs" role="group" aria-label={t("filter_all")}>{[["all", t("filter_all")], ["lost", t("filter_lost")], ["found", t("filter_found")]].map(([value, label]) => <button type="button" key={value} className={kind === value ? "active" : ""} aria-pressed={kind === value} onClick={() => setKind(value)}>{label}<span>{totals[value]}</span></button>)}</div>
     </SectionTitle>
-    {loading ? <div className="record-grid">{[1, 2, 3].map((item) => <div className="record-skeleton" key={item}><div /><span /><span /></div>)}</div> : error ? <div className="empty-panel"><span className="empty-icon"><Compass /></span><b>{t("load_failed")}</b><p>{error}</p><button className="button button-secondary" onClick={() => window.location.reload()}>{t("reload")} <ArrowRight size={15} /></button></div> : visible.length ? <div className="record-grid">{visible.map((record) => <RecordCard key={record.id} record={record} />)}</div> : <div className="empty-panel"><span className="empty-icon"><Search /></span><b>{t(kind === "all" ? "empty_all" : "empty_filter")}</b><p>{t("empty_hint")}</p><a className="button button-secondary" href="#publish">{t("hero_publish")} <ArrowRight size={15} /></a></div>}
-    <div className="board-foot"><span><span className="board-live-dot" />{t("public_browse")}</span><span>{t("count_records", { count: visible.length })}</span></div>
+    {loading ? <div className="record-grid">{[1, 2, 3, 4, 5, 6].map((item) => <div className="record-skeleton" key={item}><div /><span /><span /></div>)}</div> : error ? <div className="empty-panel"><span className="empty-icon"><Compass /></span><b>{t("load_failed")}</b><p>{error}</p><button className="button button-secondary" onClick={() => window.location.reload()}>{t("reload")} <ArrowRight size={15} /></button></div> : records.length ? <div className="record-grid">{records.map((record) => <RecordCard key={record.id} record={record} />)}</div> : <div className="empty-panel"><span className="empty-icon"><Search /></span><b>{t(kind === "all" ? "empty_all" : "empty_filter")}</b><p>{t("empty_hint")}</p><a className="button button-secondary" href="#publish">{t("hero_publish")} <ArrowRight size={15} /></a></div>}
+    {!loading && !error && records.length > 0 && hasMore && <><button type="button" className="button button-secondary button-small board-load-more" onClick={loadMore} disabled={loadingMore}>{loadingMore && <span className="spinner" />}{loadingMore ? t("loading_more") : t("load_more")}</button>{moreError && <p className="board-more-error" role="status">{t("load_failed")}</p>}</>}
+    <div className="board-foot"><span><span className="board-live-dot" />{t("public_browse")}</span><span>{t("count_records", { count: records.length, total: totals[kind] })}</span></div>
   </section>;
 }
 
