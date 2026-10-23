@@ -225,3 +225,24 @@ html:lang(ms) .kind-choice b,html:lang(ms) .kind-choice small{line-height:1.4}
 @media(max-width:680px){.notifications-panel{padding:14px}.notification-item{grid-template-columns:8px minmax(0,1fr);gap:9px}.notification-item>button{grid-column:2;justify-self:start}.notification-toast{align-items:flex-start;flex-wrap:wrap}.notification-toast>a{margin-left:28px}}
 @media(prefers-reduced-motion:reduce){.notification-item>button,.notification-toast>button{transition:none}}
 .auth-forgot-link{justify-self:end;margin-top:-7px;padding:0;border:0;background:transparent;color:#48744e;font-size:11px;font-weight:700;cursor:pointer}.auth-forgot-link:hover{text-decoration:underline;text-underline-offset:3px}
+
+
+/* Make post-submit recommendations visible and explain their order. */
+.match-results{scroll-margin-top:20px}
+.match-rank{position:absolute;z-index:2;top:13px;right:13px;display:inline-flex;min-height:28px;align-items:center;padding:0 10px;border:1px solid #dce7d6;border-radius:999px;background:#fff;color:#3d6847;box-shadow:0 4px 12px #183a3012;font-size:11px;font-weight:750;transition:transform .2s ease,background .2s ease}
+.match-rank.is-top-match{border-color:#b8c99e;background:#eaf2dd;color:#245541}
+.record-card.is-match-ranked .score-pill{top:49px}
+.record-card:hover .match-rank{transform:scale(1.04)}
+.records-back-link{display:inline-flex;align-items:center;gap:7px;margin:0 0 17px;color:#526c5e;font-size:12px;font-weight:650;transition:color .18s ease,gap .18s ease}
+.records-back-link:hover{gap:10px;color:#245541}
+.records-back-link svg{flex:none}
+.records-page .header-tools .sign-out{gap:6px;padding-inline:10px}
+@media(max-width:410px){
+  .records-page .site-header{width:calc(100% - 32px);gap:8px}
+  .records-page .header-tools{gap:5px;flex:none}
+  .records-page .header-tools .sign-out{width:auto;min-width:max-content;min-height:37px;padding-inline:8px;gap:5px;font-size:10px}
+  .records-page .header-tools .sign-out span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){
+  .match-rank,.records-back-link{transition:none}
+}
