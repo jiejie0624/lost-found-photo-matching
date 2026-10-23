@@ -228,11 +228,6 @@ def init_db() -> None:
             db,
             "CREATE INDEX IF NOT EXISTS user_notifications_unread_idx ON user_notifications (user_id, read_at)",
         )
-        execute(
-            db,
-            "DELETE FROM user_notifications WHERE created_at < ?",
-            ((datetime.now(timezone.utc) - timedelta(days=90)).isoformat(),),
-        )
         if DATABASE_URL:
             columns = {
                 row["column_name"]
@@ -1349,9 +1344,9 @@ async def delete_image(image_url: str | None, image_name: str | None) -> None:
     if image_url and image_url.startswith("https://"):
         if not BLOB_TOKEN:
             raise RuntimeError("Vercel Blob token is not configured")
-        from vercel.blob import AsyncBlobClient
+        from vercel.blob import delete_async
 
-        await AsyncBlobClient().delete(image_url)
+        await delete_async(image_url, token=BLOB_TOKEN)
     elif image_name:
         path = (UPLOAD_DIR / image_name).resolve()
         if path.parent == UPLOAD_DIR.resolve() and path.is_file():
@@ -1399,6 +1394,11 @@ async def expire_records(request: Request) -> dict[str, int]:
             execute(db, "DELETE FROM record_matches WHERE lost_record_id = ? OR found_record_id = ?", (row["id"], row["id"]))
             execute(db, "DELETE FROM records WHERE id = ?", (row["id"],))
             deleted += 1
+        execute(
+            db,
+            "DELETE FROM user_notifications WHERE created_at < ?",
+            ((datetime.now(timezone.utc) - timedelta(days=90)).isoformat(),),
+        )
     return {"expired_records_deleted": deleted}
 
 
@@ -1434,17 +1434,19 @@ async def create_record(
     normalized, _ = normalize_image(raw)
     image_name = uuid.uuid4().hex + ".jpg"
     if BLOB_TOKEN:
-        from vercel.blob import AsyncBlobClient
-
         try:
-            blob = await AsyncBlobClient().put(
+            from vercel.blob import put_async
+
+            blob = await put_async(
                 f"lost-found/{image_name}",
                 normalized,
                 access="public",
                 content_type="image/jpeg",
                 add_random_suffix=True,
+                token=BLOB_TOKEN,
             )
         except Exception as exc:
+            logger.exception("Vercel Blob upload failed")
             raise HTTPException(status_code=503, detail="照片存储暂时不可用，请稍后再试。") from exc
         image_url = blob.url
         stored_name = ""
