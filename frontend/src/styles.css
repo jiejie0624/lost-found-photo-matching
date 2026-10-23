@@ -78,19 +78,6 @@ html:lang(zh-CN) .hero h1,html:lang(zh-CN) .section-title h2,html:lang(zh-CN) .h
 html:lang(zh-CN) .publish-aside h3 em{letter-spacing:.02em}
 @media(max-width:680px){.calendar-popover{left:0;width:min(330px,calc(100vw - 64px));padding:12px}.calendar-footer{gap:5px}.calendar-today,.calendar-done{padding-inline:8px}.calendar-footer>label input{width:94px}.datetime-trigger{min-height:47px}}
 
-html:lang(ta-IN) body,html:lang(ta-IN) button,html:lang(ta-IN) input,html:lang(ta-IN) select,html:lang(ta-IN) textarea{font-family:"DM Sans","Noto Sans Tamil",sans-serif}
-html:lang(th-TH) body,html:lang(th-TH) button,html:lang(th-TH) input,html:lang(th-TH) select,html:lang(th-TH) textarea{font-family:"DM Sans","Noto Sans Thai",sans-serif}
-html:lang(th-TH) .hero h1,html:lang(th-TH) .section-title h2,html:lang(th-TH) .how-intro h2,html:lang(th-TH) .publish-aside h3{letter-spacing:0;line-height:1.55}
-html:lang(ta-IN) .hero h1,html:lang(ta-IN) .section-title h2,html:lang(ta-IN) .how-intro h2,html:lang(ta-IN) .publish-aside h3{letter-spacing:0;line-height:1.55}
-html:lang(ta-IN) .publish-aside h3 em{font-family:inherit;font-style:normal}
-html:lang(ta-IN) .kind-choice{min-width:0}
-html:lang(ta-IN) .kind-choice>span:nth-child(2){min-width:0;overflow-wrap:anywhere;line-height:1.5}
-html:lang(ta-IN) .kind-choice b,html:lang(ta-IN) .kind-choice small{overflow-wrap:anywhere;line-height:1.5}
-html:lang(ta-IN) .dropzone-prompt{padding:10px 16px;text-align:center}
-html:lang(ta-IN) .dropzone-prompt b{max-width:100%;overflow-wrap:anywhere;line-height:1.6}
-html:lang(ta-IN) .category-trigger>span,html:lang(ta-IN) .category-menu button>span{min-width:0;overflow-wrap:anywhere;line-height:1.5}
-html:lang(ta-IN) .field-label{align-items:flex-start;line-height:1.5}
-@media(min-width:681px) and (max-width:900px){html:lang(ta-IN) .publish-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}html:lang(ta-IN) .publish-aside{position:static;padding-top:0}html:lang(ta-IN) .publish-aside>p{max-width:620px}html:lang(ta-IN) .section-title{display:block}html:lang(ta-IN) .section-description{margin-top:9px}}
 .form-status a,.contact-status a{color:inherit;font-weight:750;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .record-contact-toggle{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:8px 10px;border:1px solid #dbe5d9;border-radius:7px;background:#f8faf5;color:#426d4b;font-size:10px;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
 .record-contact-toggle:hover{transform:translateY(-1px);border-color:#adbea7;background:#eef4e9}
@@ -198,8 +185,6 @@ html:lang(en) .kind-choice b{line-height:1.35}
 html:lang(zh-CN) .kind-choice b,html:lang(zh-CN) .kind-choice small{line-height:1.5}
 html:lang(ms) .hero h1,html:lang(ms) .section-title h2,html:lang(ms) .how-intro h2,html:lang(ms) .publish-aside h3{letter-spacing:-.02em;line-height:1.35}
 html:lang(ms) .kind-choice b,html:lang(ms) .kind-choice small{line-height:1.4}
-html:lang(th-TH) .kind-choice b,html:lang(th-TH) .kind-choice small,html:lang(ta-IN) .kind-choice b,html:lang(ta-IN) .kind-choice small{line-height:1.6}
-html:lang(ta-IN) .publish-aside h3 em{font-family:inherit;font-style:normal}
 @media(max-width:900px){.publish-layout{grid-template-columns:minmax(0,1fr);gap:22px}.publish-aside{position:static}.publish-aside>p{max-width:none}.section-title{display:block}.section-description{margin-top:9px}}
 @media(max-width:560px){.kind-selector{grid-template-columns:minmax(0,1fr)}.kind-choice{min-height:68px}.kind-choice>span:nth-child(2){overflow-wrap:anywhere}}
 

@@ -346,7 +346,9 @@ function PublishSection({ onPublished }) {
       if (!result || typeof result.id !== "string") throw new Error("err_bad_response");
       setMatches(Array.isArray(result.matches) ? result.matches : []);
       setPublishedRecordId(result.id);
-      const aiMessage = result.analysis_status === "analyzed" && result.matching_text_available ? t("ai_done") : t("ai_unavailable");
+      const aiMessage = result.matching_text_available
+        ? result.analysis_status === "analyzed" ? t("ai_done") : t("ai_text_only")
+        : t("ai_unavailable");
       setStatus(`${t("status_published")}${aiMessage}`); onPublished();
       setFile(null); setFileError(""); setValues({ title: "", category: "", color: "", location: "", description: "" });
     } catch (error) {

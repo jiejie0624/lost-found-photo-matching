@@ -35,6 +35,64 @@ def similarity(a: str, b: str) -> float:
     return max(token_score, SequenceMatcher(None, a.lower(), b.lower()).ratio() * 0.65)
 
 
+_LOCATION_CONTEXT_WORDS = {
+    "southern", "university", "college", "campus", "school", "within", "inside",
+    "southernuniversitycollege", "exact", "place", "location", "unknown", "area",
+}
+_RESTROOM_ALIASES = re.compile(r"\b(toilet|bathroom|washroom|lavatory|restroom|tandas|bilik air)\b", re.I)
+
+
+def normalize_campus_location(value: str) -> str:
+    """Normalize common campus and restroom wording without inventing a building."""
+    text = value.strip().lower()
+    text = _RESTROOM_ALIASES.sub("restroom", text)
+    tokens = [token for token in words(text) if token not in _LOCATION_CONTEXT_WORDS]
+    return " ".join(sorted(tokens))
+
+
+def explicitly_off_campus(record: dict[str, Any]) -> bool:
+    location = matching_text(record, "location").lower()
+    return bool(re.search(
+        r"\b(?:off[ -]?campus|offsite|outside (?:the )?(?:southern university college )?campus|not (?:within|on) (?:the )?campus)\b",
+        location,
+    ))
+
+
+def english_category(value: str) -> str:
+    return {
+        "电子产品": "electronics",
+        "证件与卡片": "identity cards and documents",
+        "钥匙": "keys",
+        "包袋": "bags",
+        "衣物": "clothing",
+        "水瓶与餐具": "drinkware and utensils",
+        "书籍文具": "books and stationery",
+        "饰品": "accessories and jewelry",
+        "其他": "other item",
+    }.get(value, "")
+
+
+def canonical_category(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    if value in {
+        "electronics", "identity cards and documents", "keys", "bags", "clothing",
+        "drinkware and utensils", "books and stationery", "accessories and jewelry", "other item",
+    }:
+        return {
+            "electronics": "电子产品",
+            "identity cards and documents": "证件与卡片",
+            "keys": "钥匙",
+            "bags": "包袋",
+            "clothing": "衣物",
+            "drinkware and utensils": "水瓶与餐具",
+            "books and stationery": "书籍文具",
+            "accessories and jewelry": "饰品",
+            "other item": "其他",
+        }[value]
+    return value
+
+
 def attribute_text(attributes: dict[str, Any], key: str) -> str:
     value = attributes.get(key, "")
     if isinstance(value, str):
@@ -57,12 +115,18 @@ def matching_text(record: dict[str, Any], key: str) -> str:
 
 
 def pair_similarity(source: dict[str, Any], candidate: dict[str, Any], key: str, left: str, right: str) -> float:
-    """Use shared-language text only when both records have it; otherwise compare originals."""
+    """Compare canonical English only; never mix untranslated originals into a score."""
     shared_left = matching_text(source, key)
     shared_right = matching_text(candidate, key)
-    if shared_left and shared_right:
-        return similarity(shared_left, shared_right)
-    return similarity(left, right)
+    if not shared_left or not shared_right:
+        return 0.0
+    if key == "location":
+        campus_left = normalize_campus_location(shared_left)
+        campus_right = normalize_campus_location(shared_right)
+        if not campus_left or not campus_right:
+            return 0.25
+        return similarity(campus_left, campus_right)
+    return similarity(shared_left, shared_right)
 
 
 def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int, list[str]]:
@@ -113,24 +177,14 @@ def match_score(source: dict[str, Any], candidate: dict[str, Any]) -> tuple[int,
         points += 8 * brand_score
         evidence.append("照片中可见品牌相同或相近")
 
-    shared_source_title = matching_text(source, "title")
-    shared_candidate_title = matching_text(candidate, "title")
     shared_source_description = matching_text(source, "description")
     shared_candidate_description = matching_text(candidate, "description")
-    if shared_source_title and shared_candidate_title:
-        source_features = " ".join(
-            part for part in (shared_source_title, shared_source_description, attribute_text(source_attrs, "features")) if part
-        )
-        candidate_features = " ".join(
-            part for part in (shared_candidate_title, shared_candidate_description, attribute_text(candidate_attrs, "features")) if part
-        )
-    else:
-        source_features = " ".join(
-            part for part in (source.get("title", ""), attribute_text(source_attrs, "features"), source.get("description", "")) if part
-        )
-        candidate_features = " ".join(
-            part for part in (candidate.get("title", ""), attribute_text(candidate_attrs, "features"), candidate.get("description", "")) if part
-        )
+    source_features = " ".join(
+        part for part in (matching_text(source, "title"), shared_source_description, attribute_text(source_attrs, "features")) if part
+    )
+    candidate_features = " ".join(
+        part for part in (matching_text(candidate, "title"), shared_candidate_description, attribute_text(candidate_attrs, "features")) if part
+    )
     feature_score = similarity(source_features, candidate_features)
     points += 13 * feature_score
     if feature_score >= 0.3:
