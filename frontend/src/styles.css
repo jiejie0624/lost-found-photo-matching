@@ -195,9 +195,7 @@ html:lang(ms) .kind-choice b,html:lang(ms) .kind-choice small{line-height:1.4}
 .publish-auth-notice a{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid #cbd9c8;border-radius:6px;background:#fff;color:#245541;font-weight:700;white-space:nowrap}
 .publish-auth-notice a:hover{background:#edf3e8;border-color:#9bb295}
 .records-page .header-tools{gap:8px}
-.records-page .header-tools .sign-out{min-height:39px;white-space:nowrap}
 @media(max-width:560px){.publish-auth-notice{grid-template-columns:20px minmax(0,1fr)}.publish-auth-notice a{grid-column:2;justify-self:start}}
-@media(max-width:410px){.records-page .header-tools .sign-out{width:39px;padding:0}.records-page .header-tools .sign-out span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}}
 @media(prefers-reduced-motion:reduce){.publish-auth-notice a{transition:none}}
 .inline-form-action{padding:0;border:0;background:transparent;color:#245541;font:inherit;font-weight:750;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .inline-form-action:hover{color:#527745}
@@ -233,16 +231,23 @@ html:lang(ms) .kind-choice b,html:lang(ms) .kind-choice small{line-height:1.4}
 .match-rank.is-top-match{border-color:#b8c99e;background:#eaf2dd;color:#245541}
 .record-card.is-match-ranked .score-pill{top:49px}
 .record-card:hover .match-rank{transform:scale(1.04)}
-.records-back-link{display:inline-flex;align-items:center;gap:7px;margin:0 0 17px;color:#526c5e;font-size:12px;font-weight:650;transition:color .18s ease,gap .18s ease}
-.records-back-link:hover{gap:10px;color:#245541}
-.records-back-link svg{flex:none}
-.records-page .header-tools .sign-out{gap:6px;padding-inline:10px}
 @media(max-width:410px){
   .records-page .site-header{width:calc(100% - 32px);gap:8px}
   .records-page .header-tools{gap:5px;flex:none}
-  .records-page .header-tools .sign-out{width:auto;min-width:max-content;min-height:37px;padding-inline:8px;gap:5px;font-size:10px}
-  .records-page .header-tools .sign-out span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
 }
 @media(prefers-reduced-motion:reduce){
-  .match-rank,.records-back-link{transition:none}
+  .match-rank{transition:none}
 }
+
+.auth-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:20px 0 0;padding:4px;border:1px solid #e6ebe3;border-radius:9px;background:#f3f5f0}
+.auth-mode-tabs button{min-height:39px;border:0;border-radius:6px;background:transparent;color:#6a7e72;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background .18s ease,color .18s ease,box-shadow .18s ease}
+.auth-mode-tabs button:hover{color:#245541}
+.auth-mode-tabs button.is-active{background:#fff;color:#194b3d;box-shadow:0 2px 8px #183a3012}
+.auth-mode-tabs button:focus-visible,.records-header-back:focus-visible,.records-sign-out:focus-visible{outline:2px solid #9ab75d;outline-offset:3px}
+.auth-mode-tabs+.auth-description{margin-top:13px}
+.records-header-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;padding:0 11px;border:1px solid #dce4dc;border-radius:8px;background:#fff;color:#426451;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.records-header-back:hover{transform:translateX(-2px);border-color:#b7c9b2;background:#f4f7f0}
+.records-sign-out{display:inline-flex;align-items:center;gap:7px;min-height:35px;margin-top:13px;padding:0 11px;border:1px solid #dce4dc;border-radius:7px;background:#fff;color:#526e5c;font-size:11px;font-weight:650;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+.records-sign-out:hover{border-color:#b7c9b2;background:#f2f6ed}
+@media(max-width:680px){.records-header-back{min-height:37px;padding:0 8px;font-size:10px}.records-sign-out{margin-top:11px}}
+@media(prefers-reduced-motion:reduce){.auth-mode-tabs button,.records-header-back,.records-sign-out{transition:none}.records-header-back:hover{transform:none}}

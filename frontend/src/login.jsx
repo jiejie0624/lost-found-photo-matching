@@ -62,8 +62,17 @@ function LoginPage() {
         ? await auth.signUp.email({ ...credentials, name: String(form.get("name")).trim() })
         : await auth.signIn.email(credentials);
       if (result?.error) throw new Error(result.error.message || t("auth_failed"));
-      const session = await currentSession();
-      if (!session?.user) throw new Error(t("auth_incomplete"));
+      let session = await currentSession();
+      if (registering && !session?.user) {
+        try {
+          const signInResult = await auth.signIn.email(credentials);
+          if (!signInResult?.error) session = await currentSession();
+        } catch { /* Email verification may be required before the first sign-in. */ }
+      }
+      if (!session?.user) {
+        if (registering) { setStatus({ key: "auth_signup_created" }); setError(false); return; }
+        throw new Error(t("auth_incomplete"));
+      }
       setStatus({ key: "auth_success" }); window.location.assign("/my-records.html");
     } catch (problem) {
       const known = ["auth_reset_failed", "auth_reset_link_invalid", "auth_reset_password_mismatch"].includes(problem?.message);
@@ -77,6 +86,7 @@ function LoginPage() {
     <main className="auth-main">
       <div className="auth-art"><div className="auth-art-circle"><span className="auth-art-leaf"><Leaf size={34} /></span><span className="auth-art-spark">✳</span></div><p className="eyebrow">{t("auth_art_kicker")}</p><h1>{t("auth_art_a")}<br /><em>{t("auth_art_b")}</em></h1><p className="auth-art-text">{t("auth_art_text")}</p><div className="auth-benefit"><span><ShieldCheck size={17} /></span>{t("auth_benefit")}</div></div>
       <section className="auth-card"><div className="auth-card-heading"><span className="auth-card-icon"><LockKeyhole size={18} /></span><div><p className="eyebrow">{t("auth_tag")}</p><h2>{registering ? t("auth_create") : forgotPassword ? t("auth_forgot_title") : resettingPassword ? t("auth_reset_title") : t("auth_welcome")}</h2></div></div>
+        {!forgotPassword && !resettingPassword && <div className="auth-mode-tabs" role="group"><button type="button" aria-pressed={!registering} className={!registering ? "is-active" : ""} onClick={() => { setMode("sign-in"); setStatus(null); setError(false); }}>{t("auth_login")}</button><button type="button" aria-pressed={registering} className={registering ? "is-active" : ""} onClick={() => { setMode("sign-up"); setStatus(null); setError(false); }}>{t("auth_create")}</button></div>}
         <p className="auth-description">{registering ? t("auth_intro_signup") : forgotPassword ? t("auth_forgot_intro") : resettingPassword ? t("auth_reset_intro") : t("auth_intro_login")}</p>
         <form className="auth-form" onSubmit={submit}>
           {registering && <label className="auth-field"><span>{t("auth_name")}</span><div className="input-shell"><Sparkles size={17} /><input name="name" autoComplete="name" maxLength={80} required placeholder={t("auth_name_placeholder")} /></div></label>}
@@ -87,7 +97,7 @@ function LoginPage() {
           <button className="button button-primary auth-submit" type="submit" disabled={busy || configured === false}>{busy ? <><span className="spinner" />{t("auth_loading")}</> : <>{registering ? t("auth_signup") : forgotPassword ? t("auth_send_reset") : resettingPassword ? t("auth_save_password") : t("auth_login")}<ArrowUpRight size={17} /></>}</button>
         </form>
         {status && <p className={`auth-status ${error ? "is-error" : ""}`} role="status" aria-live="polite">{!error && <Check size={15} />}{status.key ? t(status.key) : status.text}</p>}
-        <p className="auth-switch">{registering || forgotPassword || resettingPassword ? t("auth_has_account") : t("auth_no_account")}<button type="button" onClick={() => { setMode(registering || forgotPassword || resettingPassword ? "sign-in" : "sign-up"); setStatus(null); setError(false); }}>{registering || forgotPassword || resettingPassword ? t("auth_switch_login") : t("auth_switch_signup")}</button></p>
+        {(forgotPassword || resettingPassword) && <p className="auth-switch">{t("auth_has_account")}<button type="button" onClick={() => { setMode("sign-in"); setStatus(null); setError(false); }}>{t("auth_switch_login")}</button></p>}
         <div className="auth-safe"><ShieldCheck size={15} /><span>{t("auth_safe")}</span></div>
       </section>
     </main><footer className="auth-footer"><span>拾见 · {t("hero_kicker")}</span><span><CircleHelp size={14} />{t("auth_help")}</span></footer>

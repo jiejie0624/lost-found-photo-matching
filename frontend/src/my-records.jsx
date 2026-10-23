@@ -141,8 +141,19 @@ function MyRecordsPage() {
     finally { window.location.assign("/login.html"); }
   }
 
-  return <div className="records-page"><header className="site-header"><a className="brand" href="/"><span className="brand-mark">拾</span><span>拾见<span className="brand-dot">.</span></span></a><nav className="main-nav records-nav"><a href="/#board">{t("nav_board")}</a><a href="/#publish" className="button button-small button-primary">{t("nav_publish")} <ArrowUpRight size={16} /></a></nav><div className="header-tools"><LanguageSelect /><button type="button" className="sign-out" aria-label={t("signout")} onClick={signOut}><LogOut size={14} /><span>{t("signout")}</span></button></div></header>
-    <main className="my-records-main section-wrap"><a className="records-back-link" href="/"><ArrowLeft size={15} />{t("nav_home")}</a><div className="records-page-heading"><div><p className="eyebrow">{t("mine_kicker")}</p><h1>{t("mine_title")}<span className="title-period">.</span></h1><p className="records-welcome">{userLabel ? t("mine_welcome", { user: userLabel }) : t("mine_generic_welcome")}</p></div><a className="button button-primary" href="/#publish"><Plus size={17} />{t("mine_publish")}</a></div>
+  function goBack() {
+    try {
+      const previous = new URL(document.referrer);
+      if (window.history.length > 1 && previous.origin === window.location.origin && !["/login.html", "/my-records.html"].includes(previous.pathname)) {
+        window.history.back();
+        return;
+      }
+    } catch { /* A direct visit has no safe in-site page to return to. */ }
+    window.location.assign("/");
+  }
+
+  return <div className="records-page"><header className="site-header"><a className="brand" href="/"><span className="brand-mark">拾</span><span>拾见<span className="brand-dot">.</span></span></a><nav className="main-nav records-nav"><a href="/#board">{t("nav_board")}</a><a href="/#publish" className="button button-small button-primary">{t("nav_publish")} <ArrowUpRight size={16} /></a></nav><div className="header-tools"><LanguageSelect /><button type="button" className="records-header-back" aria-label={t("nav_back")} title={t("nav_back")} onClick={goBack}><ArrowLeft size={15} /><span>{t("nav_back")}</span></button></div></header>
+    <main className="my-records-main section-wrap"><div className="records-page-heading"><div><p className="eyebrow">{t("mine_kicker")}</p><h1>{t("mine_title")}<span className="title-period">.</span></h1><p className="records-welcome">{userLabel ? t("mine_welcome", { user: userLabel }) : t("mine_generic_welcome")}</p><button type="button" className="records-sign-out" aria-label={t("signout")} onClick={signOut}><LogOut size={15} /><span>{t("signout")}</span></button></div><a className="button button-primary" href="/#publish"><Plus size={17} />{t("mine_publish")}</a></div>
       <div className="records-privacy"><ShieldCheck size={18} /><p>{t("mine_privacy")}</p></div>
       {notificationToast && <div className="notification-toast" role="status" aria-live="polite"><Mail size={16} />{notificationToast}<a href="#notifications">{t("notifications_view")}</a><button type="button" onClick={() => setNotificationToast("")} aria-label={t("dismiss")}>×</button></div>}
       <section className="notifications-panel" id="notifications"><div className="notifications-heading"><h2>{t("notifications_title")}</h2><span>{t("notifications_unread", { count: notifications.filter((item) => !item.read_at).length })}</span></div>{notifications.length === 0 ? <p className="notifications-empty">{t("notifications_empty")}</p> : <div className="notifications-list">{notifications.map((notification) => <article className={`notification-item ${notification.read_at ? "is-read" : "is-unread"}`} key={notification.id}><span className="notification-dot" aria-hidden="true" /><div className="notification-copy"><p>{t(`notification_${notification.type}`, { title: notification.item_title })}</p><time dateTime={notification.created_at}>{date(notification.created_at, locale, t("time_unknown"))}</time></div>{!notification.read_at && <button type="button" onClick={() => markNotificationRead(notification)}>{t("notifications_mark_read")}</button>}</article>)}</div>}</section>
